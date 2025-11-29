@@ -2,7 +2,7 @@ import { validateRequest } from '../_middleware/auth';
 import { getSubscription, upgradePlan } from '../_services/subscriptionService';
 import { successResponse, errorResponse } from '../_utils/responseFormatter';
 import { resetDailyQuota, getDailyUsage } from '../_utils/quota';
-import { PlanType } from '../../src/services/firestore/plans';
+import { PlanType } from '../_types/plans';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

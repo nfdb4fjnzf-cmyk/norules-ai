@@ -1,5 +1,5 @@
 import { db } from '../_config/firebaseAdmin';
-import { PLANS, PlanType } from '../../src/services/firestore/plans';
+import { PLANS, PlanType } from '../_types/plans';
 
 export interface SubscriptionInfo {
     plan: PlanType;
