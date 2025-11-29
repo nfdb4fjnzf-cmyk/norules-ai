@@ -5,6 +5,7 @@ import HistoryItem from '../../components/History/HistoryItem';
 import HistoryDetailModal from '../../components/History/HistoryDetailModal';
 import SkeletonLoader from '../../components/SkeletonLoader';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../contexts/AuthContext';
 
 const HistoryIndex: React.FC = () => {
     const { t } = useTranslation();
@@ -15,13 +16,19 @@ const HistoryIndex: React.FC = () => {
     const [selectedLog, setSelectedLog] = useState<HistoryLog | null>(null);
     const { showToast } = useToast();
 
+    const { user } = useAuth();
+
     const fetchLogs = async (cursor?: string) => {
+        if (!user) return;
         try {
+            const token = await user.getIdToken();
             const url = cursor
                 ? `/api/history/list?limit=20&cursor=${cursor}`
                 : '/api/history/list?limit=20';
 
-            const res = await fetch(url);
+            const res = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             const data = await res.json();
 
             if (data.success) {
@@ -43,8 +50,8 @@ const HistoryIndex: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchLogs();
-    }, []);
+        if (user) fetchLogs();
+    }, [user]);
 
     const handleLoadMore = () => {
         if (nextCursor) {

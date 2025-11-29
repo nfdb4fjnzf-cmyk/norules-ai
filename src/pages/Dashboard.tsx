@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const data = [
   { name: 'Mon', score: 92 },
@@ -30,10 +31,16 @@ const Dashboard: React.FC = () => {
     { name: t('dashboard.riskLevels.high'), value: 5, fill: '#ef4444' }, // Red-500
   ];
 
+  const { user } = useAuth();
+
   useEffect(() => {
     const fetchSub = async () => {
+      if (!user) return;
       try {
-        const res = await fetch('/api/subscription/manage');
+        const token = await user.getIdToken();
+        const res = await fetch('/api/subscription/manage', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         const data = await res.json();
         if (data.success) {
           setSubscription(data.data);
@@ -44,8 +51,8 @@ const Dashboard: React.FC = () => {
         setLoading(false);
       }
     };
-    fetchSub();
-  }, []);
+    if (user) fetchSub();
+  }, [user]);
 
   return (
     <div className="space-y-6 animate-fade-in">

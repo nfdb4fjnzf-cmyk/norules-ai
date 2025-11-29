@@ -3,6 +3,7 @@ import Modal from '../../components/Modal';
 import { useToast } from '../../components/Toast';
 import SkeletonLoader from '../../components/SkeletonLoader';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface ApiKey {
     id: string;
@@ -24,13 +25,19 @@ const ApiKeys: React.FC = () => {
     const [deleting, setDeleting] = useState(false);
     const { showToast } = useToast();
 
+    const { user } = useAuth();
+
     useEffect(() => {
-        fetchKeys();
-    }, []);
+        if (user) fetchKeys();
+    }, [user]);
 
     const fetchKeys = async () => {
+        if (!user) return;
         try {
-            const res = await fetch('/api/apikeys/manage');
+            const token = await user.getIdToken();
+            const res = await fetch('/api/apikeys/manage', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             const data = await res.json();
             if (data.success) {
                 setKeys(data.data);
@@ -44,12 +51,16 @@ const ApiKeys: React.FC = () => {
     };
 
     const handleCreate = async () => {
-        if (!newKeyName.trim()) return;
+        if (!newKeyName.trim() || !user) return;
         setCreating(true);
         try {
+            const token = await user.getIdToken();
             const res = await fetch('/api/apikeys/manage', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ name: newKeyName })
             });
             const data = await res.json();
@@ -75,11 +86,13 @@ const ApiKeys: React.FC = () => {
     };
 
     const confirmDelete = async () => {
-        if (!deleteKeyId) return;
+        if (!deleteKeyId || !user) return;
         setDeleting(true);
         try {
+            const token = await user.getIdToken();
             const res = await fetch(`/api/apikeys/manage?id=${deleteKeyId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
             if (data.success) {

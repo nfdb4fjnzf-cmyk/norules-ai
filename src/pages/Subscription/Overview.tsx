@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import SkeletonLoader from '../../components/SkeletonLoader';
 import { useToast } from '../../components/Toast';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../contexts/AuthContext';
 
 const SubscriptionOverview: React.FC = () => {
     const { t } = useTranslation();
@@ -10,22 +11,36 @@ const SubscriptionOverview: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const { showToast } = useToast();
 
+    const { user } = useAuth();
+
     useEffect(() => {
-        fetch('/api/subscription/manage')
-            .then(res => res.json())
-            .then(data => {
+        const fetchSubscription = async () => {
+            if (!user) return;
+
+            try {
+                const token = await user.getIdToken();
+                const res = await fetch('/api/subscription/manage', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const data = await res.json();
+
                 if (data.success) {
                     setSubscription(data.data);
                 } else {
                     showToast('error', 'Failed to load subscription details');
                 }
-            })
-            .catch(err => {
+            } catch (err) {
                 console.error(err);
                 showToast('error', 'Network error');
-            })
-            .finally(() => setLoading(false));
-    }, []);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSubscription();
+    }, [user]);
 
     const isFree = subscription?.plan === 'free';
     const canUseExternal = subscription?.plan !== 'free';

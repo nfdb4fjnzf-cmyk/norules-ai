@@ -1,3 +1,5 @@
+import api from './api';
+
 export interface QuotaUsage {
     used: number;
     limit: number;
@@ -12,11 +14,9 @@ export interface SubscriptionInfo {
 
 export const getSubscriptionOverview = async (): Promise<SubscriptionInfo | null> => {
     try {
-        const res = await fetch('/api/subscription/manage');
-        if (!res.ok) throw new Error('Failed to fetch subscription');
-        const data = await res.json();
-        if (data.success) {
-            return data.data;
+        const res = await api.get('/subscription/manage');
+        if (res.data.success) {
+            return res.data.data;
         }
         return null;
     } catch (error) {

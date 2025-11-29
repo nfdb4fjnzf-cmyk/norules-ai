@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import UpgradeModal from '../../components/Subscription/UpgradeModal';
 import { useToast } from '../../components/Toast';
 import SkeletonLoader from '../../components/SkeletonLoader';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Plan {
     id: string;
@@ -22,15 +23,23 @@ const Plans: React.FC = () => {
     const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
     const { showToast } = useToast();
 
+    const { user } = useAuth();
+
     useEffect(() => {
-        fetchData();
-    }, []);
+        if (user) {
+            fetchData();
+        }
+    }, [user]);
 
     const fetchData = async () => {
+        if (!user) return;
         try {
+            const token = await user.getIdToken();
+            const headers = { 'Authorization': `Bearer ${token}` };
+
             const [plansRes, subRes] = await Promise.all([
-                fetch('/api/subscription/plans'),
-                fetch('/api/subscription/manage')
+                fetch('/api/subscription/plans', { headers }),
+                fetch('/api/subscription/manage', { headers })
             ]);
 
             const plansData = await plansRes.json();
@@ -72,29 +81,20 @@ const Plans: React.FC = () => {
         // For now, I'll fetch the user profile first to get the UID.
 
         try {
-            // 1. Get User ID
-            const userRes = await fetch('/api/auth/me'); // Assuming this exists or similar
-            // If not, we can use the subscription endpoint which we already called.
-            // Actually, let's just pass the plan and let the backend handle it? 
-            // The provided createInvoice API expects `userId` in body.
-            // I will assume the user is logged in and I can get the UID from the `subscription` state or a separate call.
-            // Wait, `subscription` state doesn't have UID.
-            // I will use `firebase/auth` client SDK to get current user.
-
-            // Dynamic import to avoid SSR issues if any
-            const { getAuth } = await import('firebase/auth');
-            const auth = getAuth();
-            const user = auth.currentUser;
-
             if (!user) {
                 showToast('error', 'Please log in first');
                 return;
             }
 
+            const token = await user.getIdToken();
+
             // 2. Create Invoice
             const res = await fetch('/api/payment/create-invoice', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     userId: user.uid,
                     amount: amount
