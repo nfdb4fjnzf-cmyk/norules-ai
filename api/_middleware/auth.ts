@@ -54,8 +54,8 @@ export const validateRequest = async (headers: Headers | Record<string, string> 
     }
 
     return {
+        ...decodedToken,
         uid: decodedToken.uid,
         email: decodedToken.email,
-        ...decodedToken,
     };
 };
