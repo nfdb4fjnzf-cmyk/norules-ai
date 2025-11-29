@@ -1,7 +1,12 @@
 import { privateDecrypt, constants } from 'crypto';
-import { PRIVATE_KEY } from '../_config/keys';
+import { PRIVATE_KEY } from '../_config/keys.js';
 
 export function decryptTransportKey(cipherText: string): string {
+    if (!PRIVATE_KEY) {
+        console.error("Decryption failed: Server Private Key is missing");
+        throw new Error("Server Configuration Error");
+    }
+
     try {
         const buffer = Buffer.from(cipherText, 'base64');
 
@@ -29,7 +34,7 @@ export function decryptTransportKey(cipherText: string): string {
         return payload.key;
 
     } catch (e: any) {
-        console.error("Backend Decryption Failed", e.message);
+        console.error("Backend Decryption Failed:", e.message);
         throw new Error("Invalid Encrypted Key");
     }
 }

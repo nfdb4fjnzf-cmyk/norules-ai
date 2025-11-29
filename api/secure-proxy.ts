@@ -1,4 +1,4 @@
-import { decryptTransportKey } from '../_utils/encryption.js';
+import { decryptTransportKey } from './_utils/encryption.js';
 import generateHandler from './_controllers/llm/generate.js';
 import imageHandler from './_controllers/llm/image.js';
 import videoHandler from './_controllers/llm/video.js';
@@ -40,23 +40,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // 3. Decrypt Key
         const apiKey = decryptTransportKey(encryptedKey);
 
-        // 4. Prepare Context for Controller
-        // Since we are inside the same Vercel function environment, we can't easily "forward" the request object 
-        // with modified headers to another handler function that expects VercelRequest.
-        // Instead, we should manually inject the API key into the body or context, 
-        // OR (simpler for now) just set it in the current request object's headers if possible, 
-        // but VercelRequest headers might be read-only or difficult to mock.
-
-        // However, our controllers (generateHandler, etc.) likely read from process.env or req.headers.
-        // If they read from req.headers['x-gemini-api-key'], we need to mock that.
-
-        // A better approach for this "proxy" pattern within serverless is to just call the controller logic directly.
-        // But the controllers expect (req, res).
-
-        // Let's try to modify the headers of the incoming req object.
+        // 4. Inject API Key into Headers for Controllers
+        // We modify the headers object directly. 
+        // Note: VercelRequest headers might be a plain object or IncomingHttpHeaders.
         req.headers['x-gemini-api-key'] = apiKey;
 
-        // 5. Route
+        // 5. Route to Controller
         switch (targetEndpoint) {
             case 'llm/generate':
                 return generateHandler(req, res);

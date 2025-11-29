@@ -1,12 +1,9 @@
-import { errorResponse } from '../_utils/responseFormatter';
-import generateHandler from '../_controllers/llm/generate';
-import imageHandler from '../_controllers/llm/image';
-import videoHandler from '../_controllers/llm/video';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-
-export const config = {
-    runtime: 'nodejs',
-};
+import generateHandler from '../_controllers/llm/generate.js';
+import imageHandler from '../_controllers/llm/image.js';
+import videoHandler from '../_controllers/llm/video.js';
+import { errorResponse } from '../_utils/responseFormatter.js';
+import { ErrorCodes } from '../_utils/errorHandler.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Handle CORS
@@ -15,7 +12,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
     res.setHeader(
         'Access-Control-Allow-Headers',
-        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, X-Private-Mode'
+        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, X-Encrypted-Key, X-Target-Endpoint, X-Gemini-API-Key'
     );
 
     if (req.method === 'OPTIONS') {
@@ -24,15 +21,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { type } = req.query;
 
-    if (!type || Array.isArray(type)) {
-        return res.status(400).json(errorResponse(400, `Invalid LLM type: ${type}`));
-    }
-
     switch (type) {
-        case 'generate': return generateHandler(req, res);
-        case 'image': return imageHandler(req, res);
-        case 'video': return videoHandler(req, res);
+        case 'generate':
+            return generateHandler(req, res);
+        case 'image':
+            return imageHandler(req, res);
+        case 'video':
+            return videoHandler(req, res);
         default:
-            return res.status(400).json(errorResponse(400, `Invalid LLM type: ${type}`));
+            return res.status(404).json(errorResponse(ErrorCodes.NOT_FOUND, 'Invalid LLM Endpoint'));
     }
 }

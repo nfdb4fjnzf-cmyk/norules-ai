@@ -1,14 +1,11 @@
-import { errorResponse } from '../_utils/responseFormatter';
-import textHandler from '../_controllers/analyze/text';
-import imageHandler from '../_controllers/analyze/image';
-import videoHandler from '../_controllers/analyze/video';
-import urlHandler from '../_controllers/analyze/url';
-import riskHandler from '../_controllers/analyze/risk';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-
-export const config = {
-    runtime: 'nodejs', // Must be nodejs because risk/video use firebase-admin
-};
+import textHandler from '../_controllers/analyze/text.js';
+import imageHandler from '../_controllers/analyze/image.js';
+import videoHandler from '../_controllers/analyze/video.js';
+import urlHandler from '../_controllers/analyze/url.js';
+import riskHandler from '../_controllers/analyze/risk.js';
+import { errorResponse } from '../_utils/responseFormatter.js';
+import { ErrorCodes } from '../_utils/errorHandler.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Handle CORS
@@ -17,7 +14,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
     res.setHeader(
         'Access-Control-Allow-Headers',
-        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, X-Private-Mode'
+        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, X-Encrypted-Key, X-Target-Endpoint, X-Gemini-API-Key'
     );
 
     if (req.method === 'OPTIONS') {
@@ -26,17 +23,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { type } = req.query;
 
-    if (!type || Array.isArray(type)) {
-        return res.status(400).json(errorResponse(400, `Invalid analysis type: ${type}`));
-    }
-
     switch (type) {
-        case 'text': return textHandler(req, res);
-        case 'image': return imageHandler(req, res);
-        case 'video': return videoHandler(req, res);
-        case 'url': return urlHandler(req, res);
-        case 'risk': return riskHandler(req, res);
+        case 'text':
+            return textHandler(req, res);
+        case 'image':
+            return imageHandler(req, res);
+        case 'video':
+            return videoHandler(req, res);
+        case 'url':
+            return urlHandler(req, res);
+        case 'risk':
+            return riskHandler(req, res);
         default:
-            return res.status(400).json(errorResponse(400, `Invalid analysis type: ${type}`));
+            return res.status(404).json(errorResponse(ErrorCodes.NOT_FOUND, 'Invalid Analysis Endpoint'));
     }
 }
