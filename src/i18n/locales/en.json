@@ -1,0 +1,261 @@
+{
+    "common": {
+        "loading": "Loading...",
+        "error": "Error",
+        "success": "Success",
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "edit": "Edit",
+        "view": "View",
+        "settings": "Settings",
+        "logout": "Logout",
+        "language": "Language",
+        "actions": "Actions",
+        "status": "Status",
+        "type": "Type",
+        "date": "Date",
+        "score": "Score",
+        "download": "Download",
+        "filter": "Filter"
+    },
+    "sidebar": {
+        "dashboard": "Dashboard",
+        "analyze": "Analyzer",
+        "history": "History",
+        "playground": "Playground",
+        "subscription": "Subscription",
+        "apiKeys": "API Keys",
+        "externalKey": "External Key",
+        "widget": {
+            "proPlan": "PRO PLAN",
+            "scansRemaining": "You have {{count}} scans remaining this month.",
+            "upgrade": "Upgrade"
+        }
+    },
+    "dashboard": {
+        "title": "Dashboard",
+        "subtitle": "Overview of your compliance performance",
+        "currentPlan": "Current Plan",
+        "dailyQuota": "Daily Quota",
+        "avgScore": "Avg. Compliance Score",
+        "issuesDetected": "Issues Detected",
+        "pendingReview": "Pending Review",
+        "complianceTrend": "Compliance Trend",
+        "riskDistribution": "Risk Distribution",
+        "riskLevels": {
+            "safe": "Safe",
+            "low": "Low",
+            "med": "Med",
+            "high": "High"
+        },
+        "weeklyTip": {
+            "title": "Weekly Tip",
+            "content": "Most issues this week came from missing \"Terms Apply\" text in image banners. Double check your footnotes."
+        }
+    },
+    "analyzer": {
+        "title": "Content Analyzer",
+        "subtitle": "Upload content to detect compliance risks automatically.",
+        "sections": {
+            "material": "Material (Image/Video)",
+            "copy": "Primary Text",
+            "link": "Destination Link"
+        },
+        "placeholders": {
+            "material": "Drag & drop file here, or click to upload",
+            "copy": "Enter your ad copy here...",
+            "link": "https://example.com"
+        },
+        "tabs": {
+            "text": "Text",
+            "image": "Image",
+            "video": "Video",
+            "url": "URL"
+        },
+        "input": {
+            "textPlaceholder": "Enter your ad copy here...",
+            "urlPlaceholder": "Paste ad landing page URL...",
+            "uploadImage": "Upload Image",
+            "uploadVideo": "Upload Video",
+            "fileTypeHint": "SVG, PNG, JPG or MP4 (max. 20MB)",
+            "selectFile": "Select File"
+        },
+        "actions": {
+            "analyze": "Run Analysis",
+            "analyzing": "Analyzing..."
+        },
+        "howItWorks": {
+            "title": "How it works",
+            "description": "Norules AI checks against 50+ regulatory frameworks including FTC, GDPR, and platform-specific policies (Meta, Google Ads, TikTok).",
+            "check1": "Brand Safety Check",
+            "check2": "Claim Substantiation",
+            "check3": "Prohibited Content"
+        },
+        "errors": {
+            "fileTooLarge": "File too large. Please upload video smaller than 20MB.",
+            "enterText": "Please enter text to analyze.",
+            "selectFile": "Please select a file.",
+            "analysisFailed": "Analysis failed. Please try again.",
+            "quotaExceeded": "Daily quota exceeded. Please upgrade your plan.",
+            "accessDenied": "Access denied. Free plan cannot use External API Key.",
+            "invalidKey": "Invalid API Key.",
+            "insufficientPoints": "Insufficient points. Please top up."
+        }
+    },
+    "history": {
+        "title": "Scan History",
+        "subtitle": "View your recent API usage, prompts, and results.",
+        "noHistory": "No history found.",
+        "viewReport": "View Report",
+        "status": {
+            "passed": "Passed",
+            "flagged": "Flagged"
+        },
+        "details": {
+            "title": "Log Details",
+            "timestamp": "Timestamp",
+            "mode": "Mode",
+            "apiPath": "API Path",
+            "status": "Status",
+            "prompt": "Prompt",
+            "resultSummary": "Result Summary",
+            "tokens": "Tokens",
+            "points": "Points",
+            "quotaRemaining": "Quota Remaining",
+            "noCost": "No cost"
+        }
+    },
+    "subscription": {
+        "title": "Subscription Overview",
+        "currentPlan": "Current Plan",
+        "changePlan": "Change Plan",
+        "dailyLimit": "Daily Limit",
+        "pointsDeduction": "Points Deduction",
+        "internalLLM": "Internal LLM",
+        "externalAPIKey": "External API Key",
+        "unlimited": "Unlimited",
+        "yes": "Yes",
+        "no": "No",
+        "available": "Available",
+        "disabled": "Disabled",
+        "supported": "Supported",
+        "notSupported": "Not Supported",
+        "needAccess": {
+            "title": "Need API Access?",
+            "description": "Generate API keys to integrate Norules AI directly into your workflow.",
+            "freeWarning": "Free plan cannot use external API Key",
+            "manageKeys": "Manage API Keys"
+        },
+        "plans": {
+            "free": "Free",
+            "pro": "Pro",
+            "enterprise": "Enterprise",
+            "apikey": "API Key Mode"
+        }
+    },
+    "apiKeys": {
+        "title": "API Key Management",
+        "create": "Create API Key",
+        "noKeys": "No API keys found.",
+        "table": {
+            "name": "Name",
+            "key": "Key",
+            "created": "Created",
+            "actions": "Actions"
+        },
+        "modals": {
+            "createTitle": "Create API Key",
+            "createDesc": "Enter a name for your new API key to identify it later.",
+            "placeholder": "e.g. Production App",
+            "creating": "Creating...",
+            "deleteTitle": "Delete API Key",
+            "deleteDesc": "Are you sure you want to delete this API key? This action cannot be undone and any applications using this key will stop working immediately.",
+            "deleting": "Deleting..."
+        },
+        "messages": {
+            "created": "API Key Created Successfully",
+            "deleted": "API Key Deleted",
+            "failedFetch": "Failed to fetch API keys",
+            "failedCreate": "Failed to create API key",
+            "failedDelete": "Failed to delete API key"
+        }
+    },
+    "playground": {
+        "title": "One-click Material Generation",
+        "subtitle": "Directly interact with the LLM API endpoints.",
+        "model": "Model",
+        "cost": "Estimated Cost",
+        "points": "Points",
+        "uploadImage": "Upload Image",
+        "uploadVideo": "Upload Video",
+        "riskScore": "Risk Score",
+        "riskAnalysis": "Risk Analysis",
+        "model.text.a": "Text Generation (Model A)",
+        "model.text.b": "Text Generation (Model B)",
+        "model.text.c": "Text Generation (Model C)",
+        "model.text.d": "Text Generation (Model D)",
+        "model.image.a": "Image Generation (Model A)",
+        "model.image.b": "Image Generation (Model B)",
+        "model.image.c": "Image Generation (Model C)",
+        "model.video.a": "Video Generation (Model A)",
+        "tabs": {
+            "generate": "GENERATE",
+            "chat": "CHAT",
+            "image": "IMAGE",
+            "video": "VIDEO"
+        },
+        "input": "Input",
+        "output": "Output",
+        "send": "Send Request",
+        "processing": "Processing...",
+        "mode": "Mode",
+        "internal": "Internal Mode",
+        "external": "External Key Mode",
+        "privateModeOn": "Private Mode On",
+        "privateModeOff": "Private Mode Off",
+        "quotaUsed": "Quota Used",
+        "tokens": "Tokens",
+        "responsePlaceholder": "Response will appear here",
+        "placeholder": {
+            "message": "Enter message...",
+            "prompt": "Enter prompt..."
+        },
+        "requestSuccessful": "Request successful",
+        "errors": {
+            "externalKeyMissing": "External Key missing. Please check Settings.",
+            "sessionKeyExpired": "Session Key Expired. Please re-enter your API Key in Settings.",
+            "quotaExceeded": "Daily quota exceeded.",
+            "accessDenied": "Access denied (Free plan cannot use External Key).",
+            "replayAttack": "Security Alert: Replay Attack Detected. Please refresh.",
+            "invalidApiKey": "Invalid API Key or Unauthorized.",
+            "insufficientPoints": "Insufficient points.",
+            "requestFailed": "Request failed"
+        }
+    },
+    "settings": {
+        "externalKey": {
+            "title": "External API Key",
+            "subtitle": "Bring Your Own Key (BYOK) to bypass internal point deductions.",
+            "encryption": {
+                "title": "End-to-End Encrypted",
+                "description": "Your API Key is encrypted with AES-256-GCM in your browser before storage. It is never stored in plain text. When used, it is re-encrypted for secure transport to our proxy."
+            },
+            "label": "Google Gemini API Key",
+            "status": {
+                "saved": "Encrypted & Saved"
+            },
+            "storageNote": "Key is stored in LocalStorage (Encrypted). Session Key is in SessionStorage.",
+            "actions": {
+                "save": "Save & Encrypt",
+                "remove": "Remove Key"
+            },
+            "messages": {
+                "enterKey": "Please enter a valid API Key",
+                "saved": "External API Key saved securely",
+                "encryptionFailed": "Encryption failed",
+                "removed": "External API Key removed"
+            }
+        }
+    }
+}

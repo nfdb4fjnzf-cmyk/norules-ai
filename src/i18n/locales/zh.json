@@ -1,0 +1,263 @@
+{
+    "common": {
+        "loading": "載入中...",
+        "error": "錯誤",
+        "success": "成功",
+        "save": "儲存",
+        "cancel": "取消",
+        "delete": "刪除",
+        "edit": "編輯",
+        "view": "檢視",
+        "settings": "設定",
+        "logout": "登出",
+        "language": "語言",
+        "actions": "操作",
+        "status": "狀態",
+        "type": "類型",
+        "date": "日期",
+        "score": "分數",
+        "download": "下載",
+        "filter": "篩選"
+    },
+    "sidebar": {
+        "dashboard": "儀表板",
+        "analyze": "分析器",
+        "history": "歷史紀錄",
+        "playground": "一鍵生素材",
+        "subscription": "訂閱方案",
+        "apiKeys": "API 金鑰",
+        "externalKey": "外部金鑰",
+        "widget": {
+            "proPlan": "專業方案",
+            "scansRemaining": "本月尚餘 {{count}} 次掃描額度。",
+            "upgrade": "升級方案"
+        }
+    },
+    "dashboard": {
+        "title": "儀表板",
+        "subtitle": "您的合規成效總覽",
+        "currentPlan": "目前方案",
+        "dailyQuota": "每日配額",
+        "avgScore": "平均合規分數",
+        "issuesDetected": "偵測到的問題",
+        "pendingReview": "待審核",
+        "complianceTrend": "合規趨勢",
+        "riskDistribution": "風險分佈",
+        "riskLevels": {
+            "safe": "安全",
+            "low": "低風險",
+            "med": "中風險",
+            "high": "高風險"
+        },
+        "weeklyTip": {
+            "title": "每週提示",
+            "content": "本週大多數問題來自圖片橫幅中缺少「適用條款」文字。請仔細檢查您的註腳。"
+        }
+    },
+    "analyzer": {
+        "title": "廣告檢測工具",
+        "subtitle": "上傳內容以自動檢測合規風險。",
+        "sections": {
+            "material": "素材 (圖片/影片)",
+            "copy": "文案",
+            "link": "連結"
+        },
+        "placeholders": {
+            "material": "拖放檔案至此，或點擊上傳",
+            "copy": "在此輸入您的廣告文案...",
+            "link": "https://example.com"
+        },
+        "tabs": {
+            "text": "文字",
+            "image": "圖片",
+            "video": "影片",
+            "url": "網址"
+        },
+        "input": {
+            "textPlaceholder": "在此輸入您的廣告文案...",
+            "urlPlaceholder": "貼上廣告到達頁面網址...",
+            "uploadImage": "上傳圖片",
+            "uploadVideo": "上傳影片",
+            "fileTypeHint": "SVG, PNG, JPG 或 MP4 (最大 20MB)",
+            "selectFile": "選擇檔案"
+        },
+        "actions": {
+            "analyze": "執行分析",
+            "analyzing": "分析中..."
+        },
+        "howItWorks": {
+            "title": "運作方式",
+            "description": "Norules AI 根據 50 多個監管框架進行檢查，包括 FTC、GDPR 和平台特定政策 (Meta, Google Ads, TikTok)。",
+            "check1": "品牌安全檢查",
+            "check2": "聲明證實",
+            "check3": "違禁內容"
+        },
+        "errors": {
+            "fileTooLarge": "檔案太大。請上傳小於 20MB 的影片。",
+            "enterText": "請輸入要分析的文字。",
+            "selectFile": "請選擇一個檔案。",
+            "analysisFailed": "分析失敗。請重試。",
+            "quotaExceeded": "每日配額已滿。請升級您的方案。",
+            "accessDenied": "存取被拒。免費方案無法使用外部 API 金鑰。",
+            "invalidKey": "無效的 API 金鑰。",
+            "insufficientPoints": "點數不足。請儲值。"
+        }
+    },
+    "history": {
+        "title": "掃描歷史",
+        "subtitle": "查看您最近的 API 使用情況、提示和結果。",
+        "noHistory": "找不到歷史紀錄。",
+        "viewReport": "查看報告",
+        "status": {
+            "passed": "通過",
+            "flagged": "標記"
+        },
+        "details": {
+            "title": "紀錄詳情",
+            "timestamp": "時間戳記",
+            "mode": "模式",
+            "apiPath": "API 路徑",
+            "status": "狀態",
+            "prompt": "提示詞",
+            "resultSummary": "結果摘要",
+            "tokens": "Token 數",
+            "points": "點數",
+            "quotaRemaining": "剩餘配額",
+            "noCost": "免費"
+        }
+    },
+    "subscription": {
+        "title": "訂閱總覽",
+        "currentPlan": "目前方案",
+        "changePlan": "變更方案",
+        "dailyLimit": "每日限制",
+        "pointsDeduction": "點數扣除",
+        "internalLLM": "內部 LLM",
+        "externalAPIKey": "外部 API 金鑰",
+        "unlimited": "無限制",
+        "yes": "是",
+        "no": "否",
+        "available": "可用",
+        "disabled": "已停用",
+        "supported": "支援",
+        "notSupported": "不支援",
+        "needAccess": {
+            "title": "需要 API 存取權？",
+            "description": "產生 API 金鑰以將 Norules AI 直接整合到您的工作流程中。",
+            "freeWarning": "免費方案不可使用外部 API 金鑰",
+            "manageKeys": "管理 API 金鑰"
+        },
+        "plans": {
+            "free": "免費版",
+            "pro": "專業版",
+            "enterprise": "企業版",
+            "apikey": "API 金鑰模式"
+        }
+    },
+    "apiKeys": {
+        "title": "API 金鑰管理",
+        "create": "建立 API 金鑰",
+        "noKeys": "找不到 API 金鑰。",
+        "table": {
+            "name": "名稱",
+            "key": "金鑰",
+            "created": "建立日期",
+            "actions": "操作"
+        },
+        "modals": {
+            "createTitle": "建立 API 金鑰",
+            "createDesc": "輸入新 API 金鑰的名稱以便日後識別。",
+            "placeholder": "例如：生產環境應用程式",
+            "creating": "建立中...",
+            "deleteTitle": "刪除 API 金鑰",
+            "deleteDesc": "您確定要刪除此 API 金鑰嗎？此動作無法復原，任何使用此金鑰的應用程式將立即停止運作。",
+            "deleting": "刪除中..."
+        },
+        "messages": {
+            "created": "API 金鑰建立成功",
+            "deleted": "API 金鑰已刪除",
+            "failedFetch": "無法讀取 API 金鑰",
+            "failedCreate": "無法建立 API 金鑰",
+            "failedDelete": "無法刪除 API 金鑰"
+        }
+    },
+    "playground": {
+        "title": "一鍵生素材",
+        "subtitle": "直接與 LLM API 端點互動。",
+        "model": "模型",
+        "cost": "預估花費",
+        "points": "點數",
+        "uploadImage": "上傳圖片",
+        "uploadVideo": "上傳影片",
+        "riskScore": "合規分數",
+        "targetRiskScore": "廣告合規程度",
+        "riskAnalysis": "風險分析",
+        "llm.riskAnalysis": "合規分析",
+        "model.text.a": "一鍵生文（模型一）",
+        "model.text.b": "一鍵生文（模型二）",
+        "model.text.c": "一鍵生文（模型三）",
+        "model.text.d": "一鍵生文（模型四）",
+        "model.image.a": "一鍵生圖（模型一）",
+        "model.image.b": "一鍵生圖（模型二）",
+        "model.image.c": "一鍵生圖（模型三）",
+        "model.video.a": "一鍵做影片（模型一）",
+        "tabs": {
+            "generate": "生成",
+            "chat": "聊天",
+            "image": "圖片",
+            "video": "影片"
+        },
+        "input": "輸入",
+        "output": "輸出",
+        "send": "發送請求",
+        "processing": "處理中...",
+        "mode": "模式",
+        "internal": "內部模式",
+        "external": "外部金鑰模式",
+        "privateModeOn": "隱私模式 開啟",
+        "privateModeOff": "隱私模式 關閉",
+        "quotaUsed": "配額使用",
+        "tokens": "Token 數",
+        "responsePlaceholder": "回應將顯示於此",
+        "placeholder": {
+            "message": "輸入訊息...",
+            "prompt": "輸入提示..."
+        },
+        "requestSuccessful": "請求成功",
+        "errors": {
+            "externalKeyMissing": "缺少外部金鑰。請檢查設定。",
+            "sessionKeyExpired": "工作階段金鑰過期。請在設定中重新輸入您的 API 金鑰。",
+            "quotaExceeded": "每日配額已滿。",
+            "accessDenied": "存取被拒（免費方案無法使用外部金鑰）。",
+            "replayAttack": "安全警告：偵測到重放攻擊。請重新整理。",
+            "invalidApiKey": "無效的 API 金鑰或未授權。",
+            "insufficientPoints": "點數不足。",
+            "requestFailed": "請求失敗"
+        }
+    },
+    "settings": {
+        "externalKey": {
+            "title": "外部 API 金鑰",
+            "subtitle": "使用您自己的金鑰 (BYOK) 以避免內部點數扣除。",
+            "encryption": {
+                "title": "端對端加密",
+                "description": "您的 API 金鑰在儲存前會於瀏覽器中使用 AES-256-GCM 加密。它絕不會以純文字形式儲存。使用時，它會被重新加密以安全傳輸至我們的代理伺服器。"
+            },
+            "label": "Google Gemini API 金鑰",
+            "status": {
+                "saved": "已加密並儲存"
+            },
+            "storageNote": "金鑰儲存於 LocalStorage (已加密)。工作階段金鑰儲存於 SessionStorage。",
+            "actions": {
+                "save": "儲存並加密",
+                "remove": "移除金鑰"
+            },
+            "messages": {
+                "enterKey": "請輸入有效的 API 金鑰",
+                "saved": "外部 API 金鑰已安全儲存",
+                "encryptionFailed": "加密失敗",
+                "removed": "外部 API 金鑰已移除"
+            }
+        }
+    }
+}

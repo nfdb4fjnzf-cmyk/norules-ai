@@ -1,0 +1,5 @@
+{
+  "name": "AdGuardian LLM",
+  "description": "AI-powered advertising compliance platform featuring unified content analysis, risk scoring, and real-time compliance checks for text, images, and video.",
+  "requestFramePermissions": []
+}
