@@ -26,15 +26,7 @@ export default defineConfig(({ mode }) => {
       }
     },
     build: {
-      chunkSizeWarningLimit: 1000, // Increase limit to 1000kB to silence warnings
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            vendor: ['react', 'react-dom', 'react-router-dom', 'firebase', 'firebase-admin'],
-            ui: ['@headlessui/react', '@heroicons/react', 'framer-motion']
-          }
-        }
-      }
+      chunkSizeWarningLimit: 1000,
     }
   };
 });
