@@ -79,6 +79,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(405).send('Method Not Allowed');
 
     } catch (e: any) {
-        return res.status(500).json(errorResponse(500, e.message));
+        const status = e.statusCode || 500;
+        const code = e.code || 5000;
+        return res.status(status).json(errorResponse(code, e.message));
     }
 }

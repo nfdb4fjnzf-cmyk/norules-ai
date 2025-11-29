@@ -38,6 +38,8 @@ export default async function handler(req: Request): Promise<Response> {
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (e: any) {
-        return new Response(JSON.stringify(errorResponse(500, e.message)), { status: 500 });
+        const status = e.statusCode || 500;
+        const code = e.code || 5000;
+        return new Response(JSON.stringify(errorResponse(code, e.message)), { status });
     }
 }

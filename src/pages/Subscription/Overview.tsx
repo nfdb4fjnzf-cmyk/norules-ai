@@ -29,7 +29,7 @@ const SubscriptionOverview: React.FC = () => {
                 if (data.success) {
                     setSubscription(data.data);
                 } else {
-                    showToast('error', 'Failed to load subscription details');
+                    showToast('error', data.error || 'Failed to load subscription details');
                 }
             } catch (err) {
                 console.error(err);
