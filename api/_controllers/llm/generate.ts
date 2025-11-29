@@ -1,11 +1,11 @@
-import { validateRequest } from '../../_middleware/auth.js';
-import { checkRateLimit } from '../../_middleware/rateLimit.js';
-import { successResponse, errorResponse } from '../../_utils/responseFormatter.js';
-import { AppError, ErrorCodes } from '../../_utils/errorHandler.js';
+import { validateRequest } from '../../_middleware/auth';
+import { checkRateLimit } from '../../_middleware/rateLimit';
+import { successResponse, errorResponse } from '../../_utils/responseFormatter';
+import { AppError, ErrorCodes } from '../../_utils/errorHandler';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import OpenAI from 'openai';
-import { logUsage } from '../../_utils/historyLogger.js';
-import { userService } from '../../_services/userService.js';
+import { logUsage } from '../../_utils/historyLogger';
+import { userService } from '../../_services/userService';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -52,7 +52,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         let data: any = {};
         // Determine Policy Instruction based on Compliance Score (targetRiskScore)
-        // Note: targetRiskScore here represents "Compliance Score" (100 = Safe, 0 = Risky)
         let policyInstruction = "";
         if (targetRiskScore >= 90) {
             policyInstruction = "STRICT COMPLIANCE: Adhere to all ad policies rigidly. Zero tolerance for violations. Ensure the content is completely safe and professional.";
@@ -151,7 +150,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             riskScore: (data as any).riskScore,
             meta: {
                 mode: 'INTERNAL',
-                quotaUsage: { used: pointsToDeduct, limit: 100 } // TODO: Fetch real limit
+                quotaUsage: { used: pointsToDeduct, limit: 100 }
             }
         }));
 

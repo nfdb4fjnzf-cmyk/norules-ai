@@ -1,12 +1,16 @@
 {
     "extends": "../tsconfig.json",
     "compilerOptions": {
-        "module": "NodeNext",
-        "moduleResolution": "NodeNext",
-        "target": "ES2022",
-        "noEmit": false,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "target": "ES2019",
+        "noEmit": true,
         "allowImportingTsExtensions": false,
-        "isolatedModules": false,
+        "isolatedModules": true,
+        "esModuleInterop": true,
+        "resolveJsonModule": true,
+        "skipLibCheck": true,
+        "strict": true,
         "types": [
             "node"
         ]

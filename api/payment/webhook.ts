@@ -1,119 +1,81 @@
+import { userService } from '../_services/userService';
 import { db } from '../_config/firebaseAdmin';
+import { PLANS } from '../_types/plans';
+import crypto from 'crypto';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import admin from 'firebase-admin';
-import * as crypto from 'crypto';
-import { errorResponse } from '../_utils/responseFormatter';
 
-// Webhook handler needs to read raw body for signature verification if possible,
-// but in Vercel/Next.js Edge, req.json() is standard.
-// NOWPayments sends JSON body, so JSON.stringify(req.body) should match if keys are ordered same?
-// Actually, standard practice is to use the raw body buffer.
-// However, in Edge Runtime, we might rely on the parsed JSON if we trust the order or if we can get text.
-
-export const config = {
-    runtime: 'nodejs', // Use Node.js runtime for crypto and admin SDK
-};
-
-export default async function handler(req: any, res: any) {
-    // Note: This handler uses Vercel/Next.js API Routes (Node.js) signature: (req, res)
-    // If using Edge runtime, signature is (req: Request).
-    // Given we need firebase-admin (Node.js), we stick to Node.js runtime.
-
+export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
-        return res.status(405).send('Method Not Allowed');
-    }
-
-    const signature = req.headers['x-nowpayments-sig'];
-    const ipnSecret = process.env.NOWPAYMENTS_IPN_SECRET;
-
-    if (!ipnSecret) {
-        console.error('NOWPAYMENTS_IPN_SECRET is missing');
-        return res.status(500).send('Server Configuration Error');
-    }
-
-    // Sort keys to match NOWPayments signature generation (alphabetical order)
-    // NOWPayments doc says: "sort all the parameters in the request body alphabetically"
-    const sortObject = (obj: any) => {
-        return Object.keys(obj).sort().reduce((result: any, key: any) => {
-            result[key] = obj[key];
-            return result;
-        }, {});
-    };
-
-    const sortedBody = sortObject(req.body);
-    const rawBody = JSON.stringify(sortedBody);
-
-    const expected = crypto
-        .createHmac('sha512', ipnSecret)
-        .update(rawBody)
-        .digest('hex');
-
-    if (signature !== expected) {
-        console.warn('Invalid Signature', { received: signature, expected });
-        // return res.status(403).send('Invalid Signature');
-        // For debugging, we might want to log more but fail safely.
-        // If strictly enforcing:
-        return res.status(403).send('Invalid Signature');
-    }
-
-    const data = req.body;
-    console.log('Payment Webhook Received:', data.payment_id, data.payment_status);
-
-    if (data.payment_status !== 'finished' && data.payment_status !== 'confirmed') {
-        return res.status(200).send('OK (Not Finished)');
-    }
-
-    const userId = data.order_id;
-    const amount = Number(data.price_amount);
-
-    let plan = null;
-    let limit = 0;
-    let points = 0;
-
-    // Mapping logic as per user request
-    if (amount === 5) { plan = 'lite'; limit = 5; points = 50; } // Basic -> Lite
-    else if (amount === 10) { plan = 'pro'; limit = 30; points = 150; }
-    else if (amount === 30) { plan = 'ultra'; limit = 100; points = 1000; } // Ultimate -> Ultra (Limit 100 per Plans.ts)
-    else {
-        console.warn('Unknown payment amount:', amount);
-        return res.status(200).send('Unknown Amount');
+        return res.status(405).json({ message: 'Method not allowed' });
     }
 
     try {
-        const userRef = db.collection('users').doc(userId);
+        const ipnSecret = process.env.NOWPAYMENTS_IPN_SECRET;
+        if (!ipnSecret) {
+            console.error('IPN Secret missing');
+            return res.status(500).json({ message: 'Server Configuration Error' });
+        }
 
-        // Use atomic update
-        await userRef.set({
-            subscription: {
-                plan: plan,
-                status: 'active',
-                updatedAt: new Date().toISOString()
-            },
-            // Update daily limit in subscription subcollection or user doc?
-            // The system seems to use `users/{uid}/subscription/current` for detailed sub info.
-            // But the user provided code updates `users/{uid}` directly.
-            // I will update BOTH to ensure consistency across the hybrid architecture.
+        const signature = req.headers['x-nowpayments-sig'];
+        if (!signature) {
+            return res.status(400).json({ message: 'Missing Signature' });
+        }
 
-            // 1. Update User Profile (for quick access)
-            credits: admin.firestore.FieldValue.increment(points),
-            updatedAt: new Date().toISOString()
-        }, { merge: true });
+        // Verify Signature
+        // Sort keys and create string
+        const sortedKeys = Object.keys(req.body).sort();
+        const jsonString = sortedKeys.map(key => `${key}=${req.body[key]}`).join('&');
 
-        // 2. Update Subscription Document (System Source of Truth)
-        await db.collection('users').doc(userId).collection('subscription').doc('current').set({
-            plan: plan,
-            billing_cycle: 'monthly', // Default to monthly for these fixed amounts
-            daily_limit: limit,
-            daily_used: 0,
-            next_billing_date: Date.now() + 30 * 24 * 60 * 60 * 1000,
-            status: 'active',
-            updated_at: Date.now()
-        }, { merge: true });
+        const hmac = crypto.createHmac('sha512', ipnSecret);
+        hmac.update(jsonString);
+        const calculatedSignature = hmac.digest('hex');
 
-        console.log(`User ${userId} upgraded to ${plan} with ${points} points.`);
-        return res.status(200).send('OK');
+        if (calculatedSignature !== signature) {
+            console.error('Invalid Signature');
+            return res.status(400).json({ message: 'Invalid Signature' });
+        }
 
-    } catch (error) {
-        console.error('Webhook Database Error:', error);
-        return res.status(500).send('Internal Server Error');
+        const { payment_status, order_id, pay_amount } = req.body;
+
+        if (payment_status === 'finished' || payment_status === 'confirmed') {
+            // Extract User ID from Order ID (SUB-UID-TIMESTAMP)
+            const parts = order_id.split('-');
+            if (parts.length >= 2) {
+                const userId = parts[1];
+
+                // Determine Plan based on Amount (Simple logic, or store order in DB first)
+                // Here we try to match amount to plan price
+                const plan = PLANS.find(p => Math.abs(p.price - parseFloat(pay_amount)) < 1.0); // Allow small diff for crypto fluctuation if any, though usually exact
+
+                if (plan && userId) {
+                    // Update User Subscription
+                    await db.collection('subscriptions').doc(userId).set({
+                        plan: plan.id,
+                        status: 'active',
+                        startDate: admin.firestore.FieldValue.serverTimestamp(),
+                        endDate: admin.firestore.Timestamp.fromMillis(Date.now() + 30 * 24 * 60 * 60 * 1000), // +30 days
+                        provider: 'nowpayments',
+                        transactionId: req.body.payment_id
+                    });
+
+                    // Update User Profile Mode if needed
+                    await userService.updateUserProfile(userId, {
+                        subscription: {
+                            plan: plan.id,
+                            status: 'active',
+                            startDate: new Date().toISOString(),
+                            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+                        }
+                    });
+                }
+            }
+        }
+
+        return res.status(200).json({ message: 'OK' });
+
+    } catch (error: any) {
+        console.error('Webhook Error:', error);
+        return res.status(500).json({ message: 'Internal Server Error' });
     }
 }
