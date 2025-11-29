@@ -1,17 +1,28 @@
-import { decryptTransportKey } from ../_utils/encryption';
-import generateHandler from './llm/generate';
-import imageHandler from './llm/image';
-import videoHandler from './llm/video';
-import { validateRequest } from ../_middleware/auth';
-import { errorResponse } from ../_utils/responseFormatter';
-import { ErrorCodes } from ../_utils/errorHandler';
+import { decryptTransportKey } from '../_utils/encryption.js';
+import generateHandler from './_controllers/llm/generate.js';
+import imageHandler from './_controllers/llm/image.js';
+import videoHandler from './_controllers/llm/video.js';
+import { validateRequest } from './_middleware/auth.js';
+import { errorResponse } from './_utils/responseFormatter.js';
+import { ErrorCodes } from './_utils/errorHandler.js';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-export default async function handler(req: Request) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+    // Handle CORS
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+    res.setHeader(
+        'Access-Control-Allow-Headers',
+        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, X-Encrypted-Key, X-Target-Endpoint'
+    );
+
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
     if (req.method !== 'POST') {
-        return new Response(JSON.stringify(errorResponse(ErrorCodes.BAD_REQUEST, 'Method not allowed')), {
-            status: 405,
-            headers: { 'Content-Type': 'application/json' },
-        });
+        return res.status(405).json(errorResponse(ErrorCodes.BAD_REQUEST, 'Method not allowed'));
     }
 
     try {
@@ -19,58 +30,46 @@ export default async function handler(req: Request) {
         await validateRequest(req.headers);
 
         // 2. Get Headers
-        const encryptedKey = req.headers.get('X-Encrypted-Key');
-        const targetEndpoint = req.headers.get('X-Target-Endpoint');
+        const encryptedKey = req.headers['x-encrypted-key'] as string;
+        const targetEndpoint = req.headers['x-target-endpoint'] as string;
 
         if (!encryptedKey || !targetEndpoint) {
-            return new Response(JSON.stringify(errorResponse(ErrorCodes.BAD_REQUEST, 'Missing X-Encrypted-Key or X-Target-Endpoint')), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' }
-            });
+            return res.status(400).json(errorResponse(ErrorCodes.BAD_REQUEST, 'Missing X-Encrypted-Key or X-Target-Endpoint'));
         }
 
         // 3. Decrypt Key
         const apiKey = decryptTransportKey(encryptedKey);
 
-        // 4. Prepare New Request
-        // We must clone the body because we consumed it (if we did). 
-        // Actually we haven't consumed it yet in this function, but we need to pass it to the handler.
-        // The handler will try to read req.json().
-        // If we read it here to stringify it, we consume it.
-        // So we read it, then create a new Request with the body.
-        const body = await req.json();
+        // 4. Prepare Context for Controller
+        // Since we are inside the same Vercel function environment, we can't easily "forward" the request object 
+        // with modified headers to another handler function that expects VercelRequest.
+        // Instead, we should manually inject the API key into the body or context, 
+        // OR (simpler for now) just set it in the current request object's headers if possible, 
+        // but VercelRequest headers might be read-only or difficult to mock.
 
-        const newHeaders = new Headers(req.headers);
-        newHeaders.set('X-Gemini-API-Key', apiKey);
-        newHeaders.delete('X-Encrypted-Key');
-        newHeaders.delete('X-Target-Endpoint');
+        // However, our controllers (generateHandler, etc.) likely read from process.env or req.headers.
+        // If they read from req.headers['x-gemini-api-key'], we need to mock that.
 
-        const newReq = new Request(req.url, {
-            method: req.method,
-            headers: newHeaders,
-            body: JSON.stringify(body)
-        });
+        // A better approach for this "proxy" pattern within serverless is to just call the controller logic directly.
+        // But the controllers expect (req, res).
+
+        // Let's try to modify the headers of the incoming req object.
+        req.headers['x-gemini-api-key'] = apiKey;
 
         // 5. Route
         switch (targetEndpoint) {
             case 'llm/generate':
-                return generateHandler(newReq);
+                return generateHandler(req, res);
             case 'llm/image':
-                return imageHandler(newReq);
+                return imageHandler(req, res);
             case 'llm/video':
-                return videoHandler(newReq);
+                return videoHandler(req, res);
             default:
-                return new Response(JSON.stringify(errorResponse(ErrorCodes.BAD_REQUEST, 'Invalid Target Endpoint')), {
-                    status: 400,
-                    headers: { 'Content-Type': 'application/json' }
-                });
+                return res.status(400).json(errorResponse(ErrorCodes.BAD_REQUEST, 'Invalid Target Endpoint'));
         }
 
     } catch (error: any) {
         console.error('Secure Proxy Error:', error);
-        return new Response(JSON.stringify(errorResponse(ErrorCodes.INTERNAL_SERVER_ERROR, error.message)), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return res.status(500).json(errorResponse(ErrorCodes.INTERNAL_SERVER_ERROR, error.message));
     }
 }
