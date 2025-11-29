@@ -1,5 +1,5 @@
-import { auth } from '../_config/firebaseAdmin';
-import { AppError, ErrorCodes } from '../_utils/errorHandler';
+import { auth } from '../_config/firebaseAdmin.js';
+import { AppError, ErrorCodes } from '../_utils/errorHandler.js';
 import { IncomingHttpHeaders } from 'http';
 
 export interface AuthenticatedUser {

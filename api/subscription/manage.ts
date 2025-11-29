@@ -1,8 +1,8 @@
-import { validateRequest } from '../_middleware/auth';
-import { getSubscription, upgradePlan } from '../_services/subscriptionService';
-import { successResponse, errorResponse } from '../_utils/responseFormatter';
-import { resetDailyQuota, getDailyUsage } from '../_utils/quota';
-import { PlanType } from '../_types/plans';
+import { validateRequest } from '../_middleware/auth.js';
+import { getSubscription, upgradePlan } from '../_services/subscriptionService.js';
+import { successResponse, errorResponse } from '../_utils/responseFormatter.js';
+import { resetDailyQuota, getDailyUsage } from '../_utils/quota.js';
+import { PlanType } from '../_types/plans.js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

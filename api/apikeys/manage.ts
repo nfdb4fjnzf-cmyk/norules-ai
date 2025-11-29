@@ -1,6 +1,6 @@
-import { validateRequest } from '../_middleware/auth';
-import { db } from '../_config/firebaseAdmin';
-import { successResponse, errorResponse } from '../_utils/responseFormatter';
+import { validateRequest } from '../_middleware/auth.js';
+import { db } from '../_config/firebaseAdmin.js';
+import { successResponse, errorResponse } from '../_utils/responseFormatter.js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

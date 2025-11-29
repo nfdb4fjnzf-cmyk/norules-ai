@@ -1,5 +1,6 @@
-import { db } from '../_config/firebaseAdmin';
-import { AppError, ErrorCodes } from '../_utils/errorHandler';
+import { db } from '../_config/firebaseAdmin.js';
+import { AppError, ErrorCodes } from '../_utils/errorHandler.js';
+import admin from 'firebase-admin';
 
 export interface UserProfile {
     uid: string;
@@ -11,6 +12,8 @@ export interface UserProfile {
     subscription?: {
         plan: string;
         status: string;
+        startDate?: string;
+        endDate?: string;
     };
 }
 
@@ -32,8 +35,12 @@ export const userService = {
         };
     },
 
+    updateUserProfile: async (uid: string, data: Partial<UserProfile>): Promise<void> => {
+        await db.collection('users').doc(uid).set(data, { merge: true });
+    },
+
     deductCredits: async (uid: string, amount: number): Promise<boolean> => {
-        return await db.runTransaction(async (transaction) => {
+        return await db.runTransaction(async (transaction: admin.firestore.Transaction) => {
             const userRef = db.collection('users').doc(uid);
             const userDoc = await transaction.get(userRef);
 

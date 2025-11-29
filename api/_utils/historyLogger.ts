@@ -1,4 +1,4 @@
-import { db } from '../_config/firebaseAdmin';
+import { db } from '../_config/firebaseAdmin.js';
 
 interface LogParams {
     context: { userId: string; email?: string };

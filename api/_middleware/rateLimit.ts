@@ -1,5 +1,5 @@
-import { db } from '../_config/firebaseAdmin';
-import { AppError, ErrorCodes } from '../_utils/errorHandler';
+import { db } from '../_config/firebaseAdmin.js';
+import { AppError, ErrorCodes } from '../_utils/errorHandler.js';
 
 const DAILY_LIMITS = {
     FREE: 5,

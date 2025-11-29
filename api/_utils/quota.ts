@@ -1,4 +1,4 @@
-import { db } from '../_config/firebaseAdmin';
+import { db } from '../_config/firebaseAdmin.js';
 import { FieldValue } from 'firebase-admin/firestore';
 
 export const resetDailyQuota = async (userId: string): Promise<void> => {

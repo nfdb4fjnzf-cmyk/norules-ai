@@ -1,4 +1,4 @@
-import { db } from '../_config/firebaseAdmin';
+import { db } from '../_config/firebaseAdmin.js';
 
 export const logUsage = async (uid: string, type: string, credits: number) => {
     try {

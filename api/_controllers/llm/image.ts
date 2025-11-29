@@ -75,7 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 size: size as any,
             });
 
-            imageUrl = response.data[0].url || '';
+            imageUrl = (response.data && response.data[0] && response.data[0].url) ? response.data[0].url : '';
         } else if (modelId === 'imagen-3') {
             // Imagen 3 via REST API (Google AI Studio)
             const apiKeyHeader = Array.isArray(customGeminiKey) ? customGeminiKey[0] : customGeminiKey;
