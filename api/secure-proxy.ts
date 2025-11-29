@@ -38,11 +38,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // 3. Decrypt Key
+        // Ensure decryptTransportKey is robust and uses process.env
         const apiKey = decryptTransportKey(encryptedKey);
 
         // 4. Inject API Key into Headers for Controllers
         // We modify the headers object directly. 
-        // Note: VercelRequest headers might be a plain object or IncomingHttpHeaders.
         req.headers['x-gemini-api-key'] = apiKey;
 
         // 5. Route to Controller
@@ -59,6 +59,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     } catch (error: any) {
         console.error('Secure Proxy Error:', error);
-        return res.status(500).json(errorResponse(ErrorCodes.INTERNAL_SERVER_ERROR, error.message));
+        return res.status(500).json(errorResponse(ErrorCodes.INTERNAL_SERVER_ERROR, error.message || 'Internal Server Error'));
     }
 }
