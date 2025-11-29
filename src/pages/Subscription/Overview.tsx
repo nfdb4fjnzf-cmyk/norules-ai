@@ -31,9 +31,10 @@ const SubscriptionOverview: React.FC = () => {
                 } else {
                     showToast('error', data.error || 'Failed to load subscription details');
                 }
-            } catch (err) {
+            } catch (err: any) {
                 console.error(err);
-                showToast('error', 'Network error');
+                const errorMessage = err.response?.data?.error || err.message || 'Network error';
+                showToast('error', errorMessage);
             } finally {
                 setLoading(false);
             }
