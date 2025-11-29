@@ -1,11 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import textHandler from '../_controllers/analyze/text';
-import imageHandler from '../_controllers/analyze/image';
-import videoHandler from '../_controllers/analyze/video';
-import urlHandler from '../_controllers/analyze/url';
-import riskHandler from '../_controllers/analyze/risk';
-import { errorResponse } from '../_utils/responseFormatter';
-import { ErrorCodes } from '../_utils/errorHandler';
+import textHandler from '../_controllers/analyze/text.js';
+import imageHandler from '../_controllers/analyze/image.js';
+import videoHandler from '../_controllers/analyze/video.js';
+import urlHandler from '../_controllers/analyze/url.js';
+import riskHandler from '../_controllers/analyze/risk.js';
+import { errorResponse } from '../_utils/responseFormatter.js';
+import { ErrorCodes } from '../_utils/errorHandler.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Handle CORS

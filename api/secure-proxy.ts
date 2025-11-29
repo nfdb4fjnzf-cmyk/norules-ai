@@ -1,10 +1,10 @@
-import { decryptTransportKey } from './_utils/encryption';
-import generateHandler from './_controllers/llm/generate';
-import imageHandler from './_controllers/llm/image';
-import videoHandler from './_controllers/llm/video';
-import { validateRequest } from './_middleware/auth';
-import { errorResponse } from './_utils/responseFormatter';
-import { ErrorCodes } from './_utils/errorHandler';
+import { decryptTransportKey } from './_utils/encryption.js';
+import generateHandler from './_controllers/llm/generate.js';
+import imageHandler from './_controllers/llm/image.js';
+import videoHandler from './_controllers/llm/video.js';
+import { validateRequest } from './_middleware/auth.js';
+import { errorResponse } from './_utils/responseFormatter.js';
+import { ErrorCodes } from './_utils/errorHandler.js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

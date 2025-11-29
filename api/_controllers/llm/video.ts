@@ -1,9 +1,9 @@
-import { validateRequest } from '../../_middleware/auth';
-import { checkRateLimit } from '../../_middleware/rateLimit';
-import { successResponse, errorResponse } from '../../_utils/responseFormatter';
-import { AppError, ErrorCodes } from '../../_utils/errorHandler';
-import { userService } from '../../_services/userService';
-import { logUsage } from '../../_utils/historyLogger';
+import { validateRequest } from '../../_middleware/auth.js';
+import { checkRateLimit } from '../../_middleware/rateLimit.js';
+import { successResponse, errorResponse } from '../../_utils/responseFormatter.js';
+import { AppError, ErrorCodes } from '../../_utils/errorHandler.js';
+import { userService } from '../../_services/userService.js';
+import { logUsage } from '../../_utils/historyLogger.js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

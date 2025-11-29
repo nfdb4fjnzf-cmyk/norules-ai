@@ -1,6 +1,6 @@
-import { userService } from '../_services/userService';
-import { db } from '../_config/firebaseAdmin';
-import { PLANS } from '../_types/plans';
+import { userService } from '../_services/userService.js';
+import { db } from '../_config/firebaseAdmin.js';
+import { PLANS } from '../_types/plans.js';
 import crypto from 'crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import admin from 'firebase-admin';

@@ -1,8 +1,8 @@
-import { validateRequest } from '../_middleware/auth';
-import { errorResponse, successResponse } from '../_utils/responseFormatter';
-import { ErrorCodes } from '../_utils/errorHandler';
-import { userService } from '../_services/userService';
-import { PLANS } from '../_types/plans';
+import { validateRequest } from '../_middleware/auth.js';
+import { errorResponse, successResponse } from '../_utils/responseFormatter.js';
+import { ErrorCodes } from '../_utils/errorHandler.js';
+import { userService } from '../_services/userService.js';
+import { PLANS } from '../_types/plans.js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

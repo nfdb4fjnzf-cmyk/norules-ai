@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import generateHandler from '../_controllers/llm/generate';
-import imageHandler from '../_controllers/llm/image';
-import videoHandler from '../_controllers/llm/video';
-import { errorResponse } from '../_utils/responseFormatter';
-import { ErrorCodes } from '../_utils/errorHandler';
+import generateHandler from '../_controllers/llm/generate.js';
+import imageHandler from '../_controllers/llm/image.js';
+import videoHandler from '../_controllers/llm/video.js';
+import { errorResponse } from '../_utils/responseFormatter.js';
+import { ErrorCodes } from '../_utils/errorHandler.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Handle CORS
