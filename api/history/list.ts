@@ -3,6 +3,10 @@ import { db } from '../_config/firebaseAdmin.js';
 import { successResponse, errorResponse } from '../_utils/responseFormatter.js';
 
 export default async function handler(req: Request): Promise<Response> {
+    if (req.method === 'OPTIONS') {
+        return new Response(null, { status: 200 });
+    }
+
     if (req.method !== 'GET') {
         return new Response('Method Not Allowed', { status: 405 });
     }

@@ -9,6 +9,10 @@ import { userService } from '../../_services/userService.js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
     if (req.method !== 'POST') {
         return res.status(405).json(errorResponse(ErrorCodes.BAD_REQUEST, 'Method not allowed'));
     }
