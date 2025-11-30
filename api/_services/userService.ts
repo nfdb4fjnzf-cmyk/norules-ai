@@ -8,6 +8,7 @@ export interface UserProfile {
     displayName?: string;
     photoURL?: string;
     credits: number;
+    dailyLimit?: number;
     mode: 'internal' | 'external';
     subscription?: {
         plan: string;

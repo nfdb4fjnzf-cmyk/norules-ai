@@ -53,34 +53,60 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const { payment_status, order_id, pay_amount } = req.body;
 
         if (payment_status === 'finished' || payment_status === 'confirmed') {
-            // Extract User ID from Order ID (SUB-UID-TIMESTAMP)
+            // Extract User ID, Plan, Cycle from Order ID (SUB-UID-PLAN-CYCLE-TIMESTAMP)
+            // Example: SUB-user123-lite-monthly-1712345678
             const parts = order_id.split('-');
-            if (parts.length >= 2) {
-                const userId = parts[1];
 
-                // Determine Plan based on Amount (Simple logic, or store order in DB first)
-                // Here we try to match amount to plan price
-                const plan = PLANS.find(p => Math.abs(p.price - parseFloat(pay_amount)) < 1.0); // Allow small diff for crypto fluctuation if any, though usually exact
+            // We need to be careful if UID contains hyphens. 
+            // Assuming UID is the second part, but if UID has hyphens, this split is risky.
+            // Better strategy: The format is fixed: SUB-{uid}-{plan}-{cycle}-{timestamp}
+            // Plan is known (lite/standard/enterprise) -> no hyphens
+            // Cycle is known (monthly/quarterly/yearly) -> no hyphens
+            // Timestamp is digits -> no hyphens
+            // So we can pop from the end.
 
-                if (plan && userId) {
-                    // Update User Subscription
+            if (parts.length >= 5) {
+                const timestamp = parts.pop();
+                const cycle = parts.pop();
+                const planId = parts.pop();
+                // The rest is SUB-{uid}. Remove SUB-
+                const uidParts = parts.slice(1);
+                const userId = uidParts.join('-');
+
+                const plan = PLANS.find(p => p.id === planId);
+
+                if (plan && userId && (cycle === 'monthly' || cycle === 'quarterly' || cycle === 'yearly')) {
+
+                    // Calculate End Date
+                    const endDate = new Date();
+                    if (cycle === 'monthly') endDate.setDate(endDate.getDate() + 30);
+                    else if (cycle === 'quarterly') endDate.setDate(endDate.getDate() + 90);
+                    else if (cycle === 'yearly') endDate.setDate(endDate.getDate() + 365);
+
+                    // Update User Subscription in Firestore
                     await db.collection('subscriptions').doc(userId).set({
                         plan: plan.id,
+                        billingCycle: cycle,
                         status: 'active',
                         startDate: admin.firestore.FieldValue.serverTimestamp(),
-                        endDate: admin.firestore.Timestamp.fromMillis(Date.now() + 30 * 24 * 60 * 60 * 1000), // +30 days
+                        endDate: admin.firestore.Timestamp.fromDate(endDate),
                         provider: 'nowpayments',
-                        transactionId: req.body.payment_id
+                        transactionId: req.body.payment_id,
+                        amountUSD: req.body.price_amount,
+                        amountCrypto: req.body.pay_amount,
+                        dailyLimit: plan.dailyLimit
                     });
 
-                    // Update User Profile Mode if needed
+                    // Update User Profile
                     await userService.updateUserProfile(userId, {
                         subscription: {
                             plan: plan.id,
                             status: 'active',
                             startDate: new Date().toISOString(),
-                            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-                        }
+                            endDate: endDate.toISOString()
+                        },
+                        // Reset credits or update limits if needed
+                        dailyLimit: plan.dailyLimit
                     });
                 }
             }

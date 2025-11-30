@@ -26,7 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     try {
         const user = await validateRequest(req.headers);
-        const { planId } = req.body;
+        const { planId, billingCycle = 'monthly' } = req.body;
 
         if (!planId) {
             return res.status(400).json(errorResponse(ErrorCodes.BAD_REQUEST, 'Plan ID is required'));
@@ -37,7 +37,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json(errorResponse(ErrorCodes.BAD_REQUEST, 'Invalid Plan ID'));
         }
 
-        const priceAmount = selectedPlan.price;
+        // Calculate Price based on Cycle
+        let priceAmount = 0;
+        switch (billingCycle) {
+            case 'quarterly': priceAmount = selectedPlan.quarterlyPrice; break;
+            case 'yearly': priceAmount = selectedPlan.yearlyPrice; break;
+            default: priceAmount = selectedPlan.monthlyPrice; break;
+        }
+
+        // Safety check for minimum amount (though our plans are > $5)
+        if (priceAmount < 1) {
+            return res.status(400).json(errorResponse(ErrorCodes.BAD_REQUEST, 'Invalid price amount'));
+        }
+
         const currency = 'USD'; // Base currency
         const payCurrency = 'usdttrc20'; // NOWPayments specific
 
@@ -57,8 +69,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 price_amount: priceAmount,
                 price_currency: currency,
                 pay_currency: payCurrency,
-                order_id: `SUB-${user.uid}-${Date.now()}`,
-                order_description: `Subscription to ${selectedPlan.name}`,
+                // Encode Plan and Cycle in Order ID for Webhook
+                order_id: `SUB-${user.uid}-${planId}-${billingCycle}-${Date.now()}`,
+                order_description: `Subscription to ${selectedPlan.name} (${billingCycle})`,
                 ipn_callback_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://norulesai.vercel.app'}/api/payment/webhook`,
                 success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://norulesai.vercel.app'}/subscription/success`,
                 cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://norulesai.vercel.app'}/subscription/cancel`

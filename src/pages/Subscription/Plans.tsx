@@ -7,12 +7,15 @@ import { useAuth } from '../../contexts/AuthContext';
 interface Plan {
     id: string;
     name: string;
-    price: number;
+    description: string;
+    monthlyPrice: number;
+    quarterlyPrice: number;
+    yearlyPrice: number;
     dailyLimit: number;
     features: string[];
 }
 
-type BillingCycle = 'monthly' | 'quarterly' | 'annual';
+type BillingCycle = 'monthly' | 'quarterly' | 'yearly';
 
 const Plans: React.FC = () => {
     const [plans, setPlans] = useState<Plan[]>([]);
@@ -63,24 +66,6 @@ const Plans: React.FC = () => {
     };
 
     const handleConfirmUpgrade = async (planId: string) => {
-        // Determine amount based on planId
-        // This matches the backend logic in webhook
-        let amount = 0;
-        if (planId === 'lite') amount = 5;
-        if (planId === 'pro') amount = 10;
-        if (planId === 'ultra') amount = 30;
-
-        if (amount === 0) {
-            showToast('error', 'Invalid plan selected');
-            return;
-        }
-
-        // Get User ID (Assuming we have a context or can get it from auth)
-        // Since this is a client component, we might need to rely on the API to get the user from the session cookie/token.
-        // But the API expects userId in the body.
-        // Let's first try to get it from the subscription endpoint or auth context if available.
-        // For now, I'll fetch the user profile first to get the UID.
-
         try {
             if (!user) {
                 showToast('error', 'Please log in first');
@@ -98,7 +83,8 @@ const Plans: React.FC = () => {
                 },
                 body: JSON.stringify({
                     userId: user.uid,
-                    planId: planId
+                    planId: planId,
+                    billingCycle: billingCycle
                 })
             });
 
@@ -119,15 +105,15 @@ const Plans: React.FC = () => {
         }
     };
 
-    const getPrice = (basePrice: number) => {
-        if (billingCycle === 'quarterly') return (basePrice * 3 * 0.9).toFixed(1); // 10% off
-        if (billingCycle === 'annual') return (basePrice * 12 * 0.9).toFixed(1); // 10% off
-        return basePrice;
+    const getPrice = (plan: Plan) => {
+        if (billingCycle === 'quarterly') return plan.quarterlyPrice;
+        if (billingCycle === 'yearly') return plan.yearlyPrice;
+        return plan.monthlyPrice;
     };
 
     const getPeriodLabel = () => {
         if (billingCycle === 'quarterly') return '/quarter';
-        if (billingCycle === 'annual') return '/year';
+        if (billingCycle === 'yearly') return '/year';
         return '/mo';
     };
 
@@ -139,7 +125,7 @@ const Plans: React.FC = () => {
 
                 {/* Billing Cycle Toggle */}
                 <div className="inline-flex bg-[#151927] p-1 rounded-xl border border-white/10">
-                    {(['monthly', 'quarterly', 'annual'] as BillingCycle[]).map((cycle) => (
+                    {(['monthly', 'quarterly', 'yearly'] as BillingCycle[]).map((cycle) => (
                         <button
                             key={cycle}
                             onClick={() => setBillingCycle(cycle)}
@@ -149,7 +135,8 @@ const Plans: React.FC = () => {
                                 }`}
                         >
                             {cycle.charAt(0).toUpperCase() + cycle.slice(1)}
-                            {cycle !== 'monthly' && <span className="ml-1 text-xs text-green-400">-10%</span>}
+                            {cycle === 'quarterly' && <span className="ml-1 text-xs text-green-400">-10%</span>}
+                            {cycle === 'yearly' && <span className="ml-1 text-xs text-green-400">-15%</span>}
                         </button>
                     ))}
                 </div>
@@ -174,7 +161,7 @@ const Plans: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {plans.map((plan) => {
                         const isCurrent = plan.id === currentPlanId;
-                        const displayPrice = getPrice(plan.price);
+                        const displayPrice = getPrice(plan);
 
                         return (
                             <div
@@ -190,6 +177,7 @@ const Plans: React.FC = () => {
                                     </div>
                                 )}
                                 <h3 className="text-lg font-bold text-gray-100 mb-2">{plan.name}</h3>
+                                <p className="text-sm text-gray-400 mb-4">{plan.description}</p>
                                 <div className="flex items-baseline mb-6">
                                     <span className="text-3xl font-extrabold text-gray-100">${displayPrice}</span>
                                     <span className="text-gray-500 ml-1">{getPeriodLabel()}</span>
@@ -198,7 +186,7 @@ const Plans: React.FC = () => {
                                 <ul className="space-y-4 mb-8 flex-1">
                                     <li className="flex items-start text-sm text-gray-300">
                                         <span className="mr-2 text-blue-400 mt-0.5 material-symbols-outlined text-base">schedule</span>
-                                        <span className="leading-tight">{plan.dailyLimit} Daily Requests</span>
+                                        <span className="leading-tight">{plan.dailyLimit === -1 ? 'Unlimited' : `${plan.dailyLimit} Daily`} Requests</span>
                                     </li>
                                     {plan.features.map((feature, idx) => (
                                         <li key={idx} className="flex items-start text-sm text-gray-300">
