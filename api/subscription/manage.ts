@@ -30,8 +30,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const sub = await getSubscription(uid);
             const usage = await getDailyUsage(uid);
 
+            // V3: Calculate Remaining Days
+            let remainingDays = 0;
+            if (sub.endDate) {
+                const now = new Date();
+                const end = new Date(sub.endDate);
+                const diffTime = end.getTime() - now.getTime();
+                remainingDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+            }
+
             const responseData = {
                 ...sub,
+                remainingDays,
+                // upgradeHistory is fetched inside getSubscription if we updated subscriptionService, 
+                // but let's check subscriptionService.ts first. 
+                // If not, we might need to fetch it here or update service.
+                // Assuming getSubscription returns the full doc data which includes upgradeHistory array if present.
                 usage: {
                     used: usage,
                     limit: sub.daily_limit,

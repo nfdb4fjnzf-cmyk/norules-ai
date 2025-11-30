@@ -3,55 +3,70 @@ import { PLANS, PlanType } from '../_types/plans.js';
 
 export interface SubscriptionInfo {
     plan: PlanType;
-    billing_cycle: 'monthly' | 'quarterly' | 'annual';
-    daily_limit: number;
-    daily_used: number;
-    next_billing_date: number; // Timestamp
+    billingCycle: 'monthly' | 'quarterly' | 'yearly';
+    daily_limit: number; // Keep snake_case for frontend compatibility if needed, or switch to camelCase? Frontend likely expects snake_case based on previous code. Let's keep daily_limit mapping.
+    dailyLimit?: number; // V3 uses camelCase
+    startDate?: string;
+    endDate?: string;
+    nextBillingDate?: string;
     status: 'active' | 'canceled' | 'past_due';
-    created_at: number;
-    updated_at: number;
+    upgradeHistory?: any[];
+    provider?: string;
 }
 
-const SUBSCRIPTION_DOC_PATH = 'current';
-
 export async function getSubscription(userId: string): Promise<SubscriptionInfo> {
-    const doc = await db.collection('users').doc(userId).collection('subscription').doc(SUBSCRIPTION_DOC_PATH).get();
+    // V3: Read from root 'subscriptions' collection
+    const doc = await db.collection('subscriptions').doc(userId).get();
 
     if (!doc.exists) {
-        const defaultPlan = PLANS.find(p => p.id === 'lite') || PLANS[0];
+        // Fallback to Free/Lite default
+        const defaultPlan = PLANS.find(p => p.id === 'light') || PLANS[0];
         return {
-            plan: 'lite',
-            billing_cycle: 'monthly',
+            plan: 'free', // Default to free if no sub
+            billingCycle: 'monthly',
             daily_limit: 5,
-            daily_used: 0,
-            next_billing_date: Date.now() + 30 * 24 * 60 * 60 * 1000,
-            status: 'active',
-            created_at: Date.now(),
-            updated_at: Date.now()
+            dailyLimit: 5,
+            status: 'active'
         };
     }
 
-    return doc.data() as SubscriptionInfo;
+    const data = doc.data();
+    return {
+        plan: data?.plan || 'free',
+        billingCycle: data?.billingCycle || 'monthly',
+        daily_limit: data?.dailyLimit || 5, // Map camel to snake for legacy support
+        dailyLimit: data?.dailyLimit || 5,
+        startDate: data?.startDate,
+        endDate: data?.endDate,
+        nextBillingDate: data?.nextBillingDate || data?.endDate, // Fallback
+        status: data?.status || 'active',
+        upgradeHistory: data?.upgradeHistory || [],
+        provider: data?.provider
+    };
 }
 
-export async function upgradePlan(userId: string, newPlan: PlanType, billingCycle: 'monthly' | 'quarterly' | 'annual' = 'monthly'): Promise<void> {
+export async function upgradePlan(userId: string, newPlan: PlanType, billingCycle: 'monthly' | 'quarterly' | 'yearly' = 'monthly'): Promise<void> {
+    // This function might be deprecated in favor of payment webhook, but keeping for manual overrides
     const planConfig = PLANS.find(p => p.id === newPlan);
     if (!planConfig) throw new Error('Invalid plan');
 
     let durationDays = 30;
     if (billingCycle === 'quarterly') durationDays = 90;
-    if (billingCycle === 'annual') durationDays = 365;
+    if (billingCycle === 'yearly') durationDays = 365;
 
-    const subscription: SubscriptionInfo = {
+    const now = new Date();
+    const endDate = new Date(now.getTime() + (durationDays * 24 * 60 * 60 * 1000));
+
+    const subscription = {
         plan: newPlan,
-        billing_cycle: billingCycle,
-        daily_limit: planConfig.dailyLimit,
-        daily_used: 0,
-        next_billing_date: Date.now() + (durationDays * 24 * 60 * 60 * 1000),
+        billingCycle: billingCycle,
+        dailyLimit: planConfig.dailyLimit,
         status: 'active',
-        created_at: Date.now(),
-        updated_at: Date.now()
+        startDate: now.toISOString(),
+        endDate: endDate.toISOString(),
+        nextBillingDate: endDate.toISOString(),
+        updatedAt: now.toISOString()
     };
 
-    await db.collection('users').doc(userId).collection('subscription').doc(SUBSCRIPTION_DOC_PATH).set(subscription);
+    await db.collection('subscriptions').doc(userId).set(subscription, { merge: true });
 }

@@ -29,12 +29,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const cursor = req.query.cursor as string | undefined;
         const limit = parseInt((req.query.limit as string) || '20');
 
-        let query = db.collection('users').doc(uid).collection('logs')
+        // V3: Query global 'usage_logs' collection by userId
+        let query = db.collection('usage_logs')
+            .where('userId', '==', uid)
             .orderBy('timestamp', 'desc')
             .limit(limit);
 
         if (cursor) {
-            const cursorDoc = await db.collection('users').doc(uid).collection('logs').doc(cursor).get();
+            const cursorDoc = await db.collection('usage_logs').doc(cursor).get();
             if (cursorDoc.exists) {
                 query = query.startAfter(cursorDoc);
             }
