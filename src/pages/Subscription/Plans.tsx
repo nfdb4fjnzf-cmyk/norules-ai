@@ -98,7 +98,7 @@ const Plans: React.FC = () => {
                 },
                 body: JSON.stringify({
                     userId: user.uid,
-                    amount: amount
+                    planId: planId
                 })
             });
 

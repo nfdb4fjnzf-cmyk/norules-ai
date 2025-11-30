@@ -120,11 +120,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         } else {
             // Gemini Logic
             const apiKeyHeader = Array.isArray(customGeminiKey) ? customGeminiKey[0] : customGeminiKey;
-            const apiKey = apiKeyHeader || process.env.GEMINI_API_KEY || '';
+            const apiKey = apiKeyHeader || process.env.GEMINI_API_KEY;
+
+            if (!apiKey) {
+                throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, 'Gemini API Key is missing on server', 500);
+            }
+
             const genAI = new GoogleGenerativeAI(apiKey);
 
-            // Map frontend model IDs to Gemini models
-            const geminiModelName = modelId === 'gemini-2.5-pro' ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
+            // Map frontend model IDs to Gemini models (Use standard 1.5 models)
+            const geminiModelName = modelId.includes('pro') ? 'gemini-1.5-pro' : 'gemini-1.5-flash';
             const model = genAI.getGenerativeModel({ model: geminiModelName });
 
             const result = await model.generateContent([
