@@ -130,9 +130,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
             // Map frontend model IDs to Gemini models (Use standard 1.5 models)
             // Frontend now sends 'gemini-1.5-pro' or 'gemini-1.5-flash'
-            let geminiModelName = 'gemini-1.5-flash';
+            let geminiModelName = 'gemini-1.5-flash-latest';
             if (modelId === 'gemini-1.5-pro' || modelId.includes('pro')) {
-                geminiModelName = 'gemini-1.5-pro';
+                geminiModelName = 'gemini-1.5-pro-latest';
             }
 
             const model = genAI.getGenerativeModel({ model: geminiModelName });

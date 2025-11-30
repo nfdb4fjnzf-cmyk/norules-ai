@@ -52,7 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // 5. Call Gemini with Specialized Risk Prompt
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' }); // Use Pro for deep analysis
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro-latest' }); // Use Pro for deep analysis
         const prompt = `
       Perform a deep compliance risk analysis for the following content, specifically focusing on ${platform} policies (e.g., TikTok Community Guidelines, Meta Advertising Standards).
       
