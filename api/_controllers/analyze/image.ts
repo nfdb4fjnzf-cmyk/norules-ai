@@ -46,6 +46,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             throw new AppError(ErrorCodes.INSUFFICIENT_POINTS, 'Insufficient credits for Image Analysis (3 credits required).', 402);
         }
 
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, 'Gemini API Key is missing on server', 500);
+        }
+        const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
         // Remove data URL prefix if present
