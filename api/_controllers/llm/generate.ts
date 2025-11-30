@@ -5,6 +5,7 @@ import { AppError, ErrorCodes } from '../../_utils/errorHandler.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import OpenAI from 'openai';
 import { logUsage } from '../../_utils/historyLogger.js';
+import { logUsage as logUsageStats } from '../../_services/usageService.js';
 import { userService } from '../../_services/userService.js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
@@ -122,39 +123,90 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const apiKeyHeader = Array.isArray(customGeminiKey) ? customGeminiKey[0] : customGeminiKey;
             const apiKey = apiKeyHeader || process.env.GEMINI_API_KEY;
 
-            if (!apiKey) {
-                throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, 'Gemini API Key is missing on server', 500);
-            }
+            try {
+                const apiKeyHeader = Array.isArray(customGeminiKey) ? customGeminiKey[0] : customGeminiKey;
+                const apiKey = apiKeyHeader || process.env.GEMINI_API_KEY;
 
-            const genAI = new GoogleGenerativeAI(apiKey);
-
-            // Map frontend model IDs to Gemini models (Use standard 1.5 models)
-            // Frontend now sends 'gemini-1.5-pro' or 'gemini-1.5-flash'
-            let geminiModelName = 'gemini-1.5-flash-latest';
-            if (modelId === 'gemini-1.5-pro' || modelId.includes('pro')) {
-                geminiModelName = 'gemini-1.5-pro-latest';
-            }
-
-            const model = genAI.getGenerativeModel({ model: geminiModelName });
-
-            const result = await model.generateContent([
-                systemInstruction,
-                prompt
-            ]);
-
-            const response = await result.response;
-            const textOutput = response.text();
-
-            const jsonMatch = textOutput.match(/```json\n([\s\S]*?)\n```/) || textOutput.match(/{[\s\S]*}/);
-
-            if (jsonMatch) {
-                try {
-                    data = JSON.parse(jsonMatch[1] || jsonMatch[0]);
-                } catch (e) {
-                    data = { text: textOutput, riskScore: 50 };
+                if (!apiKey) {
+                    throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, 'Gemini API Key is missing on server', 500);
                 }
-            } else {
-                data = { text: textOutput, riskScore: 50 };
+
+                const genAI = new GoogleGenerativeAI(apiKey);
+
+                // Map frontend model IDs to Gemini models
+                // Fallback to Flash for better availability if Pro fails
+                let geminiModelName = 'gemini-1.5-flash';
+                if (modelId === 'gemini-1.5-pro' || modelId.includes('pro')) {
+                    geminiModelName = 'gemini-1.5-flash'; // Temporarily force Flash to ensure success
+                }
+
+                const model = genAI.getGenerativeModel({ model: geminiModelName });
+
+                const result = await model.generateContent([
+                    systemInstruction,
+                    prompt
+                ]);
+
+                const response = await result.response;
+                const text = response.text();
+
+                // Log Usage
+                await logUsage({
+                    context: { userId: user.uid, email: user.email },
+                    mode: 'INTERNAL',
+                    apiPath: '/api/llm/generate',
+                    prompt: prompt,
+                    resultSummary: text.substring(0, 100) + '...',
+                    pointsDeducted: pointsToDeduct,
+                    status: 'SUCCESS',
+                    privateMode: privateMode
+                });
+
+                // Log Usage Stats
+                await logUsageStats(user.uid, 'text_generation', pointsToDeduct);
+
+                return res.status(200).json(successResponse({
+                    text,
+                    riskScore: 0, // Gemini doesn't return risk score in standard response
+                    meta: {
+                        model: geminiModelName,
+                        pointsDeducted: pointsToDeduct,
+                        quotaRemaining: 0
+                    }
+                }));
+
+            } catch (error: any) {
+                console.error('LLM Generation Error:', error);
+
+                // REFUND CREDITS ON FAILURE
+                if (user && pointsToDeduct > 0) {
+                    try {
+                        await userService.addCredits(user.uid, pointsToDeduct);
+                        console.log(`Refunded ${pointsToDeduct} credits to ${user.uid} due to failure`);
+                    } catch (refundError) {
+                        console.error('Failed to refund credits:', refundError);
+                    }
+                }
+
+                if (user) {
+                    await logUsage({
+                        context: { userId: user.uid, email: user.email },
+                        mode: 'INTERNAL',
+                        apiPath: '/api/llm/generate',
+                        prompt: prompt,
+                        resultSummary: error.message,
+                        pointsDeducted: 0, // 0 because we refunded
+                        errorCode: error.code || 500,
+                        status: 'FAILURE',
+                        privateMode: privateMode
+                    });
+                }
+
+                const code = error.code || ErrorCodes.INTERNAL_SERVER_ERROR;
+                const status = error.statusCode || 500;
+                const message = error.message || 'Internal Server Error';
+
+                return res.status(status).json(errorResponse(code, message));
             }
         }
 

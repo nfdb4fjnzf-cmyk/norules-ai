@@ -116,6 +116,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } catch (error: any) {
         console.error('Text Analysis Error:', error);
 
+        // REFUND CREDITS ON FAILURE
+        if (user && pointsToDeduct > 0) {
+            try {
+                await userService.addCredits(user.uid, pointsToDeduct);
+            } catch (refundError) {
+                console.error('Failed to refund credits:', refundError);
+            }
+        }
+
         // Log Failure
         if (user) {
             await logUsage({

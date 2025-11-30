@@ -78,5 +78,39 @@ export const userService = {
 
             return true;
         });
+    },
+
+    addCredits: async (uid: string, amount: number): Promise<void> => {
+        await db.runTransaction(async (transaction: admin.firestore.Transaction) => {
+            const userRef = db.collection('users').doc(uid);
+            const userDoc = await transaction.get(userRef);
+
+            if (!userDoc.exists) {
+                throw new AppError(ErrorCodes.NOT_FOUND, 'User not found', 404);
+            }
+
+            const userData = userDoc.data();
+            const currentCredits = userData?.credits || 0;
+
+            // We don't apply discount multiplier on refund because we want to refund exactly what was deducted?
+            // Wait, deductCredits applies multiplier. So if we deduct 10 * 0.8 = 8, we should refund 8.
+            // But the caller passes 'amount' (e.g. 10).
+            // So we need to re-calculate the exact amount that was deducted.
+            // This is tricky. Ideally deductCredits returns the *actual* deducted amount.
+            // For now, I will assume the caller passes the base amount and I apply the same multiplier logic to be consistent.
+
+            const plan = userData?.subscription?.plan || 'free';
+            let multiplier = 1;
+            if (plan === 'lite') multiplier = 0.8;
+            else if (plan === 'pro') multiplier = 0.6;
+            else if (plan === 'ultra') multiplier = 0.4;
+
+            const finalAmount = amount * multiplier;
+
+            transaction.update(userRef, {
+                credits: currentCredits + finalAmount,
+                updatedAt: new Date().toISOString()
+            });
+        });
     }
 };
