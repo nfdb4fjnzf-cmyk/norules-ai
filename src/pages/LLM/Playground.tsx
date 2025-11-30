@@ -156,7 +156,8 @@ const LLMPlayground: React.FC = () => {
 
         } catch (e: any) {
             console.error(e);
-            const errorMessage = e.response?.data?.error || e.message || 'Generation failed';
+            // Check for 'message' from our API response format
+            const errorMessage = e.response?.data?.message || e.response?.data?.error || e.message || 'Generation failed';
             showToast('error', errorMessage);
         } finally {
             setLoading(false);

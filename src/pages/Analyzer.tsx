@@ -167,7 +167,8 @@ const Analyzer: React.FC = () => {
             if (error.response?.status === 401) {
                 showToast('error', "Authentication failed. Please login.");
             } else {
-                showToast('error', "Analysis failed. Please try again.");
+                const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || "Analysis failed. Please try again.";
+                showToast('error', errorMessage);
             }
         } finally {
             setIsAnalyzing(false);
