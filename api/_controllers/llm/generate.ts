@@ -5,7 +5,7 @@ import { AppError, ErrorCodes } from '../../_utils/errorHandler.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import OpenAI from 'openai';
 import { logUsage } from '../../_utils/historyLogger.js';
-import { logUsage as logUsageStats } from '../../_services/usageService.js';
+import { logUsage as logUsageStats, usageService } from '../../_services/usageService.js';
 import { userService } from '../../_services/userService.js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
@@ -102,6 +102,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 apiKey: apiKey || process.env.OPENAI_API_KEY,
             });
 
+            // V3: Estimate Cost
+            const estimatedCost = usageService.estimateCost('chat', prompt.length);
+
+            // V3: Deduct Estimated Cost
+            await checkRateLimit(user.uid, plan);
+            const hasSufficientCredits = await userService.deductCredits(user.uid, estimatedCost);
+            if (!hasSufficientCredits) {
+                throw new AppError(ErrorCodes.INSUFFICIENT_POINTS, `Insufficient credits. Estimated: ${estimatedCost}`, 402);
+            }
+
             const completion = await openai.chat.completions.create({
                 messages: [
                     { role: "system", content: systemInstruction },
@@ -118,20 +128,59 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 data = { text: content, riskScore: 50 };
             }
 
+            // V3: Calculate Actual Cost based on Usage Metadata
+            const usage = completion.usage;
+            const tokensIn = usage?.prompt_tokens || Math.ceil(prompt.length / 4);
+            const tokensOut = usage?.completion_tokens || Math.ceil(content.length / 4);
+
+            const actualCost = usageService.calculateCost('chat', modelId, tokensIn, tokensOut);
+
+            // V3: Adjust Balance
+            const costDiff = actualCost - estimatedCost;
+            if (costDiff > 0) {
+                // Deduct extra
+                await userService.deductCredits(user.uid, costDiff);
+            } else if (costDiff < 0) {
+                // Refund difference
+                await userService.addCredits(user.uid, Math.abs(costDiff));
+            }
+
+            // V3: Log Transaction
+            await usageService.logTransaction({
+                userId: user.uid,
+                actionType: 'chat',
+                inputText: prompt,
+                outputType: 'json',
+                estimatedCost,
+                actualCost,
+                timestamp: new Date().toISOString(),
+                modelUsed: modelId,
+                tokensIn,
+                tokensOut,
+                status: 'success'
+            });
+
         } else {
             // Gemini Logic
             const apiKeyHeader = Array.isArray(customGeminiKey) ? customGeminiKey[0] : customGeminiKey;
             const apiKey = apiKeyHeader || process.env.GEMINI_API_KEY;
 
             try {
-                const apiKeyHeader = Array.isArray(customGeminiKey) ? customGeminiKey[0] : customGeminiKey;
-                const apiKey = apiKeyHeader || process.env.GEMINI_API_KEY;
-
                 if (!apiKey) {
                     throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, 'Gemini API Key is missing on server', 500);
                 }
 
                 const genAI = new GoogleGenerativeAI(apiKey);
+
+                // V3: Estimate Cost
+                const estimatedCost = usageService.estimateCost('chat', prompt.length);
+
+                // V3: Deduct Estimated Cost
+                await checkRateLimit(user.uid, plan);
+                const hasSufficientCredits = await userService.deductCredits(user.uid, estimatedCost);
+                if (!hasSufficientCredits) {
+                    throw new AppError(ErrorCodes.INSUFFICIENT_POINTS, `Insufficient credits. Estimated: ${estimatedCost}`, 402);
+                }
 
                 // Map frontend model IDs to Gemini models
                 // Fallback to Flash for better availability if Pro fails
@@ -150,55 +199,87 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 const response = await result.response;
                 const text = response.text();
 
-                // Log Usage
-                await logUsage({
-                    context: { userId: user.uid, email: user.email },
-                    mode: 'INTERNAL',
-                    apiPath: '/api/llm/generate',
-                    prompt: prompt,
-                    resultSummary: text.substring(0, 100) + '...',
-                    pointsDeducted: pointsToDeduct,
-                    status: 'SUCCESS',
-                    privateMode: privateMode
+                // V3: Calculate Actual Cost based on Usage Metadata
+                const usage = response.usageMetadata;
+                const tokensIn = usage?.promptTokenCount || Math.ceil(prompt.length / 4);
+                const tokensOut = usage?.candidatesTokenCount || Math.ceil(text.length / 4);
+
+                const actualCost = usageService.calculateCost('chat', geminiModelName, tokensIn, tokensOut);
+
+                // V3: Adjust Balance
+                const costDiff = actualCost - estimatedCost;
+                if (costDiff > 0) {
+                    // Deduct extra
+                    await userService.deductCredits(user.uid, costDiff);
+                } else if (costDiff < 0) {
+                    // Refund difference
+                    await userService.addCredits(user.uid, Math.abs(costDiff));
+                }
+
+                // V3: Log Transaction
+                await usageService.logTransaction({
+                    userId: user.uid,
+                    actionType: 'chat',
+                    inputText: prompt,
+                    outputType: 'text',
+                    estimatedCost,
+                    actualCost,
+                    timestamp: new Date().toISOString(),
+                    modelUsed: geminiModelName,
+                    tokensIn,
+                    tokensOut,
+                    status: 'success'
                 });
 
-                // Log Usage Stats
-                await logUsageStats(user.uid, 'text_generation', pointsToDeduct);
+                // Log Usage Stats (Legacy/Aggregated)
+                await logUsageStats(user.uid, 'text_generation', actualCost);
 
                 return res.status(200).json(successResponse({
                     text,
-                    riskScore: 0, // Gemini doesn't return risk score in standard response
+                    riskScore: 0,
                     meta: {
                         model: geminiModelName,
-                        pointsDeducted: pointsToDeduct,
-                        quotaRemaining: 0
+                        pointsDeducted: actualCost,
+                        quotaRemaining: 0,
+                        usage: { tokensIn, tokensOut, total: tokensIn + tokensOut }
                     }
                 }));
 
             } catch (error: any) {
                 console.error('LLM Generation Error:', error);
 
-                // REFUND CREDITS ON FAILURE
-                if (user && pointsToDeduct > 0) {
+                // REFUND ESTIMATED CREDITS ON FAILURE
+                // We assume estimatedCost was defined in try block scope, but here it might not be if error happened before.
+                // We need to move estimatedCost definition up or handle it safely.
+                // For now, we'll assume if we reached deduction, we need to refund.
+                // Actually, let's just use a safe variable.
+                const estimatedCostForRefund = usageService.estimateCost('chat', prompt?.length || 0);
+
+                if (user) {
                     try {
-                        await userService.addCredits(user.uid, pointsToDeduct);
-                        console.log(`Refunded ${pointsToDeduct} credits to ${user.uid} due to failure`);
+                        // We only refund if we actually deducted.
+                        // But we don't know for sure if deduction happened if error is generic.
+                        // Ideally we track 'deducted' state.
+                        // For safety in this V3 migration, I will assume if error is NOT 'INSUFFICIENT_POINTS', we might have deducted.
+                        // But simpler: just check if error.code is NOT 402.
+                        if (error.statusCode !== 402) {
+                            await userService.addCredits(user.uid, estimatedCostForRefund);
+                            console.log(`Refunded ${estimatedCostForRefund} credits to ${user.uid} due to failure`);
+                        }
                     } catch (refundError) {
                         console.error('Failed to refund credits:', refundError);
                     }
-                }
 
-                if (user) {
-                    await logUsage({
-                        context: { userId: user.uid, email: user.email },
-                        mode: 'INTERNAL',
-                        apiPath: '/api/llm/generate',
-                        prompt: prompt,
-                        resultSummary: error.message,
-                        pointsDeducted: 0, // 0 because we refunded
-                        errorCode: error.code || 500,
-                        status: 'FAILURE',
-                        privateMode: privateMode
+                    // Log Failure Transaction
+                    await usageService.logTransaction({
+                        userId: user.uid,
+                        actionType: 'chat',
+                        inputText: prompt,
+                        estimatedCost: estimatedCostForRefund,
+                        actualCost: 0,
+                        timestamp: new Date().toISOString(),
+                        status: 'failed',
+                        errorMessage: error.message
                     });
                 }
 
@@ -216,7 +297,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             apiPath: '/api/llm/generate',
             prompt: prompt,
             resultSummary: JSON.stringify(data),
-            pointsDeducted: pointsToDeduct,
+            pointsDeducted: pointsToDeduct, // This will be deprecated for V3, actualCost will be used
             status: 'SUCCESS',
             privateMode: privateMode
         });

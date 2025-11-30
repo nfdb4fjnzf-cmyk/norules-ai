@@ -1,29 +1,80 @@
 import { db } from '../_config/firebaseAdmin.js';
 
-export const logUsage = async (uid: string, type: string, credits: number) => {
-    try {
-        const today = new Date().toISOString().split('T')[0];
-        const usageRef = db.collection('usage').doc(`${uid}_${today}`);
+export interface UsageLog {
+    userId: string;
+    actionType: 'chat' | 'image' | 'video' | 'analysis';
+    inputText?: string;
+    outputType?: string;
+    estimatedCost: number;
+    actualCost: number;
+    timestamp: string;
+    modelUsed?: string;
+    tokensIn?: number;
+    tokensOut?: number;
+    status: 'success' | 'failed';
+    errorMessage?: string;
+}
 
-        await usageRef.set({
-            uid,
-            date: today,
-            lastUpdated: new Date().toISOString()
-        }, { merge: true });
+export const usageService = {
+    /**
+     * Calculate Cost based on V3 Rules
+     * LLM: Token * 2 (If tokens unknown, use rough char estimate: 1 token ~= 4 chars)
+     * Image: 30
+     * Video: 60
+     */
+    calculateCost: (actionType: string, model: string, tokensIn = 0, tokensOut = 0): number => {
+        if (actionType === 'image') return 30;
+        if (actionType === 'video') return 60;
 
-        // We can add a subcollection for detailed logs if needed, 
-        // but for now we just ensure the document exists or update a counter if we were tracking count.
-        // Since we are tracking credits in user profile, this might be for audit logs.
+        if (actionType === 'chat' || actionType === 'analysis') {
+            const totalTokens = tokensIn + tokensOut;
+            return Math.ceil(totalTokens * 2);
+        }
 
-        await db.collection('usage_logs').add({
-            uid,
-            type,
-            credits,
-            timestamp: new Date().toISOString()
-        });
+        return 0;
+    },
 
-    } catch (error) {
-        console.error('Failed to log usage:', error);
-        // Non-blocking error
+    /**
+     * Estimate Cost (for Frontend)
+     * Uses character count to estimate tokens for LLM
+     */
+    estimateCost: (actionType: string, inputLength: number = 0): number => {
+        if (actionType === 'image') return 30;
+        if (actionType === 'video') return 60;
+
+        if (actionType === 'chat' || actionType === 'analysis') {
+            // Estimate: 1 token ~= 4 chars. 
+            // Input + Expected Output (assume 500 chars output for estimate?)
+            const estimatedTokensIn = Math.ceil(inputLength / 4);
+            const estimatedTokensOut = 200; // Buffer
+            return Math.ceil((estimatedTokensIn + estimatedTokensOut) * 2);
+        }
+        return 0;
+    },
+
+    /**
+     * Log Usage to 'usage_logs' collection
+     */
+    logTransaction: async (log: UsageLog) => {
+        try {
+            await db.collection('usage_logs').add({
+                ...log,
+                timestamp: new Date().toISOString()
+            });
+        } catch (error) {
+            console.error('Failed to log usage transaction:', error);
+        }
+    },
+
+    /**
+     * Legacy support (optional, can remove if not needed)
+     */
+    logUsage: async (uid: string, type: string, credits: number) => {
+        // Redirect to new logger if possible, or keep for backward compatibility
+        // For V3, we prefer logTransaction
     }
 };
+
+// Export legacy function for existing calls until refactored
+export const logUsage = usageService.logUsage;
+

@@ -4,6 +4,7 @@ import { successResponse, errorResponse } from '../../_utils/responseFormatter.j
 import { AppError, ErrorCodes } from '../../_utils/errorHandler.js';
 import { logUsage } from '../../_utils/historyLogger.js';
 import { userService } from '../../_services/userService.js';
+import { usageService } from '../../_services/usageService.js';
 import OpenAI from 'openai';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
@@ -14,7 +15,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     let user: any = null;
     let privateMode = false;
-    let pointsToDeduct = 10; // Higher cost for image generation
+
+    // V3: Fixed Cost for Image
+    const estimatedCost = 30;
 
     try {
         user = await validateRequest(req.headers);
@@ -54,9 +57,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         await checkRateLimit(user.uid, plan);
 
-        const hasSufficientCredits = await userService.deductCredits(user.uid, pointsToDeduct);
+        // V3: Deduct Fixed Cost
+        const hasSufficientCredits = await userService.deductCredits(user.uid, estimatedCost);
         if (!hasSufficientCredits) {
-            throw new AppError(ErrorCodes.INSUFFICIENT_POINTS, 'Insufficient credits', 402);
+            throw new AppError(ErrorCodes.INSUFFICIENT_POINTS, `Insufficient credits. Required: ${estimatedCost}`, 402);
         }
 
         let imageUrl = '';
@@ -118,13 +122,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             imageUrl = 'https://via.placeholder.com/1024x1024.png?text=Mock+Image+Generation';
         }
 
+        // V3: Log Transaction
+        await usageService.logTransaction({
+            userId: user.uid,
+            actionType: 'image',
+            inputText: prompt,
+            outputType: 'image',
+            estimatedCost,
+            actualCost: estimatedCost, // Fixed cost
+            timestamp: new Date().toISOString(),
+            modelUsed: modelId,
+            status: 'success'
+        });
+
+        // Legacy Log
         await logUsage({
             context: { userId: user.uid, email: user.email },
             mode: 'INTERNAL',
             apiPath: '/api/llm/image',
             prompt: prompt,
             resultSummary: `Generated Image: ${imageUrl.substring(0, 50)}...`,
-            pointsDeducted: pointsToDeduct,
+            pointsDeducted: estimatedCost,
             status: 'SUCCESS',
             privateMode: privateMode
         });
@@ -134,6 +152,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             riskScore: riskScore,
             meta: {
                 mode: 'INTERNAL',
+                pointsDeducted: estimatedCost,
                 quotaUsage: { used: 1, limit: 100 }
             }
         }));
@@ -141,17 +160,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } catch (error: any) {
         console.error('Image Generation Error:', error);
 
+        // REFUND ON FAILURE
         if (user) {
-            await logUsage({
-                context: { userId: user.uid, email: user.email },
-                mode: 'INTERNAL',
-                apiPath: '/api/llm/image',
-                prompt: 'Error',
-                resultSummary: error.message,
-                pointsDeducted: 0,
-                errorCode: error.code || 500,
-                status: 'FAILURE',
-                privateMode: privateMode
+            try {
+                // Check if error is NOT insufficient points (meaning we likely deducted)
+                if (error.statusCode !== 402) {
+                    await userService.addCredits(user.uid, estimatedCost);
+                    console.log(`Refunded ${estimatedCost} credits to ${user.uid} due to failure`);
+                }
+            } catch (refundError) {
+                console.error('Failed to refund credits:', refundError);
+            }
+
+            // Log Failure
+            await usageService.logTransaction({
+                userId: user.uid,
+                actionType: 'image',
+                inputText: req.body?.prompt || 'Unknown',
+                estimatedCost,
+                actualCost: 0,
+                timestamp: new Date().toISOString(),
+                status: 'failed',
+                errorMessage: error.message
             });
         }
 
