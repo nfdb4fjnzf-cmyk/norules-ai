@@ -12,6 +12,7 @@ export interface AnalysisResult {
 export const analyzerService = {
     analyzeText: async (text: string): Promise<AnalysisResult> => {
         const response = await api.post('/analyze/text', { text });
+        if (response.data.code !== 0) throw new Error(response.data.message || 'Analysis failed');
         return response.data.data;
     },
 
@@ -23,6 +24,7 @@ export const analyzerService = {
                 try {
                     const base64Image = reader.result as string;
                     const response = await api.post('/analyze/image', { image: base64Image });
+                    if (response.data.code !== 0) throw new Error(response.data.message || 'Analysis failed');
                     resolve(response.data.data);
                 } catch (error) {
                     reject(error);
@@ -33,21 +35,20 @@ export const analyzerService = {
     },
 
     analyzeVideo: async (videoUri: string): Promise<AnalysisResult> => {
-        // Note: This expects a Google File API URI or similar. 
-        // For MVP with small files, we might try base64 but Gemini Video usually needs File API.
-        // If we are just sending a URL (e.g. YouTube or public URL), we use the URL endpoint or a specific video one.
-        // For now, let's assume the backend handles the URI we pass.
         const response = await api.post('/analyze/video', { videoUri });
+        if (response.data.code !== 0) throw new Error(response.data.message || 'Analysis failed');
         return response.data.data;
     },
 
     analyzeUrl: async (url: string): Promise<AnalysisResult> => {
         const response = await api.post('/analyze/url', { url });
+        if (response.data.code !== 0) throw new Error(response.data.message || 'Analysis failed');
         return response.data.data;
     },
 
     analyzeRisk: async (content: string, platform: 'tiktok' | 'meta' | 'general' = 'general'): Promise<AnalysisResult> => {
         const response = await api.post('/analyze/risk', { content, platform });
+        if (response.data.code !== 0) throw new Error(response.data.message || 'Analysis failed');
         return response.data.data;
     },
 };

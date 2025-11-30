@@ -104,13 +104,13 @@ const Plans: React.FC = () => {
 
             const data = await res.json();
 
-            if (data.success && data.data.invoice_url) {
+            if (data.code === 0 && data.data.invoice_url) {
                 // 3. Redirect to Payment
                 window.open(data.data.invoice_url, '_blank');
                 showToast('success', 'Redirecting to payment...');
                 setIsUpgradeModalOpen(false);
             } else {
-                throw new Error(data.error || 'Failed to create invoice');
+                throw new Error(data.message || 'Failed to create invoice');
             }
 
         } catch (error: any) {

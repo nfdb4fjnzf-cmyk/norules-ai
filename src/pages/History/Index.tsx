@@ -31,7 +31,7 @@ const HistoryIndex: React.FC = () => {
             });
             const data = await res.json();
 
-            if (data.success) {
+            if (data.code === 0) {
                 if (cursor) {
                     setLogs(prev => [...prev, ...data.data.logs]);
                 } else {
@@ -39,7 +39,7 @@ const HistoryIndex: React.FC = () => {
                 }
                 setNextCursor(data.data.nextCursor);
             } else {
-                showToast('error', data.error || t('history.messages.failedFetch') || 'Failed to fetch history');
+                showToast('error', data.message || t('history.messages.failedFetch') || 'Failed to fetch history');
             }
         } catch (e) {
             showToast('error', t('common.error') || 'Network error');
