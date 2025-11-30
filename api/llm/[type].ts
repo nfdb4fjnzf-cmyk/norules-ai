@@ -1,8 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import videoHandler from '../_controllers/analyze/video.js';
+import generateHandler from '../_controllers/llm/generate.js';
+import imageHandler from '../_controllers/llm/image.js';
+import videoHandler from '../_controllers/llm/video.js';
+import { errorResponse } from '../_utils/responseFormatter.js';
+import { ErrorCodes } from '../_utils/errorHandler.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    // Manual CORS
+    // Handle CORS
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     const origin = req.headers.origin || '*';
     res.setHeader('Access-Control-Allow-Origin', origin);
@@ -16,5 +20,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).end();
     }
 
-    return videoHandler(req, res);
+    const { type } = req.query;
+
+    switch (type) {
+        case 'generate':
+            return generateHandler(req, res);
+        case 'image':
+            return imageHandler(req, res);
+        case 'video':
+            return videoHandler(req, res);
+        default:
+            return res.status(404).json(errorResponse(ErrorCodes.NOT_FOUND, 'Invalid LLM Endpoint'));
+    }
 }
