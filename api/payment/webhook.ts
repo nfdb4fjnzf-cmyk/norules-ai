@@ -83,21 +83,54 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     else if (cycle === 'quarterly') endDate.setDate(endDate.getDate() + 90);
                     else if (cycle === 'yearly') endDate.setDate(endDate.getDate() + 365);
 
-                    // Update User Subscription in Firestore
-                    await db.collection('subscriptions').doc(userId).set({
+                    // Fetch current subscription to record history
+                    const subRef = db.collection('subscriptions').doc(userId);
+                    const subDoc = await subRef.get();
+                    const oldData = subDoc.exists ? subDoc.data() : null;
+
+                    // V3: Record Upgrade History
+                    if (oldData && oldData.plan !== plan.id) {
+                        await subRef.collection('history').add({
+                            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+                            oldPlan: oldData.plan,
+                            newPlan: plan.id,
+                            chargeAmount: req.body.price_amount,
+                            action: 'upgrade'
+                        });
+                    }
+
+                    // Update User Subscription in Firestore (V3 Spec)
+                    // Spec: subscriptions collection with plan, startDate, endDate, nextBillingDate, isActive, upgradeHistory
+                    // Note: upgradeHistory is requested as a field, but subcollection is cleaner for scalability.
+                    // I'll add it as an array field too if strictly requested, but subcollection is better.
+                    // The spec says: "upgradeHistory += timestamp, oldPlan, newPlan, chargeAmount".
+                    // I will use `arrayUnion` for the field to comply with spec.
+
+                    const historyEntry = {
+                        timestamp: new Date().toISOString(),
+                        oldPlan: oldData?.plan || 'free',
+                        newPlan: plan.id,
+                        chargeAmount: req.body.price_amount
+                    };
+
+                    await subRef.set({
+                        userId: userId,
                         plan: plan.id,
                         billingCycle: cycle,
-                        status: 'active',
-                        startDate: admin.firestore.FieldValue.serverTimestamp(),
-                        endDate: admin.firestore.Timestamp.fromDate(endDate),
+                        isActive: true, // Spec: isActive
+                        status: 'active', // Keep for backward compatibility
+                        startDate: new Date().toISOString(),
+                        endDate: endDate.toISOString(),
+                        nextBillingDate: endDate.toISOString(), // Spec: nextBillingDate
                         provider: 'nowpayments',
                         transactionId: req.body.payment_id,
                         amountUSD: req.body.price_amount,
                         amountCrypto: req.body.pay_amount,
-                        dailyLimit: plan.dailyLimit
-                    });
+                        dailyLimit: plan.dailyLimit,
+                        upgradeHistory: admin.firestore.FieldValue.arrayUnion(historyEntry)
+                    }, { merge: true });
 
-                    // Update User Profile
+                    // Update User Profile (Legacy/Redundant but good for quick access)
                     await userService.updateUserProfile(userId, {
                         subscription: {
                             plan: plan.id,
@@ -105,7 +138,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                             startDate: new Date().toISOString(),
                             endDate: endDate.toISOString()
                         },
-                        // Reset credits or update limits if needed
                         dailyLimit: plan.dailyLimit
                     });
                 }

@@ -1,4 +1,4 @@
-export type PlanType = 'free' | 'lite' | 'standard' | 'enterprise';
+export type PlanType = 'free' | 'light' | 'medium' | 'enterprise';
 export type BillingCycle = 'monthly' | 'quarterly' | 'yearly';
 
 export interface Plan {
@@ -14,8 +14,8 @@ export interface Plan {
 
 export const PLANS: Plan[] = [
     {
-        id: 'lite',
-        name: 'Lite',
+        id: 'light',
+        name: 'Light',
         description: 'Perfect for beginners',
         monthlyPrice: 5,
         quarterlyPrice: 13.5, // 5 * 3 * 0.9
@@ -24,8 +24,8 @@ export const PLANS: Plan[] = [
         features: ['5 Daily Requests', 'Basic Support', 'Standard Speed']
     },
     {
-        id: 'standard',
-        name: 'Standard',
+        id: 'medium',
+        name: 'Medium',
         description: 'For growing businesses',
         monthlyPrice: 15,
         quarterlyPrice: 40.5, // 15 * 3 * 0.9
