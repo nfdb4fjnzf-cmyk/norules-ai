@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://norules-ai.vercel.app/sitemap.xml
