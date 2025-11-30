@@ -129,7 +129,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const genAI = new GoogleGenerativeAI(apiKey);
 
             // Map frontend model IDs to Gemini models (Use standard 1.5 models)
-            const geminiModelName = modelId.includes('pro') ? 'gemini-1.5-pro' : 'gemini-1.5-flash';
+            // Frontend now sends 'gemini-1.5-pro' or 'gemini-1.5-flash'
+            let geminiModelName = 'gemini-1.5-flash';
+            if (modelId === 'gemini-1.5-pro' || modelId.includes('pro')) {
+                geminiModelName = 'gemini-1.5-pro';
+            }
+
             const model = genAI.getGenerativeModel({ model: geminiModelName });
 
             const result = await model.generateContent([

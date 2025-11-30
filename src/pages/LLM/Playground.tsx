@@ -17,8 +17,8 @@ interface Message {
 }
 
 const MODELS = [
-    { id: 'gemini-2.5-pro', nameKey: 'playground.model.text.a', cost: 1 }, // Standard
-    { id: 'gemini-2.5-flash', nameKey: 'playground.model.text.b', cost: 0.5 }, // Mini
+    { id: 'gemini-1.5-pro', nameKey: 'playground.model.text.a', cost: 1 }, // Standard
+    { id: 'gemini-1.5-flash', nameKey: 'playground.model.text.b', cost: 0.5 }, // Mini
     { id: 'gpt-4o', nameKey: 'playground.model.text.c', cost: 2 }, // Advanced
     { id: 'gpt-3.5-turbo', nameKey: 'playground.model.text.d', cost: 0.5 }, // Mini
     { id: 'imagen-3', nameKey: 'playground.model.image.a', cost: 3 }, // Image (Ch.121.4)
