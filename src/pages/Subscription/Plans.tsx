@@ -45,8 +45,8 @@ const Plans: React.FC = () => {
             const plansData = await plansRes.json();
             const subData = await subRes.json();
 
-            if (plansData.success) setPlans(plansData.data);
-            if (subData.success) setCurrentPlanId(subData.data.plan);
+            if (plansData.code === 0) setPlans(plansData.data);
+            if (subData.code === 0) setCurrentPlanId(subData.data.plan);
         } catch (error: any) {
             console.error('Failed to fetch data', error);
             const errorMessage = error.response?.data?.error || error.message || 'Failed to load plans';

@@ -26,10 +26,10 @@ const SubscriptionOverview: React.FC = () => {
                 });
                 const data = await res.json();
 
-                if (data.success) {
+                if (data.code === 0) {
                     setSubscription(data.data);
                 } else {
-                    showToast('error', data.error || 'Failed to load subscription details');
+                    showToast('error', data.message || 'Failed to load subscription details');
                 }
             } catch (err: any) {
                 console.error(err);
