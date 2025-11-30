@@ -7,6 +7,7 @@ import SkeletonLoader from '../components/SkeletonLoader';
 import { analyzerService } from '../services/analyzerService';
 import { useAuth } from '../contexts/AuthContext';
 import { useModal } from '../contexts/ModalContext';
+import CostEstimateModal from '../components/CostEstimateModal';
 
 // Mock Analysis Result Interface
 interface AnalysisResult {
@@ -33,6 +34,10 @@ const Analyzer: React.FC = () => {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [result, setResult] = useState<AnalysisResult | null>(null);
 
+    // V3 Cost Estimation State
+    const [showCostModal, setShowCostModal] = useState(false);
+    const [estimatedCostValue, setEstimatedCostValue] = useState(0);
+
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,7 +60,7 @@ const Analyzer: React.FC = () => {
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    const handleAnalyze = async () => {
+    const handleAnalyzeClick = () => {
         if (!materialFile && !copyText && !linkUrl && !enableRiskAnalysis) {
             showToast('error', t('analyzer.errors.emptyInput') || "Please provide at least one input.");
             return;
@@ -72,9 +77,7 @@ const Analyzer: React.FC = () => {
         if (enableRiskAnalysis) requiredCredits += 2; // Risk Analyzer: 2 points (Ch.121.3)
 
         // 2. Check Credits (Internal Mode Only)
-        // Default to 'internal' if mode is missing (safe fallback)
         const mode = userProfile?.mode || 'internal';
-
         if (mode === 'internal') {
             const currentCredits = userProfile?.credits || 0;
             if (currentCredits < requiredCredits) {
@@ -86,6 +89,13 @@ const Analyzer: React.FC = () => {
             }
         }
 
+        // Set Estimate and Open Modal
+        setEstimatedCostValue(requiredCredits);
+        setShowCostModal(true);
+    };
+
+    const executeAnalysis = async () => {
+        setShowCostModal(false);
         setIsAnalyzing(true);
         setResult(null);
 
@@ -97,10 +107,6 @@ const Analyzer: React.FC = () => {
                 if (materialFile.type.startsWith('image')) {
                     promises.push(analyzerService.analyzeImage(materialFile).then(res => ({ type: 'Material', ...res })));
                 } else if (materialFile.type.startsWith('video')) {
-                    // For video, we need a URI. Since we don't have a file uploader to Google yet, 
-                    // we'll skip or mock for now, OR try to send as base64 if small (backend might fail).
-                    // Let's try image endpoint for video frames if supported, or just warn.
-                    // Actually, let's just simulate for video to avoid breaking flow until File API is ready.
                     console.warn("Video upload not fully supported in frontend yet");
                     promises.push(Promise.resolve({
                         type: 'Video',
@@ -124,12 +130,8 @@ const Analyzer: React.FC = () => {
 
             // 4. Risk Analysis (Ch.121.3)
             if (enableRiskAnalysis) {
-                // Combine inputs for risk analysis context
                 const context = [copyText, linkUrl].filter(Boolean).join('\n');
                 if (context || materialFile) {
-                    // If we have material but no text, we might need OCR or description first.
-                    // For now, we send text context. If only image, we skip or assume backend handles it.
-                    // Let's send a placeholder if only image to trigger the check.
                     const riskContent = context || "Image/Video Content Analysis";
                     promises.push(analyzerService.analyzeRisk(riskContent).then(res => ({ type: 'Risk', ...res })));
                 }
@@ -163,7 +165,6 @@ const Analyzer: React.FC = () => {
 
         } catch (error: any) {
             console.error(error);
-            // If 401, it means not logged in or invalid token
             if (error.response?.status === 401) {
                 showToast('error', "Authentication failed. Please login.");
             } else {
@@ -177,6 +178,16 @@ const Analyzer: React.FC = () => {
 
     return (
         <div className="h-full flex flex-col gap-6 animate-fade-in">
+            <CostEstimateModal
+                isOpen={showCostModal}
+                onClose={() => setShowCostModal(false)}
+                onConfirm={executeAnalysis}
+                actionType="Analysis"
+                estimatedCost={estimatedCostValue}
+                currentBalance={userProfile?.credits || 0}
+                isProcessing={isAnalyzing}
+            />
+
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-100">{t('analyzer.title')}</h1>
@@ -293,7 +304,7 @@ const Analyzer: React.FC = () => {
                     </div>
 
                     <button
-                        onClick={handleAnalyze}
+                        onClick={handleAnalyzeClick}
                         disabled={isAnalyzing}
                         className={`w-full py-4 rounded-xl font-bold text-white shadow-lg transition-all transform active:scale-[0.98] ${isAnalyzing
                             ? 'bg-gray-600 cursor-not-allowed'

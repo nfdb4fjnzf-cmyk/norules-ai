@@ -8,6 +8,8 @@ import { Card } from '../../components/ui/Card';
 import { llmService } from '../../services/llmService';
 import { useAuth } from '../../contexts/AuthContext';
 import { useModal } from '../../contexts/ModalContext';
+import CostEstimateModal from '../../components/CostEstimateModal';
+import api from '../../services/api';
 
 type Mode = 'INTERNAL' | 'EXTERNAL';
 
@@ -61,6 +63,11 @@ const LLMPlayground: React.FC = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [fileType, setFileType] = useState<'image' | 'video' | null>(null);
 
+    // V3 Cost Estimation State
+    const [showCostModal, setShowCostModal] = useState(false);
+    const [estimatedCostValue, setEstimatedCostValue] = useState(0);
+    const [isEstimating, setIsEstimating] = useState(false);
+
     useEffect(() => {
         const init = async () => {
             const hasKey = localStorage.getItem('encrypted_api_key');
@@ -108,7 +115,6 @@ const LLMPlayground: React.FC = () => {
 
     // Calculate Cost based on Model (Ch.121.5)
     const selectedModelData = MODELS.find(m => m.id === selectedModel) || MODELS[0];
-    const estimatedCost = selectedModelData.cost;
     const modelType = getModelType(selectedModel);
 
     // Access Control Check
@@ -125,18 +131,38 @@ const LLMPlayground: React.FC = () => {
             return;
         }
 
-        // Credit Check (Internal Mode)
+        // V3: Estimate Cost First
         if (mode === 'INTERNAL') {
-            const currentCredits = userProfile?.credits || 0;
-            if (currentCredits < estimatedCost) {
-                openModal('INSUFFICIENT_CREDITS', {
-                    requiredCredits: estimatedCost,
-                    currentCredits
+            try {
+                setIsEstimating(true);
+                const res = await api.post('/cost/estimate', {
+                    actionType: modelType === 'text' ? 'chat' : modelType, // Map text to chat/analysis
+                    inputLength: input.length,
+                    model: selectedModel
                 });
-                return;
-            }
-        }
 
+                if (res.data.success) {
+                    setEstimatedCostValue(res.data.data.estimatedCost);
+                    setShowCostModal(true);
+                } else {
+                    // Fallback if estimate fails? Or block?
+                    // Let's block to be safe
+                    showToast('error', 'Failed to estimate cost. Please try again.');
+                }
+            } catch (e) {
+                console.error('Estimation error', e);
+                showToast('error', 'Failed to estimate cost.');
+            } finally {
+                setIsEstimating(false);
+            }
+        } else {
+            // External mode bypasses cost check (or handles differently)
+            executeGeneration();
+        }
+    };
+
+    const executeGeneration = async () => {
+        setShowCostModal(false);
         setLoading(true);
         setResponse(null);
         try {
@@ -175,6 +201,16 @@ const LLMPlayground: React.FC = () => {
 
     return (
         <div className="h-full flex flex-col gap-6 animate-fade-in">
+            <CostEstimateModal
+                isOpen={showCostModal}
+                onClose={() => setShowCostModal(false)}
+                onConfirm={executeGeneration}
+                actionType={modelType}
+                estimatedCost={estimatedCostValue}
+                currentBalance={userProfile?.credits || 0}
+                isProcessing={loading}
+            />
+
             <div className="flex justify-between items-center mb-2">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-100">{t('playground.title')}</h1>
@@ -325,17 +361,17 @@ const LLMPlayground: React.FC = () => {
                         </div>
 
                         <div className="flex justify-between items-center text-xs text-gray-400 px-1">
-                            <span>{t('playground.cost')}: <span className="text-warning font-bold">{estimatedCost}</span> {t('playground.points')}</span>
+                            <span>{t('playground.cost')}: <span className="text-warning font-bold">{estimatedCostValue || '...'}</span> {t('playground.points')}</span>
                             <span>{input.length} chars</span>
                         </div>
                     </div>
 
                     <button
                         onClick={handleCall}
-                        disabled={loading || isRestricted}
-                        className={`w-full py-3 rounded-xl font-bold text-white transition-all ${loading || isRestricted ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'}`}
+                        disabled={loading || isRestricted || isEstimating}
+                        className={`w-full py-3 rounded-xl font-bold text-white transition-all ${loading || isRestricted || isEstimating ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'}`}
                     >
-                        {loading ? t('playground.processing') : isRestricted ? 'Feature Restricted' : t('playground.send')}
+                        {loading ? t('playground.processing') : isEstimating ? 'Estimating...' : isRestricted ? 'Feature Restricted' : t('playground.send')}
                     </button>
                 </div>
 

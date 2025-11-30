@@ -4,13 +4,31 @@ import SkeletonLoader from '../../components/SkeletonLoader';
 import { useToast } from '../../components/Toast';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
+import { Calendar, Clock, CreditCard, History, ArrowUpCircle, CheckCircle } from 'lucide-react';
+
+interface SubscriptionData {
+    plan: string;
+    billingCycle: string;
+    dailyLimit: number;
+    startDate?: string;
+    endDate?: string;
+    nextBillingDate?: string;
+    remainingDays?: number;
+    status: string;
+    upgradeHistory?: Array<{
+        timestamp: string;
+        oldPlan: string;
+        newPlan: string;
+        chargeAmount: number;
+        action: string;
+    }>;
+}
 
 const SubscriptionOverview: React.FC = () => {
     const { t } = useTranslation();
-    const [subscription, setSubscription] = useState<any>(null);
+    const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
     const [loading, setLoading] = useState(true);
     const { showToast } = useToast();
-
     const { user } = useAuth();
 
     useEffect(() => {
@@ -43,80 +61,107 @@ const SubscriptionOverview: React.FC = () => {
         fetchSubscription();
     }, [user]);
 
-    const isFree = subscription?.plan === 'free';
-    const canUseExternal = subscription?.plan !== 'free';
-    const pointsDeducted = subscription?.plan !== 'apikey'; // Assuming API Key mode doesn't deduct points based on previous plan defs
-
     const getPlanName = (plan: string) => {
-        if (plan === 'apikey') return t('subscription.plans.apikey');
-        if (plan === 'free') return t('subscription.plans.free');
-        if (plan === 'pro') return t('subscription.plans.pro');
-        if (plan === 'enterprise') return t('subscription.plans.enterprise');
-        return plan;
+        switch (plan) {
+            case 'light': return 'Light Plan';
+            case 'medium': return 'Medium Plan';
+            case 'enterprise': return 'Enterprise Plan';
+            case 'free': return 'Free Plan';
+            default: return plan;
+        }
+    };
+
+    const formatDate = (dateStr?: string) => {
+        if (!dateStr) return '-';
+        return new Date(dateStr).toLocaleDateString();
     };
 
     return (
-        <div className="max-w-4xl mx-auto">
-            <h1 className="text-2xl font-bold text-gray-100 mb-6">{t('subscription.title')}</h1>
+        <div className="max-w-5xl mx-auto animate-fade-in p-6 space-y-8">
+            <div className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-2xl font-bold text-white mb-2">Subscription Overview</h1>
+                    <p className="text-gray-400">Manage your plan, billing, and usage limits.</p>
+                </div>
+                <Link
+                    to="/subscription/plans"
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-lg shadow-blue-500/20"
+                >
+                    <ArrowUpCircle className="w-4 h-4" />
+                    Upgrade Plan
+                </Link>
+            </div>
 
-            {/* Plan Details Card */}
-            <div className="rounded-2xl bg-[#151927] border border-white/10 p-6 mb-6 shadow-none backdrop-blur-sm">
+            {/* Current Plan Card */}
+            <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 backdrop-blur-sm">
                 {loading ? (
-                    <div className="space-y-6">
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <SkeletonLoader type="small" className="mb-2" />
-                                <SkeletonLoader type="large" className="w-32" />
-                            </div>
-                            <SkeletonLoader type="medium" className="w-32 h-10 rounded-xl" />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 border-t border-white/10 pt-6">
-                            <SkeletonLoader type="medium" />
-                            <SkeletonLoader type="medium" />
-                            <SkeletonLoader type="medium" />
-                            <SkeletonLoader type="medium" />
+                    <div className="space-y-4">
+                        <SkeletonLoader type="medium" className="w-1/3 h-8" />
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <SkeletonLoader type="medium" className="h-24" />
+                            <SkeletonLoader type="medium" className="h-24" />
+                            <SkeletonLoader type="medium" className="h-24" />
                         </div>
                     </div>
                 ) : (
                     <>
-                        <div className="flex justify-between items-center mb-6">
-                            <div>
-                                <p className="text-sm text-gray-400 uppercase tracking-wide">{t('subscription.currentPlan')}</p>
-                                <h2 className="text-3xl font-bold text-blue-400 capitalize">
-                                    {getPlanName(subscription?.plan)}
-                                </h2>
+                        <div className="flex items-center gap-4 mb-8">
+                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                                <CreditCard className="w-8 h-8 text-white" />
                             </div>
-                            <Link
-                                to="/subscription/plans"
-                                className="rounded-xl px-4 py-2 font-semibold bg-blue-500 hover:bg-blue-600 text-white transition-all duration-150 ease-out hover:opacity-80 active:scale-95"
-                            >
-                                {t('subscription.changePlan')}
-                            </Link>
+                            <div>
+                                <h2 className="text-3xl font-bold text-white capitalize">
+                                    {getPlanName(subscription?.plan || 'free')}
+                                </h2>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${subscription?.status === 'active'
+                                            ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                                            : 'bg-gray-700 text-gray-400 border-gray-600'
+                                        }`}>
+                                        {subscription?.status === 'active' ? 'Active' : 'Inactive'}
+                                    </span>
+                                    <span className="text-gray-400 text-sm capitalize">
+                                        • {subscription?.billingCycle || 'Monthly'} Billing
+                                    </span>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 border-t border-white/10 pt-6">
-                            <div>
-                                <p className="text-sm text-gray-400 mb-1">{t('subscription.dailyLimit')}</p>
-                                <p className="text-xl font-semibold text-gray-300">
-                                    {subscription?.dailyLimit >= 9999 ? t('subscription.unlimited') : subscription?.dailyLimit}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
+                                <div className="flex items-center gap-2 text-gray-400 mb-2">
+                                    <Calendar className="w-4 h-4" />
+                                    <span className="text-sm">Start Date</span>
+                                </div>
+                                <p className="text-lg font-semibold text-white">
+                                    {formatDate(subscription?.startDate)}
                                 </p>
                             </div>
-                            <div>
-                                <p className="text-sm text-gray-400 mb-1">{t('subscription.pointsDeduction')}</p>
-                                <p className={`text-xl font-semibold ${pointsDeducted ? 'text-orange-400' : 'text-green-500'}`}>
-                                    {pointsDeducted ? t('subscription.yes') : t('subscription.no')}
+                            <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
+                                <div className="flex items-center gap-2 text-gray-400 mb-2">
+                                    <Clock className="w-4 h-4" />
+                                    <span className="text-sm">Next Billing</span>
+                                </div>
+                                <p className="text-lg font-semibold text-white">
+                                    {formatDate(subscription?.nextBillingDate)}
                                 </p>
                             </div>
-                            <div>
-                                <p className="text-sm text-gray-400 mb-1">{t('subscription.internalLLM')}</p>
-                                <p className={`text-xl font-semibold ${subscription?.plan === 'apikey' ? 'text-gray-500' : 'text-green-500'}`}>
-                                    {subscription?.plan === 'apikey' ? t('subscription.disabled') : t('subscription.available')}
+                            <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
+                                <div className="flex items-center gap-2 text-gray-400 mb-2">
+                                    <History className="w-4 h-4" />
+                                    <span className="text-sm">Remaining Days</span>
+                                </div>
+                                <p className="text-lg font-semibold text-blue-400">
+                                    {subscription?.remainingDays ?? '-'} Days
                                 </p>
                             </div>
-                            <div>
-                                <p className="text-sm text-gray-400 mb-1">{t('subscription.externalAPIKey')}</p>
-                                <p className={`text-xl font-semibold ${canUseExternal ? 'text-green-500' : 'text-red-400'}`}>
-                                    {canUseExternal ? t('subscription.supported') : t('subscription.notSupported')}
+                            <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
+                                <div className="flex items-center gap-2 text-gray-400 mb-2">
+                                    <CheckCircle className="w-4 h-4" />
+                                    <span className="text-sm">Daily Limit</span>
+                                </div>
+                                <p className="text-lg font-semibold text-white">
+                                    {subscription?.dailyLimit === -1 ? 'Unlimited' : subscription?.dailyLimit}
                                 </p>
                             </div>
                         </div>
@@ -124,19 +169,44 @@ const SubscriptionOverview: React.FC = () => {
                 )}
             </div>
 
-            {/* API Access / Warning Card */}
-            <div className="rounded-2xl bg-[#151927] border border-white/10 p-6 mb-6">
-                <h3 className="text-lg font-semibold text-blue-300 mb-2">{t('subscription.needAccess.title')}</h3>
-                <p className="text-gray-300 mb-4">
-                    {t('subscription.needAccess.description')}
-                    {isFree && <span className="font-bold text-red-500 ml-2">{t('subscription.needAccess.freeWarning')}</span>}
-                </p>
-                <Link
-                    to="/settings/apikeys"
-                    className="text-blue-400 font-medium hover:underline flex items-center gap-1"
-                >
-                    {t('subscription.needAccess.manageKeys')} <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                </Link>
+            {/* Upgrade History */}
+            <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 backdrop-blur-sm">
+                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                    <History className="w-5 h-5 text-gray-400" />
+                    Upgrade History
+                </h3>
+
+                {!loading && (!subscription?.upgradeHistory || subscription.upgradeHistory.length === 0) ? (
+                    <div className="text-center py-8 text-gray-500">
+                        No upgrade history found.
+                    </div>
+                ) : (
+                    <div className="relative border-l border-gray-800 ml-3 space-y-8">
+                        {subscription?.upgradeHistory?.map((event, index) => (
+                            <div key={index} className="relative pl-8">
+                                <div className="absolute -left-1.5 top-1.5 w-3 h-3 rounded-full bg-blue-500 border-2 border-gray-900 shadow-[0_0_0_4px_rgba(59,130,246,0.2)]" />
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1">
+                                    <span className="text-sm text-gray-400 font-mono">
+                                        {new Date(event.timestamp).toLocaleString()}
+                                    </span>
+                                    <span className="text-xs font-medium px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase">
+                                        {event.action || 'Upgrade'}
+                                    </span>
+                                </div>
+                                <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+                                    <p className="text-white font-medium">
+                                        Plan Change: <span className="text-gray-400">{event.oldPlan}</span> → <span className="text-blue-400">{event.newPlan}</span>
+                                    </p>
+                                    {event.chargeAmount > 0 && (
+                                        <p className="text-sm text-gray-400 mt-1">
+                                            Charged: <span className="text-white">${event.chargeAmount}</span>
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );

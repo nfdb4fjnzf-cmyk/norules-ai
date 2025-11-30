@@ -4,10 +4,10 @@ import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tool
 import SkeletonLoader from '../components/SkeletonLoader';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { CreditCard, History, Zap, Calendar, ArrowRight } from 'lucide-react';
 
 const data = [
   { name: 'Mon', score: 92 },
@@ -54,58 +54,100 @@ const Dashboard: React.FC = () => {
     if (user) fetchSub();
   }, [user]);
 
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '-';
+    return new Date(dateStr).toLocaleDateString();
+  };
+
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in max-w-7xl mx-auto p-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white mb-2">{t('dashboard.title')}</h1>
           <p className="text-secondary">{t('dashboard.subtitle')}</p>
         </div>
-        {/* Plan Badge */}
-        {!loading && subscription && (
-          <div className="px-4 py-2 rounded-xl bg-background-card border border-border flex items-center gap-3 shadow-sm">
-            <span className="text-sm text-secondary">{t('dashboard.currentPlan')}</span>
-            <span className="font-bold text-primary">{subscription.plan.toUpperCase()}</span>
-            <Link to="/subscription/plans">
-              <Button size="sm" variant="outline" className="ml-2 h-8">
-                {t('sidebar.widget.upgrade')}
-              </Button>
-            </Link>
-          </div>
-        )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        {/* Quota Card */}
-        <Card className="flex flex-col justify-between transition-all duration-200 hover:border-white/20 hover:bg-background-card/80 backdrop-blur-sm group">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <p className="text-secondary text-sm font-medium mb-1">{t('dashboard.dailyQuota')}</p>
-              {loading ? (
-                <SkeletonLoader type="small" className="w-20 h-8" />
-              ) : (
-                <h3 className="text-3xl font-bold text-white tracking-tight">
-                  {subscription?.usage?.used || 0} <span className="text-lg text-secondary font-normal">/ {subscription?.dailyLimit}</span>
-                </h3>
-              )}
+      {/* V3 Summary Block */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Plan & Expiry */}
+        <div className="bg-gradient-to-br from-blue-600/20 to-purple-600/20 border border-blue-500/20 rounded-2xl p-6 backdrop-blur-sm relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-blue-500/20 rounded-lg">
+                <CreditCard className="w-5 h-5 text-blue-400" />
+              </div>
+              <h3 className="text-gray-300 font-medium">Current Plan</h3>
             </div>
-            <div className="p-3 rounded-xl bg-primary/10 text-primary group-hover:bg-primary/20 transition-all">
-              <span className="material-symbols-outlined">data_usage</span>
-            </div>
+            {loading ? (
+              <SkeletonLoader type="small" className="w-24 h-8" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold text-white capitalize mb-1">
+                  {subscription?.plan || 'Free'}
+                </div>
+                <div className="text-sm text-gray-400 flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  Next Billing: {formatDate(subscription?.nextBillingDate)}
+                </div>
+              </>
+            )}
+            <Link to="/subscription/overview" className="absolute bottom-6 right-6 p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors">
+              <ArrowRight className="w-4 h-4 text-white" />
+            </Link>
           </div>
-          {!loading && subscription && (
-            <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
-              <div
-                className="bg-primary h-full rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(100, ((subscription.usage?.used || 0) / subscription.dailyLimit) * 100)}%` }}
-              ></div>
-            </div>
-          )}
-        </Card>
+        </div>
 
-        <MetricCard label={t('dashboard.avgScore')} value="92.4" trend={2.1} icon="analytics" color="bg-purple-500" />
-        <MetricCard label={t('dashboard.issuesDetected')} value="86" trend={-5} icon="bug_report" color="bg-orange-500" />
-        <MetricCard label={t('dashboard.pendingReview')} value="12" icon="pending_actions" color="bg-gray-500" />
+        {/* Usage Stats */}
+        <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 backdrop-blur-sm relative overflow-hidden">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-yellow-500/20 rounded-lg">
+              <Zap className="w-5 h-5 text-yellow-500" />
+            </div>
+            <h3 className="text-gray-300 font-medium">Usage This Month</h3>
+          </div>
+          {loading ? (
+            <SkeletonLoader type="small" className="w-24 h-8" />
+          ) : (
+            <>
+              <div className="text-3xl font-bold text-white mb-1">
+                {subscription?.usage?.used || 0}
+                <span className="text-lg text-gray-500 font-normal ml-2">
+                  / {subscription?.dailyLimit === -1 ? '∞' : subscription?.dailyLimit}
+                </span>
+              </div>
+              <div className="w-full bg-gray-800 h-1.5 rounded-full mt-3 overflow-hidden">
+                <div
+                  className="bg-yellow-500 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${Math.min(100, ((subscription?.usage?.used || 0) / (subscription?.dailyLimit || 1)) * 100)}%` }}
+                />
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 backdrop-blur-sm flex flex-col justify-center gap-3">
+          <Link to="/history" className="flex items-center justify-between p-3 bg-gray-800/50 rounded-xl hover:bg-gray-800 transition-colors group">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-500/20 rounded-lg">
+                <History className="w-4 h-4 text-purple-400" />
+              </div>
+              <span className="text-gray-200 font-medium">View History</span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />
+          </Link>
+          <Link to="/subscription/plans" className="flex items-center justify-between p-3 bg-gray-800/50 rounded-xl hover:bg-gray-800 transition-colors group">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-500/20 rounded-lg">
+                <CreditCard className="w-4 h-4 text-green-400" />
+              </div>
+              <span className="text-gray-200 font-medium">Upgrade Plan</span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
