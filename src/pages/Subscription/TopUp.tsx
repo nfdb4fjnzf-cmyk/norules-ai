@@ -98,7 +98,7 @@ const TopUp: React.FC = () => {
                     </div>
                     <h3 className="text-xl font-bold text-white mb-2">Enterprise Custom</h3>
                     <div className="w-full mb-4">
-                        <label className="block text-xs text-gray-400 mb-2 text-left">Enter Amount (>10,000)</label>
+                        <label className="block text-xs text-gray-400 mb-2 text-left">Enter Amount (&gt;10,000)</label>
                         <input
                             type="number"
                             min="10001"
