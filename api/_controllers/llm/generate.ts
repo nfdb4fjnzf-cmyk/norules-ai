@@ -247,9 +247,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 await logUsageStats(user.uid, 'text_generation', actualCost);
 
                 return res.status(200).json(successResponse({
-                    text,
+                    data: { text },
                     riskScore: 0,
                     meta: {
+                        mode: 'INTERNAL',
                         model: geminiModelName,
                         pointsDeducted: actualCost,
                         quotaRemaining: 0,
