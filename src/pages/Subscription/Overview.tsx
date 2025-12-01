@@ -83,13 +83,22 @@ const SubscriptionOverview: React.FC = () => {
                     <h1 className="text-2xl font-bold text-white mb-2">訂閱方案</h1>
                     <p className="text-gray-400">管理您的方案、帳單與使用額度。</p>
                 </div>
-                <Link
-                    to="/subscription/plans"
-                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-lg shadow-blue-500/20"
-                >
-                    <ArrowUpCircle className="w-4 h-4" />
-                    升級方案
-                </Link>
+                <div className="flex gap-3">
+                    <Link
+                        to="/subscription/topup"
+                        className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors border border-white/10"
+                    >
+                        <span className="material-symbols-outlined text-lg">bolt</span>
+                        購買點數
+                    </Link>
+                    <Link
+                        to="/subscription/plans"
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-lg shadow-blue-500/20"
+                    >
+                        <ArrowUpCircle className="w-4 h-4" />
+                        升級方案
+                    </Link>
+                </div>
             </div>
 
             {/* Current Plan Card */}
