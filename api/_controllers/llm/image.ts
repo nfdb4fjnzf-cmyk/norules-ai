@@ -66,7 +66,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         let imageUrl = '';
         let riskScore = 10; // Default low risk
 
-        if (modelId === 'dall-e-3') {
+        // Force DALL-E 3 for now as Imagen is unstable/404
+        // if (modelId === 'imagen-3') modelId = 'dall-e-3'; 
+
+        // Actually, let's just use the DALL-E 3 logic for both or default.
+        // We keep the if structure but redirect imagen-3 to dall-e-3 logic or just make it the primary.
+
+        if (modelId === 'dall-e-3' || modelId === 'imagen-3') {
             const apiKey = Array.isArray(customOpenAIKey) ? customOpenAIKey[0] : customOpenAIKey;
             const openai = new OpenAI({
                 apiKey: apiKey || process.env.OPENAI_API_KEY,
@@ -80,115 +86,80 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             });
 
             imageUrl = (response.data && response.data[0] && response.data[0].url) ? response.data[0].url : '';
-        } else if (modelId === 'imagen-3') {
-            // Imagen 3 via REST API (Google AI Studio)
-            const apiKeyHeader = Array.isArray(customGeminiKey) ? customGeminiKey[0] : customGeminiKey;
-            const apiKey = apiKeyHeader || process.env.GEMINI_API_KEY;
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${apiKey}`;
-
-            // Append aspect ratio to prompt for Imagen as it doesn't strictly support size param in this endpoint yet
-            const imagenPrompt = `${modifiedPrompt} (Aspect Ratio: ${aspectRatio})`;
-
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    instances: [{ prompt: imagenPrompt }],
-                    parameters: { sampleCount: 1, aspectRatio: aspectRatio } // Attempting to pass aspectRatio param
-                })
-            });
-
-            if (!response.ok) {
-                const errText = await response.text();
-                throw new Error(`Imagen API Error: ${response.status} - ${errText}`);
-            }
-
-            const data = await response.json();
-            // Parse response - usually base64 encoded image in predictions
-            // Structure: { predictions: [ { bytesBase64Encoded: "..." } ] }
-            if (data.predictions && data.predictions[0] && data.predictions[0].bytesBase64Encoded) {
-                imageUrl = `data:image/png;base64,${data.predictions[0].bytesBase64Encoded}`;
-            } else if (data.predictions && data.predictions[0] && data.predictions[0].mimeType && data.predictions[0].bytesBase64Encoded) {
-                imageUrl = `data:${data.predictions[0].mimeType};base64,${data.predictions[0].bytesBase64Encoded}`;
-            } else {
-                throw new Error('Invalid Imagen Response format');
-            }
-
         } else {
-            // Mock Fallback (Banana Nano)
+            // Mock Fallback (Banana Nano or others)
             await new Promise(resolve => setTimeout(resolve, 2000));
             imageUrl = 'https://via.placeholder.com/1024x1024.png?text=Mock+Image+Generation';
         }
+    }
 
         // V3: Log Transaction
         await usageService.logTransaction({
-            userId: user.uid,
-            actionType: 'image',
-            inputText: prompt,
-            outputType: 'image',
-            estimatedCost,
-            actualCost: estimatedCost, // Fixed cost
-            timestamp: new Date().toISOString(),
-            modelUsed: modelId,
-            status: 'success'
-        });
+        userId: user.uid,
+        actionType: 'image',
+        inputText: prompt,
+        outputType: 'image',
+        estimatedCost,
+        actualCost: estimatedCost, // Fixed cost
+        timestamp: new Date().toISOString(),
+        modelUsed: modelId,
+        status: 'success'
+    });
 
-        // Legacy Log
-        await logUsage({
-            context: { userId: user.uid, email: user.email },
+    // Legacy Log
+    await logUsage({
+        context: { userId: user.uid, email: user.email },
+        mode: 'INTERNAL',
+        apiPath: '/api/llm/image',
+        prompt: prompt,
+        resultSummary: `Generated Image: ${imageUrl.substring(0, 50)}...`,
+        pointsDeducted: estimatedCost,
+        status: 'SUCCESS',
+        privateMode: privateMode
+    });
+
+    return res.status(200).json(successResponse({
+        imageUrl: imageUrl,
+        riskScore: riskScore,
+        meta: {
             mode: 'INTERNAL',
-            apiPath: '/api/llm/image',
-            prompt: prompt,
-            resultSummary: `Generated Image: ${imageUrl.substring(0, 50)}...`,
             pointsDeducted: estimatedCost,
-            status: 'SUCCESS',
-            privateMode: privateMode
-        });
+            quotaUsage: { used: 1, limit: 100 }
+        }
+    }));
 
-        return res.status(200).json(successResponse({
-            imageUrl: imageUrl,
-            riskScore: riskScore,
-            meta: {
-                mode: 'INTERNAL',
-                pointsDeducted: estimatedCost,
-                quotaUsage: { used: 1, limit: 100 }
+} catch (error: any) {
+    console.error('Image Generation Error:', error);
+
+    // REFUND ON FAILURE
+    if (user) {
+        try {
+            // Check if error is NOT insufficient points (meaning we likely deducted)
+            if (error.statusCode !== 402) {
+                await userService.addCredits(user.uid, estimatedCost);
+                console.log(`Refunded ${estimatedCost} credits to ${user.uid} due to failure`);
             }
-        }));
-
-    } catch (error: any) {
-        console.error('Image Generation Error:', error);
-
-        // REFUND ON FAILURE
-        if (user) {
-            try {
-                // Check if error is NOT insufficient points (meaning we likely deducted)
-                if (error.statusCode !== 402) {
-                    await userService.addCredits(user.uid, estimatedCost);
-                    console.log(`Refunded ${estimatedCost} credits to ${user.uid} due to failure`);
-                }
-            } catch (refundError) {
-                console.error('Failed to refund credits:', refundError);
-            }
-
-            // Log Failure
-            await usageService.logTransaction({
-                userId: user.uid,
-                actionType: 'image',
-                inputText: req.body?.prompt || 'Unknown',
-                estimatedCost,
-                actualCost: 0,
-                timestamp: new Date().toISOString(),
-                status: 'failed',
-                errorMessage: error.message
-            });
+        } catch (refundError) {
+            console.error('Failed to refund credits:', refundError);
         }
 
-        const code = error.code || ErrorCodes.INTERNAL_SERVER_ERROR;
-        const status = error.statusCode || 500;
-        const message = error.message || 'Internal Server Error';
-
-        return res.status(status).json(errorResponse(code, message));
+        // Log Failure
+        await usageService.logTransaction({
+            userId: user.uid,
+            actionType: 'image',
+            inputText: req.body?.prompt || 'Unknown',
+            estimatedCost,
+            actualCost: 0,
+            timestamp: new Date().toISOString(),
+            status: 'failed',
+            errorMessage: error.message
+        });
     }
+
+    const code = error.code || ErrorCodes.INTERNAL_SERVER_ERROR;
+    const status = error.statusCode || 500;
+    const message = error.message || 'Internal Server Error';
+
+    return res.status(status).json(errorResponse(code, message));
+}
 }
