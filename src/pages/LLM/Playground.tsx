@@ -311,19 +311,13 @@ const LLMPlayground: React.FC = () => {
 
                     {isGuidedMode ? (
                         <ErrorBoundary>
-                            {/* <GuidedModeForm
-                                    onGenerate={handleGuidedGenerate}
-                                    isEnterprise={subscription?.plan === 'enterprise'}
-                                    hasCustomKey={!!userProfile?.customApiKey}
-                                    availableModels={MODELS}
-                                    onCostChange={setEstimatedCostValue}
-                                /> */}
-                            <div className="p-10 text-center text-gray-400 bg-white/5 rounded-xl border border-white/10">
-                                <p>Guided Mode is currently under maintenance.</p>
-                                <button onClick={() => setIsGuidedMode(false)} className="mt-4 text-blue-400 hover:underline">
-                                    Switch to Standard Mode
-                                </button>
-                            </div>
+                            <GuidedModeForm
+                                onGenerate={handleGuidedGenerate}
+                                isEnterprise={subscription?.plan === 'enterprise'}
+                                hasCustomKey={!!userProfile?.customApiKey}
+                                availableModels={MODELS}
+                                onCostChange={setEstimatedCostValue}
+                            />
                         </ErrorBoundary>
                     ) : (
                         <>
