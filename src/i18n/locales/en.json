@@ -232,6 +232,27 @@
             "invalidApiKey": "Invalid API Key or Unauthorized.",
             "insufficientPoints": "Insufficient points.",
             "requestFailed": "Request failed"
+        },
+        "guidedMode": {
+            "title": "Guided Mode",
+            "switchLabel": "Guided Mode",
+            "platform": "Platform",
+            "format": "Format",
+            "productName": "Product Name",
+            "brandName": "Brand Name",
+            "keySellingPoints": "Key Selling Points",
+            "targetAudience": "Target Audience",
+            "marketingGoal": "Marketing Goal",
+            "tone": "Tone",
+            "creativeType": "Creative Type",
+            "aspectRatio": "Aspect Ratio",
+            "visualStyle": "Visual Style",
+            "brandColor": "Brand Color (Hex)",
+            "elements": "Visual Elements",
+            "language": "Language",
+            "compliance": "Compliance Mode",
+            "outputFormat": "Output Format",
+            "autoSelectModel": "✨ AI Auto-Select Model"
         }
     },
     "settings": {

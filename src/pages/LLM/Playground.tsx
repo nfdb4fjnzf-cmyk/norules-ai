@@ -9,6 +9,7 @@ import { llmService } from '../../services/llmService';
 import { useAuth } from '../../contexts/AuthContext';
 import { useModal } from '../../contexts/ModalContext';
 import CostEstimateModal from '../../components/CostEstimateModal';
+import GuidedModeForm from '../../components/GuidedMode/GuidedModeForm';
 import api from '../../services/api';
 
 type Mode = 'INTERNAL' | 'EXTERNAL';
@@ -124,11 +125,33 @@ const LLMPlayground: React.FC = () => {
     // Access Control Check
     const isRestricted = (modelType === 'image' || modelType === 'video') && (mode === 'EXTERNAL' || (subscription?.plan === 'free' && mode === 'INTERNAL'));
 
-    const handleCall = async () => {
-        if (!input && !file) {
+    // Guided Mode State
+    const [isGuidedMode, setIsGuidedMode] = useState(false);
+
+    const handleGuidedGenerate = (prompt: string, modelId: string, actionType: 'text' | 'image' | 'video') => {
+        setInput(prompt);
+        setSelectedModel(modelId);
+        // We need to trigger generation immediately
+        // But handleCall uses state 'input' and 'selectedModel' which might not be updated yet due to closure.
+        // So we refactor handleCall to accept optional args.
+        handleCall(prompt, modelId, actionType);
+    };
+
+    const handleCall = async (overrideInput?: string, overrideModel?: string, overrideActionType?: 'text' | 'image' | 'video') => {
+        const currentInput = overrideInput || input;
+        const currentModel = overrideModel || selectedModel;
+        const currentModelType = overrideActionType || getModelType(currentModel);
+
+        // If file is present, use it (Standard Mode only usually, but Guided Mode might support it later)
+        // For now Guided Mode doesn't support file upload in the form, but we can keep it compatible.
+
+        if (!currentInput && !file) {
             showToast('error', t('analyzer.errors.enterText'));
             return;
         }
+
+        // Access Control Check (Re-evaluate with current model)
+        const isRestricted = (currentModelType === 'image' || currentModelType === 'video') && (mode === 'EXTERNAL' || (subscription?.plan === 'free' && mode === 'INTERNAL'));
 
         if (isRestricted) {
             showToast('error', 'This feature is not available in your current plan or mode.');
@@ -140,17 +163,22 @@ const LLMPlayground: React.FC = () => {
             try {
                 setIsEstimating(true);
                 const res = await api.post('/cost/estimate', {
-                    actionType: modelType === 'text' ? 'chat' : modelType, // Map text to chat/analysis
-                    inputLength: input.length,
-                    model: selectedModel
+                    actionType: currentModelType === 'text' ? 'chat' : currentModelType,
+                    inputLength: currentInput.length,
+                    model: currentModel
                 });
 
                 if (res.data.code === 0) {
                     setEstimatedCostValue(res.data.data.estimatedCost);
+                    // If Guided Mode, we might want to skip confirmation or show it differently?
+                    // For now, show the modal.
+                    // We need to store the "pending execution" parameters
+                    // But executeGeneration reads from state.
+                    // We should update state before showing modal.
+                    setInput(currentInput);
+                    setSelectedModel(currentModel);
                     setShowCostModal(true);
                 } else {
-                    // Fallback if estimate fails? Or block?
-                    // Let's block to be safe
                     showToast('error', 'Failed to estimate cost. Please try again.');
                 }
             } catch (e) {
@@ -160,23 +188,32 @@ const LLMPlayground: React.FC = () => {
                 setIsEstimating(false);
             }
         } else {
-            // External mode bypasses cost check (or handles differently)
-            executeGeneration();
+            // External mode
+            setInput(currentInput);
+            setSelectedModel(currentModel);
+            // We need to wait for state update? No, executeGeneration reads state.
+            // React state updates are batched.
+            // Better to pass args to executeGeneration too.
+            executeGeneration(currentInput, currentModel, currentModelType);
         }
     };
 
-    const executeGeneration = async () => {
+    const executeGeneration = async (overrideInput?: string, overrideModel?: string, overrideType?: string) => {
+        const textToUse = overrideInput || input;
+        const modelToUse = overrideModel || selectedModel;
+        const typeToUse = overrideType || getModelType(modelToUse);
+
         setShowCostModal(false);
         setLoading(true);
         setResponse(null);
         try {
             let res;
-            if (modelType === 'image') {
-                res = await llmService.generateImage(input, selectedModel, complianceScore, aspectRatio, privateMode);
-            } else if (modelType === 'video') {
-                res = await llmService.generateVideo(input, selectedModel, complianceScore, aspectRatio, privateMode);
+            if (typeToUse === 'image') {
+                res = await llmService.generateImage(textToUse, modelToUse, complianceScore, aspectRatio, privateMode);
+            } else if (typeToUse === 'video') {
+                res = await llmService.generateVideo(textToUse, modelToUse, complianceScore, aspectRatio, privateMode);
             } else {
-                res = await llmService.generateText(input, selectedModel, complianceScore, privateMode);
+                res = await llmService.generateText(textToUse, modelToUse, complianceScore, privateMode);
             }
 
             setResponse(res);
@@ -186,7 +223,6 @@ const LLMPlayground: React.FC = () => {
 
         } catch (e: any) {
             console.error(e);
-            // Check for 'message' from our API response format
             const errorMessage = e.response?.data?.message || e.response?.data?.error || e.message || 'Generation failed';
             showToast('error', errorMessage);
         } finally {
@@ -208,8 +244,8 @@ const LLMPlayground: React.FC = () => {
             <CostEstimateModal
                 isOpen={showCostModal}
                 onClose={() => setShowCostModal(false)}
-                onConfirm={executeGeneration}
-                actionType={modelType}
+                onConfirm={() => executeGeneration()}
+                actionType={getModelType(selectedModel)}
                 estimatedCost={estimatedCostValue}
                 currentBalance={userProfile?.credits || 0}
                 isProcessing={loading}
@@ -254,129 +290,157 @@ const LLMPlayground: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
                 {/* Input Area */}
                 <div className="rounded-2xl bg-white/5 border border-white/10 p-6 flex flex-col gap-4 overflow-y-auto">
-                    <div className="flex justify-between items-center">
-                        <h3 className="font-bold text-gray-200">{t('playground.input')}</h3>
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-400">{t('playground.model')}:</span>
-                            <select
-                                value={selectedModel}
-                                onChange={(e) => setSelectedModel(e.target.value)}
-                                className="bg-black/20 border border-white/10 rounded-lg px-2 py-1 text-sm text-gray-200 outline-none focus:border-blue-500/50"
-                            >
-                                {MODELS.map((model) => {
-                                    const type = getModelType(model.id);
-                                    const disabled = (type === 'image' || type === 'video') && (mode === 'EXTERNAL' || (subscription?.plan === 'free' && mode === 'INTERNAL'));
-                                    return (
-                                        <option key={model.id} value={model.id} disabled={disabled}>
-                                            {t(model.nameKey)} {disabled ? '(Upgrade Required)' : ''}
-                                        </option>
-                                    );
-                                })}
-                            </select>
-                        </div>
+
+                    {/* Mode Toggle */}
+                    <div className="flex bg-black/20 p-1 rounded-xl border border-white/5 mb-2">
+                        <button
+                            onClick={() => setIsGuidedMode(false)}
+                            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${!isGuidedMode ? 'bg-blue-500 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                        >
+                            Free Input
+                        </button>
+                        <button
+                            onClick={() => setIsGuidedMode(true)}
+                            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${isGuidedMode ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                        >
+                            ✨ Guided Mode
+                        </button>
                     </div>
 
-                    <textarea
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        placeholder={t('playground.placeholder.prompt')}
-                        className="flex-1 bg-black/20 rounded-xl p-4 text-gray-200 outline-none border border-white/5 focus:border-blue-500/50 resize-none font-mono text-sm min-h-[150px]"
-                    />
-
-                    {/* Aspect Ratio Selector (Only for Image/Video) */}
-                    {(modelType === 'image' || modelType === 'video') && (
-                        <div className="bg-black/20 p-3 rounded-xl border border-white/5">
-                            <div className="flex justify-between items-center mb-2">
-                                <span className="text-xs text-gray-400 font-bold">Aspect Ratio</span>
-                                <span className="text-xs text-blue-400">
-                                    Output: {modelType === 'image' ? '1080p' : '720p'}
-                                </span>
-                            </div>
-                            <div className="flex gap-2">
-                                {ASPECT_RATIOS.map((ratio) => (
-                                    <button
-                                        key={ratio.id}
-                                        onClick={() => setAspectRatio(ratio.id)}
-                                        className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${aspectRatio === ratio.id
-                                            ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20'
-                                            : 'bg-white/5 text-gray-400 hover:bg-white/10'
-                                            }`}
+                    {isGuidedMode ? (
+                        <GuidedModeForm
+                            onGenerate={handleGuidedGenerate}
+                            isEnterprise={subscription?.plan === 'enterprise'}
+                            hasCustomKey={mode === 'EXTERNAL'}
+                            availableModels={MODELS}
+                        />
+                    ) : (
+                        <>
+                            <div className="flex justify-between items-center">
+                                <h3 className="font-bold text-gray-200">{t('playground.input')}</h3>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm text-gray-400">{t('playground.model')}:</span>
+                                    <select
+                                        value={selectedModel}
+                                        onChange={(e) => setSelectedModel(e.target.value)}
+                                        className="bg-black/20 border border-white/10 rounded-lg px-2 py-1 text-sm text-gray-200 outline-none focus:border-blue-500/50"
                                     >
-                                        {ratio.label}
-                                        <div className="text-[10px] opacity-60 mt-0.5">
-                                            {modelType === 'image' ? ratio.resolution.image : ratio.resolution.video}
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* File Upload & Cost */}
-                    <div className="flex flex-col gap-3">
-                        <div className="flex items-center justify-between">
-                            <div className="flex gap-2">
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    className="hidden"
-                                    onChange={(e) => handleFileSelect(e, fileType || 'image')}
-                                />
-                                <button
-                                    onClick={() => triggerFileSelect('image')}
-                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${fileType === 'image' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50' : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/5'}`}
-                                >
-                                    <span className="material-symbols-outlined text-lg">image</span>
-                                    {t('playground.uploadImage')}
-                                </button>
-                                <button
-                                    onClick={() => triggerFileSelect('video')}
-                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${fileType === 'video' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50' : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/5'}`}
-                                >
-                                    <span className="material-symbols-outlined text-lg">movie</span>
-                                    {t('playground.uploadVideo')}
-                                </button>
+                                        {MODELS.map((model) => {
+                                            const type = getModelType(model.id);
+                                            const disabled = (type === 'image' || type === 'video') && (mode === 'EXTERNAL' || (subscription?.plan === 'free' && mode === 'INTERNAL'));
+                                            return (
+                                                <option key={model.id} value={model.id} disabled={disabled}>
+                                                    {t(model.nameKey)} {disabled ? '(Upgrade Required)' : ''}
+                                                </option>
+                                            );
+                                        })}
+                                    </select>
+                                </div>
                             </div>
 
-                            {file && (
-                                <div className="flex items-center gap-2 bg-white/5 px-3 py-1 rounded-lg border border-white/10">
-                                    <span className="text-xs text-gray-300 truncate max-w-[100px]">{file.name}</span>
-                                    <button onClick={clearFile} className="text-gray-500 hover:text-red-400">
-                                        <span className="material-symbols-outlined text-sm">close</span>
-                                    </button>
+                            <textarea
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                placeholder={t('playground.placeholder.prompt')}
+                                className="flex-1 bg-black/20 rounded-xl p-4 text-gray-200 outline-none border border-white/5 focus:border-blue-500/50 resize-none font-mono text-sm min-h-[150px]"
+                            />
+
+                            {/* Aspect Ratio Selector (Only for Image/Video) */}
+                            {(modelType === 'image' || modelType === 'video') && (
+                                <div className="bg-black/20 p-3 rounded-xl border border-white/5">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-xs text-gray-400 font-bold">Aspect Ratio</span>
+                                        <span className="text-xs text-blue-400">
+                                            Output: {modelType === 'image' ? '1080p' : '720p'}
+                                        </span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        {ASPECT_RATIOS.map((ratio) => (
+                                            <button
+                                                key={ratio.id}
+                                                onClick={() => setAspectRatio(ratio.id)}
+                                                className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${aspectRatio === ratio.id
+                                                    ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20'
+                                                    : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                                                    }`}
+                                            >
+                                                {ratio.label}
+                                                <div className="text-[10px] opacity-60 mt-0.5">
+                                                    {modelType === 'image' ? ratio.resolution.image : ratio.resolution.video}
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
-                        </div>
 
-                        {/* Target Compliance Score Slider */}
-                        <div className="flex flex-col gap-2 py-2">
-                            <div className="flex justify-between items-center text-xs text-gray-400">
-                                <span>{t('playground.targetRiskScore')}</span>
-                                <span className="text-gray-200 font-bold">{complianceScore}</span>
+                            {/* File Upload & Cost */}
+                            <div className="flex flex-col gap-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="file"
+                                            ref={fileInputRef}
+                                            className="hidden"
+                                            onChange={(e) => handleFileSelect(e, fileType || 'image')}
+                                        />
+                                        <button
+                                            onClick={() => triggerFileSelect('image')}
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${fileType === 'image' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50' : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/5'}`}
+                                        >
+                                            <span className="material-symbols-outlined text-lg">image</span>
+                                            {t('playground.uploadImage')}
+                                        </button>
+                                        <button
+                                            onClick={() => triggerFileSelect('video')}
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${fileType === 'video' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50' : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/5'}`}
+                                        >
+                                            <span className="material-symbols-outlined text-lg">movie</span>
+                                            {t('playground.uploadVideo')}
+                                        </button>
+                                    </div>
+
+                                    {file && (
+                                        <div className="flex items-center gap-2 bg-white/5 px-3 py-1 rounded-lg border border-white/10">
+                                            <span className="text-xs text-gray-300 truncate max-w-[100px]">{file.name}</span>
+                                            <button onClick={clearFile} className="text-gray-500 hover:text-red-400">
+                                                <span className="material-symbols-outlined text-sm">close</span>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Target Compliance Score Slider */}
+                                <div className="flex flex-col gap-2 py-2">
+                                    <div className="flex justify-between items-center text-xs text-gray-400">
+                                        <span>{t('playground.targetRiskScore')}</span>
+                                        <span className="text-gray-200 font-bold">{complianceScore}</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        value={complianceScore}
+                                        onChange={(e) => setComplianceScore(Number(e.target.value))}
+                                        className="w-full h-1.5 bg-black/40 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                    />
+                                </div>
+
+                                <div className="flex justify-between items-center text-xs text-gray-400 px-1">
+                                    <span>{t('playground.cost')}: <span className="text-warning font-bold">{estimatedCostValue || '...'}</span> {t('playground.points')}</span>
+                                    <span>{input.length} chars</span>
+                                </div>
                             </div>
-                            <input
-                                type="range"
-                                min="0"
-                                max="100"
-                                value={complianceScore}
-                                onChange={(e) => setComplianceScore(Number(e.target.value))}
-                                className="w-full h-1.5 bg-black/40 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                            />
-                        </div>
 
-                        <div className="flex justify-between items-center text-xs text-gray-400 px-1">
-                            <span>{t('playground.cost')}: <span className="text-warning font-bold">{estimatedCostValue || '...'}</span> {t('playground.points')}</span>
-                            <span>{input.length} chars</span>
-                        </div>
-                    </div>
-
-                    <button
-                        onClick={handleCall}
-                        disabled={loading || isRestricted || isEstimating}
-                        className={`w-full py-3 rounded-xl font-bold text-white transition-all ${loading || isRestricted || isEstimating ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'}`}
-                    >
-                        {loading ? t('playground.processing') : isEstimating ? 'Estimating...' : isRestricted ? 'Feature Restricted' : t('playground.send')}
-                    </button>
+                            <button
+                                onClick={() => handleCall()}
+                                disabled={loading || isRestricted || isEstimating}
+                                className={`w-full py-3 rounded-xl font-bold text-white transition-all ${loading || isRestricted || isEstimating ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'}`}
+                            >
+                                {loading ? t('playground.processing') : isEstimating ? 'Estimating...' : isRestricted ? 'Feature Restricted' : t('playground.send')}
+                            </button>
+                        </>
+                    )}
                 </div>
 
                 {/* Output Area */}

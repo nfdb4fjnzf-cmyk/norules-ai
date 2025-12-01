@@ -234,6 +234,27 @@
             "invalidApiKey": "無效的 API 金鑰或未授權。",
             "insufficientPoints": "點數不足。",
             "requestFailed": "請求失敗"
+        },
+        "guidedMode": {
+            "title": "智能引導模式",
+            "switchLabel": "智能引導模式",
+            "platform": "發布平台",
+            "format": "素材形式",
+            "productName": "產品名稱",
+            "brandName": "品牌名稱",
+            "keySellingPoints": "核心賣點",
+            "targetAudience": "目標受眾",
+            "marketingGoal": "行銷目標",
+            "tone": "語氣風格",
+            "creativeType": "素材類型",
+            "aspectRatio": "內容比例",
+            "visualStyle": "視覺風格",
+            "brandColor": "品牌色 (HEX)",
+            "elements": "畫面元素",
+            "language": "文案語言",
+            "compliance": "合規模式",
+            "outputFormat": "輸出格式",
+            "autoSelectModel": "✨ AI 自動選擇模型"
         }
     },
     "settings": {
