@@ -21,8 +21,8 @@ interface Message {
 }
 
 const MODELS = [
-    { id: 'gemini-1.5-pro', nameKey: 'playground.model.text.a', cost: 1 }, // Standard
-    { id: 'gemini-1.5-flash', nameKey: 'playground.model.text.b', cost: 0.5 }, // Mini
+    { id: 'gemini-1.5-pro-001', nameKey: 'playground.model.text.a', cost: 1 }, // Standard
+    { id: 'gemini-1.5-flash-001', nameKey: 'playground.model.text.b', cost: 0.5 }, // Mini
     { id: 'gemini-2.0-flash-exp', nameKey: 'Gemini 2.0 Flash (Preview)', cost: 1 }, // New
     { id: 'gemini-exp-1121', nameKey: 'Gemini Exp 1121', cost: 1 }, // Experimental
     { id: 'gpt-4o', nameKey: 'playground.model.text.c', cost: 2 }, // Advanced
@@ -127,7 +127,7 @@ const LLMPlayground: React.FC = () => {
     const isRestricted = (modelType === 'image' || modelType === 'video') && (mode === 'EXTERNAL' || (subscription?.plan === 'free' && mode === 'INTERNAL'));
 
     // Guided Mode State
-    const [isGuidedMode, setIsGuidedMode] = useState(false);
+    const [isGuidedMode, setIsGuidedMode] = useState(true);
 
     const handleGuidedGenerate = (prompt: string, modelId: string, actionType: 'text' | 'image' | 'video') => {
         setInput(prompt);

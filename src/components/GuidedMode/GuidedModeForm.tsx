@@ -75,11 +75,11 @@ const GuidedModeForm: React.FC<GuidedModeFormProps> = ({ onGenerate, isEnterpris
         }
 
         if (formData.format === 'Product Description') {
-            return 'gemini-1.5-flash-latest'; // Fast & Cheap
+            return 'gemini-1.5-flash-001'; // Fast & Cheap
         }
 
         // 4. Default Fallback
-        return 'gemini-1.5-pro-latest';
+        return 'gemini-1.5-pro-001';
     };
 
     const handleSubmit = () => {
