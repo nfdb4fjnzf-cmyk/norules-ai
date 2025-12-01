@@ -23,7 +23,7 @@ export const PLANS: Plan[] = [
         yearlyPrice: 51,      // 5 * 12 * 0.85
         dailyLimit: 5,
         monthlyCredits: 500, // ~16.5 USD value
-        features: ['每日 5 次請求', '每月 500 點數', '基礎客服', '標準速度']
+        features: ['每月 500 點數', '基礎客服', '標準速度']
     },
     {
         id: 'medium',
@@ -34,7 +34,7 @@ export const PLANS: Plan[] = [
         yearlyPrice: 153,     // 15 * 12 * 0.85
         dailyLimit: 30,
         monthlyCredits: 2000, // ~66 USD value
-        features: ['每日 30 次請求', '每月 2000 點數', '優先客服', '快速速度', '可使用所有模型']
+        features: ['每月 2000 點數', '優先客服', '快速速度', '可使用所有模型']
     },
     {
         id: 'enterprise',
@@ -45,7 +45,7 @@ export const PLANS: Plan[] = [
         yearlyPrice: 306,     // 30 * 12 * 0.85
         dailyLimit: -1,       // Unlimited
         monthlyCredits: 10000, // Effectively unlimited for normal use
-        features: ['無限次請求', '每月 10,000 點數', '24/7 客服', '最高速度', '客製化方案']
+        features: ['每月 10,000 點數', '24/7 客服', '最高速度', '客製化方案']
     }
 ];
 

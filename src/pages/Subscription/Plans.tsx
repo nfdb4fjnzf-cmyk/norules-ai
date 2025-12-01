@@ -163,6 +163,9 @@ const Plans: React.FC = () => {
                         const isCurrent = plan.id === currentPlanId;
                         const displayPrice = getPrice(plan);
 
+                        const isLightMonthly = plan.id === 'light' && billingCycle === 'monthly';
+                        const isDisabled = isCurrent || isLightMonthly;
+
                         return (
                             <div
                                 key={plan.id}
@@ -198,13 +201,15 @@ const Plans: React.FC = () => {
 
                                 <button
                                     onClick={() => handleSubscribeClick(plan.id)}
-                                    disabled={isCurrent}
+                                    disabled={isDisabled}
                                     className={`w-full rounded-xl px-4 py-2 font-semibold transition-all duration-150 ease-out active:scale-95 ${isCurrent
-                                        ? 'bg-white/10 text-gray-400 cursor-default'
-                                        : 'bg-blue-500 hover:bg-blue-600 text-white hover:opacity-80'
+                                            ? 'bg-white/10 text-gray-400 cursor-default'
+                                            : isLightMonthly
+                                                ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                                                : 'bg-blue-500 hover:bg-blue-600 text-white hover:opacity-80'
                                         }`}
                                 >
-                                    {isCurrent ? '目前方案' : '訂閱'}
+                                    {isCurrent ? '目前方案' : isLightMonthly ? '僅限季付' : '訂閱'}
                                 </button>
                             </div>
                         );
