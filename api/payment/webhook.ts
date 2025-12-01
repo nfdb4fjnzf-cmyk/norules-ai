@@ -140,6 +140,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                         },
                         dailyLimit: plan.dailyLimit
                     });
+
+                    // V3: Grant Monthly Credits (Subscription + Points Model)
+                    if (plan.monthlyCredits && plan.monthlyCredits > 0) {
+                        // We use addCredits which handles transaction internally.
+                        // Note: addCredits applies multiplier logic for refunds, but here we want to add RAW credits.
+                        // The current addCredits implementation applies multiplier! This is problematic for "Granting" credits.
+                        // We should probably use a direct update or a new method 'grantCredits'.
+                        // However, let's look at addCredits again.
+                        // It multiplies by plan discount. That's for "Refund".
+                        // For "Granting", we want exact amount.
+                        // I'll use a direct DB update here to be safe and simple, or I should have updated userService.
+                        // Let's do direct DB update for now to avoid breaking userService signature if it's used elsewhere.
+                        // Actually, I can just update the user doc directly since I have the reference logic nearby?
+                        // No, let's use a transaction or simple update.
+
+                        const userRef = db.collection('users').doc(userId);
+                        await db.runTransaction(async (t) => {
+                            const doc = await t.get(userRef);
+                            const currentCredits = doc.data()?.credits || 0;
+                            t.update(userRef, {
+                                credits: currentCredits + plan.monthlyCredits,
+                                updatedAt: new Date().toISOString()
+                            });
+                        });
+                        console.log(`Granted ${plan.monthlyCredits} credits to ${userId} for ${plan.id} plan.`);
+                    }
                 }
             }
         }

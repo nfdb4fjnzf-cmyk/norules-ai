@@ -9,6 +9,7 @@ export interface Plan {
     quarterlyPrice: number;
     yearlyPrice: number;
     dailyLimit: number; // -1 for unlimited
+    monthlyCredits: number; // New: Credits granted per month
     features: string[];
 }
 
@@ -21,7 +22,8 @@ export const PLANS: Plan[] = [
         quarterlyPrice: 13.5, // 5 * 3 * 0.9
         yearlyPrice: 51,      // 5 * 12 * 0.85
         dailyLimit: 5,
-        features: ['5 Daily Requests', 'Basic Support', 'Standard Speed']
+        monthlyCredits: 500, // ~16.5 USD value
+        features: ['5 Daily Requests', '500 Monthly Credits', 'Basic Support', 'Standard Speed']
     },
     {
         id: 'medium',
@@ -31,7 +33,8 @@ export const PLANS: Plan[] = [
         quarterlyPrice: 40.5, // 15 * 3 * 0.9
         yearlyPrice: 153,     // 15 * 12 * 0.85
         dailyLimit: 30,
-        features: ['30 Daily Requests', 'Priority Support', 'Fast Speed', 'All Models Access']
+        monthlyCredits: 2000, // ~66 USD value
+        features: ['30 Daily Requests', '2000 Monthly Credits', 'Priority Support', 'Fast Speed', 'All Models Access']
     },
     {
         id: 'enterprise',
@@ -41,7 +44,8 @@ export const PLANS: Plan[] = [
         quarterlyPrice: 81,   // 30 * 3 * 0.9
         yearlyPrice: 306,     // 30 * 12 * 0.85
         dailyLimit: -1,       // Unlimited
-        features: ['Unlimited Requests', '24/7 Support', 'Max Speed', 'Custom Solutions']
+        monthlyCredits: 10000, // Effectively unlimited for normal use
+        features: ['Unlimited Requests', '10,000 Monthly Credits', '24/7 Support', 'Max Speed', 'Custom Solutions']
     }
 ];
 

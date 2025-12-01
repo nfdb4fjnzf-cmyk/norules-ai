@@ -59,11 +59,16 @@ export const userService = {
                 return true;
             }
 
+            // Enterprise plan has unlimited credits (bypass deduction)
+            if (plan === 'enterprise') {
+                return true;
+            }
+
             // Calculate Discount (Ch.3 Mode A)
             let multiplier = 1;
-            if (plan === 'lite') multiplier = 0.8; // 20% off
-            else if (plan === 'pro') multiplier = 0.6; // 40% off
-            else if (plan === 'ultra') multiplier = 0.4; // 60% off
+            if (plan === 'light') multiplier = 0.8; // 20% off
+            else if (plan === 'medium') multiplier = 0.6; // 40% off
+            else if (plan === 'enterprise') multiplier = 0; // Should be handled above, but 0 just in case
 
             const finalAmount = amount * multiplier;
 
@@ -101,9 +106,9 @@ export const userService = {
 
             const plan = userData?.subscription?.plan || 'free';
             let multiplier = 1;
-            if (plan === 'lite') multiplier = 0.8;
-            else if (plan === 'pro') multiplier = 0.6;
-            else if (plan === 'ultra') multiplier = 0.4;
+            if (plan === 'light') multiplier = 0.8;
+            else if (plan === 'medium') multiplier = 0.6;
+            else if (plan === 'enterprise') multiplier = 0;
 
             const finalAmount = amount * multiplier;
 
