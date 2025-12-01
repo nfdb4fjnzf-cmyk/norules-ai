@@ -252,7 +252,72 @@
             "language": "Language",
             "compliance": "Compliance Mode",
             "outputFormat": "Output Format",
-            "autoSelectModel": "✨ AI Auto-Select Model"
+            "autoSelectModel": "✨ AI Auto-Select Model",
+            "options": {
+                "format": {
+                    "Short Video Script": "Short Video Script",
+                    "Social Post": "Social Post",
+                    "Ad Headline & Copy": "Ad Headline & Copy",
+                    "Product Description": "Product Description",
+                    "Image Creative": "Image Creative",
+                    "Video Creative": "Video Creative"
+                },
+                "marketingGoal": {
+                    "Awareness": "Awareness",
+                    "Engagement": "Engagement",
+                    "Traffic": "Traffic",
+                    "Conversion": "Conversion"
+                },
+                "tone": {
+                    "Professional": "Professional",
+                    "Friendly": "Friendly",
+                    "Humorous": "Humorous",
+                    "Urgent": "Urgent",
+                    "Luxury": "Luxury",
+                    "Trendy": "Trendy",
+                    "Filipino Influencer": "Filipino Influencer",
+                    "Tech": "Tech"
+                },
+                "creativeType": {
+                    "Image": "Image",
+                    "Video": "Video",
+                    "Copy": "Copy",
+                    "Carousel": "Carousel",
+                    "Banner": "Banner"
+                },
+                "visualStyle": {
+                    "Business Minimal": "Business Minimal",
+                    "Tech Blue": "Tech Blue",
+                    "Chibi/Cute": "Chibi/Cute",
+                    "Influencer": "Influencer",
+                    "AA Style": "AA Style",
+                    "GA Style": "GA Style",
+                    "High Stimulus": "High Stimulus",
+                    "Brand Color": "Brand Color"
+                },
+                "elements": {
+                    "Human (Male)": "Human (Male)",
+                    "Human (Female)": "Human (Female)",
+                    "No Human": "No Human",
+                    "Logo": "Logo",
+                    "Explosive Effects": "Explosive Effects",
+                    "Game UI": "Game UI",
+                    "Localized Scene (PH)": "Localized Scene (PH)",
+                    "Localized Scene (TW)": "Localized Scene (TW)",
+                    "Localized Scene (VN)": "Localized Scene (VN)"
+                },
+                "compliance": {
+                    "Meta Safe Mode": "Meta Safe Mode",
+                    "TikTok Safe Mode": "TikTok Safe Mode",
+                    "High Stimulus": "High Stimulus"
+                },
+                "language": {
+                    "Traditional Chinese": "Traditional Chinese",
+                    "English": "English",
+                    "Tagalog": "Tagalog",
+                    "Vietnamese": "Vietnamese"
+                }
+            }
         }
     },
     "settings": {

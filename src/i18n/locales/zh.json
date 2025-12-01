@@ -254,7 +254,72 @@
             "language": "文案語言",
             "compliance": "合規模式",
             "outputFormat": "輸出格式",
-            "autoSelectModel": "✨ AI 自動選擇模型"
+            "autoSelectModel": "✨ AI 自動選擇模型",
+            "options": {
+                "format": {
+                    "Short Video Script": "短影音腳本",
+                    "Social Post": "社群貼文",
+                    "Ad Headline & Copy": "廣告標題與內文",
+                    "Product Description": "產品描述",
+                    "Image Creative": "圖片素材",
+                    "Video Creative": "影片素材"
+                },
+                "marketingGoal": {
+                    "Awareness": "品牌曝光",
+                    "Engagement": "互動提升",
+                    "Traffic": "導流點擊",
+                    "Conversion": "轉換註冊／購買"
+                },
+                "tone": {
+                    "Professional": "專業",
+                    "Friendly": "親切友善",
+                    "Humorous": "幽默風趣",
+                    "Urgent": "緊急／強促銷",
+                    "Luxury": "高奢精品風",
+                    "Trendy": "潮流年輕風",
+                    "Filipino Influencer": "網美語氣",
+                    "Tech": "科技感"
+                },
+                "creativeType": {
+                    "Image": "圖片",
+                    "Video": "影片",
+                    "Copy": "文案",
+                    "Carousel": "輪播",
+                    "Banner": "橫幅"
+                },
+                "visualStyle": {
+                    "Business Minimal": "商務簡潔",
+                    "Tech Blue": "科技藍",
+                    "Chibi/Cute": "Q版可愛",
+                    "Influencer": "網美風",
+                    "AA Style": "AA 風格",
+                    "GA Style": "GA 風格",
+                    "High Stimulus": "高刺激 (爆亮)",
+                    "Brand Color": "品牌色"
+                },
+                "elements": {
+                    "Human (Male)": "人物 (男)",
+                    "Human (Female)": "人物 (女)",
+                    "No Human": "無人物",
+                    "Logo": "Logo",
+                    "Explosive Effects": "爆分特效",
+                    "Game UI": "遊戲介面",
+                    "Localized Scene (PH)": "在地場景 (菲律賓)",
+                    "Localized Scene (TW)": "在地場景 (台灣)",
+                    "Localized Scene (VN)": "在地場景 (越南)"
+                },
+                "compliance": {
+                    "Meta Safe Mode": "Meta 安全模式",
+                    "TikTok Safe Mode": "TikTok 安全模式",
+                    "High Stimulus": "高刺激模式 (風險自負)"
+                },
+                "language": {
+                    "Traditional Chinese": "繁體中文",
+                    "English": "英文",
+                    "Tagalog": "菲律賓語",
+                    "Vietnamese": "越南語"
+                }
+            }
         }
     },
     "settings": {

@@ -139,7 +139,7 @@ Special Instructions:
                         onChange={e => setFormData({ ...formData, format: e.target.value })}
                         className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 outline-none focus:border-blue-500/50"
                     >
-                        {FORMATS.map(f => <option key={f} value={f}>{f}</option>)}
+                        {FORMATS.map(f => <option key={f} value={f}>{t(`playground.guidedMode.options.format.${f}`)}</option>)}
                     </select>
                 </div>
             </div>
@@ -198,7 +198,7 @@ Special Instructions:
                         onChange={e => setFormData({ ...formData, marketingGoal: e.target.value })}
                         className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 outline-none focus:border-blue-500/50"
                     >
-                        {GOALS.map(g => <option key={g} value={g}>{g}</option>)}
+                        {GOALS.map(g => <option key={g} value={g}>{t(`playground.guidedMode.options.marketingGoal.${g}`)}</option>)}
                     </select>
                 </div>
                 <div>
@@ -208,7 +208,7 @@ Special Instructions:
                         onChange={e => setFormData({ ...formData, tone: e.target.value })}
                         className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 outline-none focus:border-blue-500/50"
                     >
-                        {TONES.map(t => <option key={t} value={t}>{t}</option>)}
+                        {TONES.map(t => <option key={t} value={t}>{t(`playground.guidedMode.options.tone.${t}`)}</option>)}
                     </select>
                 </div>
             </div>
@@ -224,7 +224,7 @@ Special Instructions:
                             onChange={e => setFormData({ ...formData, creativeType: e.target.value })}
                             className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 outline-none focus:border-blue-500/50"
                         >
-                            {CREATIVE_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
+                            {CREATIVE_TYPES.map(c => <option key={c} value={c}>{t(`playground.guidedMode.options.creativeType.${c}`)}</option>)}
                         </select>
                     </div>
                     {isVisual && (
@@ -250,7 +250,7 @@ Special Instructions:
                                 onChange={e => setFormData({ ...formData, visualStyle: e.target.value })}
                                 className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 outline-none focus:border-blue-500/50"
                             >
-                                {VISUAL_STYLES.map(s => <option key={s} value={s}>{s}</option>)}
+                                {VISUAL_STYLES.map(s => <option key={s} value={s}>{t(`playground.guidedMode.options.visualStyle.${s}`)}</option>)}
                             </select>
                         </div>
                         {formData.visualStyle === 'Brand Color' && (
@@ -277,7 +277,7 @@ Special Instructions:
                                                 : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'
                                             }`}
                                     >
-                                        {el}
+                                        {t(`playground.guidedMode.options.elements.${el}`)}
                                     </button>
                                 ))}
                             </div>
@@ -295,7 +295,7 @@ Special Instructions:
                         onChange={e => setFormData({ ...formData, language: e.target.value })}
                         className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 outline-none focus:border-blue-500/50"
                     >
-                        {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
+                        {LANGUAGES.map(l => <option key={l} value={l}>{t(`playground.guidedMode.options.language.${l}`)}</option>)}
                     </select>
                 </div>
                 <div>
@@ -305,7 +305,7 @@ Special Instructions:
                         onChange={e => setFormData({ ...formData, compliance: e.target.value })}
                         className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 outline-none focus:border-blue-500/50"
                     >
-                        {COMPLIANCE_MODES.map(c => <option key={c} value={c}>{c}</option>)}
+                        {COMPLIANCE_MODES.map(c => <option key={c} value={c}>{t(`playground.guidedMode.options.compliance.${c}`)}</option>)}
                     </select>
                 </div>
             </div>
