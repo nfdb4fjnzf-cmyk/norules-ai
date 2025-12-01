@@ -47,6 +47,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             throw new AppError(ErrorCodes.BAD_REQUEST, 'Prompt is required', 400);
         }
 
+        // Restrict BYOK (Bring Your Own Key) to Enterprise Plan
+        if (customGeminiKey || customOpenAIKey) {
+            if (plan !== 'enterprise') {
+                throw new AppError(ErrorCodes.FORBIDDEN, 'Using custom API keys is only available for Enterprise plan users.', 403);
+            }
+        }
+
         // Calculate Cost based on Model (Ch.121.5)
         if (modelId === 'gemini-2.5-flash' || modelId === 'gpt-3.5-turbo') {
             pointsToDeduct = 0.5; // Mini
