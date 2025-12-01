@@ -27,8 +27,8 @@ const MainLayout: React.FC = () => {
     if (path === '/') return t('sidebar.dashboard');
     if (path.startsWith('/analyze')) return t('sidebar.analyze');
     if (path === '/history') return t('sidebar.history');
-    if (path === '/billing') return t('sidebar.subscription'); // Assuming billing maps to subscription
-    if (path === '/subscription') return t('sidebar.subscription');
+    if (path === '/billing') return t('sidebar.subscription');
+    if (path.startsWith('/subscription')) return t('sidebar.subscription');
     if (path === '/settings') return t('common.settings');
     if (path.includes('apikeys')) return t('sidebar.apiKeys');
     return t('sidebar.dashboard');
