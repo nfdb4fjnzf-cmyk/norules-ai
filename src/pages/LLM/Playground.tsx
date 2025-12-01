@@ -405,7 +405,7 @@ const LLMPlayground: React.FC = () => {
 
                             {/* Response Data */}
                             <div className="space-y-2">
-                                <span className="text-sm text-gray-400">{t('playground.riskAnalysis')}</span>
+                                <span className="text-sm text-gray-400">{t('playground.generatedContent')}</span>
                                 <div className="bg-black/20 p-4 rounded-xl border border-white/5 font-mono text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">
                                     {response.data?.text || JSON.stringify(response.data, null, 2)}
                                 </div>

@@ -192,6 +192,7 @@
         "riskScore": "合規分數",
         "targetRiskScore": "廣告合規程度",
         "riskAnalysis": "風險分析",
+        "generatedContent": "生成內容",
         "llm.riskAnalysis": "合規分析",
         "model.text.a": "一鍵生文（模型一）",
         "model.text.b": "一鍵生文（模型二）",

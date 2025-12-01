@@ -191,6 +191,7 @@
         "uploadVideo": "Upload Video",
         "riskScore": "Risk Score",
         "riskAnalysis": "Risk Analysis",
+        "generatedContent": "Generated Content",
         "model.text.a": "Text Generation (Model A)",
         "model.text.b": "Text Generation (Model B)",
         "model.text.c": "Text Generation (Model C)",
