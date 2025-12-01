@@ -5,15 +5,27 @@ export interface HistoryLog {
     id: string;
     userId: string;
     timestamp: number; // Unix timestamp
-    mode: 'INTERNAL' | 'EXTERNAL';
-    apiPath: string;
-    prompt: string;
-    resultSummary: string;
+    // V2 Fields
+    mode?: 'INTERNAL' | 'EXTERNAL';
+    apiPath?: string;
+    prompt?: string;
+    resultSummary?: string;
     pointsDeducted?: number;
     quotaRemaining?: number;
     tokensUsed?: number;
     errorCode?: number;
-    status: 'SUCCESS' | 'FAILURE';
+    status: string; // 'SUCCESS' | 'FAILURE' | 'success' | 'failed'
+
+    // V3 Fields
+    actionType?: string;
+    inputText?: string;
+    outputType?: string;
+    estimatedCost?: number;
+    actualCost?: number;
+    modelUsed?: string;
+    tokensIn?: number;
+    tokensOut?: number;
+    errorMessage?: string;
 }
 
 export async function addHistoryLog(log: Omit<HistoryLog, 'id' | 'timestamp'>): Promise<string> {

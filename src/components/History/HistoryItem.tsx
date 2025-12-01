@@ -9,8 +9,14 @@ interface HistoryItemProps {
 
 const HistoryItem: React.FC<HistoryItemProps> = ({ log, onClick }) => {
     const { t } = useTranslation();
-    const isSuccess = log.status === 'SUCCESS';
+    const isSuccess = log.status?.toLowerCase() === 'success';
     const date = new Date(log.timestamp).toLocaleString();
+
+    // V3 vs V2 Field Mapping
+    const title = log.actionType ? log.actionType.toUpperCase() : log.apiPath?.replace('/api/', '');
+    const content = log.inputText || log.prompt || '-';
+    const cost = log.actualCost !== undefined ? log.actualCost : log.pointsDeducted;
+    const mode = log.modelUsed || log.mode || 'UNKNOWN';
 
     return (
         <div
@@ -26,27 +32,27 @@ const HistoryItem: React.FC<HistoryItemProps> = ({ log, onClick }) => {
                 </div>
 
                 {/* Info */}
-                <div>
+                <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                        <span className="text-gray-200 font-semibold text-sm">{log.apiPath}</span>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${log.mode === 'INTERNAL'
+                        <span className="text-gray-200 font-semibold text-sm">{title}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${isSuccess
                             ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                            : 'bg-green-500/10 text-green-400 border border-green-500/20'
+                            : 'bg-red-500/10 text-red-400 border border-red-500/20'
                             }`}>
-                            {log.mode}
+                            {mode}
                         </span>
                     </div>
                     <div className="text-gray-500 text-xs font-mono truncate max-w-[200px] sm:max-w-md">
-                        {log.prompt}
+                        {content}
                     </div>
                 </div>
             </div>
 
             {/* Right Side */}
-            <div className="text-right hidden sm:block">
+            <div className="text-right hidden sm:block shrink-0">
                 <div className="text-gray-400 text-xs mb-1">{date}</div>
-                {log.mode === 'INTERNAL' && log.pointsDeducted ? (
-                    <div className="text-red-400 text-xs font-bold">-{log.pointsDeducted} pts</div>
+                {cost ? (
+                    <div className="text-yellow-400 text-xs font-bold">-{cost} pts</div>
                 ) : (
                     <div className="text-gray-600 text-xs">{t('history.details.noCost')}</div>
                 )}
