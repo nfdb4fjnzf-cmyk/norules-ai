@@ -9,8 +9,9 @@ import { llmService } from '../../services/llmService';
 import { useAuth } from '../../contexts/AuthContext';
 import { useModal } from '../../contexts/ModalContext';
 import CostEstimateModal from '../../components/CostEstimateModal';
-import GuidedModeForm from '../../components/GuidedMode/GuidedModeForm';
 import api from '../../services/api';
+
+const GuidedModeForm = React.lazy(() => import('../../components/GuidedMode/GuidedModeForm'));
 
 type Mode = 'INTERNAL' | 'EXTERNAL';
 
@@ -308,12 +309,14 @@ const LLMPlayground: React.FC = () => {
                     </div>
 
                     {isGuidedMode ? (
-                        <GuidedModeForm
-                            onGenerate={handleGuidedGenerate}
-                            isEnterprise={subscription?.plan === 'enterprise'}
-                            hasCustomKey={mode === 'EXTERNAL'}
-                            availableModels={MODELS}
-                        />
+                        <React.Suspense fallback={<SkeletonLoader type="large" className="h-96 w-full" />}>
+                            <GuidedModeForm
+                                onGenerate={handleGuidedGenerate}
+                                isEnterprise={subscription?.plan === 'enterprise'}
+                                hasCustomKey={mode === 'EXTERNAL'}
+                                availableModels={MODELS}
+                            />
+                        </React.Suspense>
                     ) : (
                         <>
                             <div className="flex justify-between items-center">
