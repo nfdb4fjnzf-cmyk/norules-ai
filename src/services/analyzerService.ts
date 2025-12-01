@@ -51,4 +51,15 @@ export const analyzerService = {
         if (response.data.code !== 0) throw new Error(response.data.message || 'Analysis failed');
         return response.data.data;
     },
+
+    analyzeMaterial: async (data: {
+        image_base64?: string;
+        video_base64?: string;
+        copywriting?: string;
+        landing_page_url?: string;
+    }): Promise<any> => {
+        const response = await api.post('/analyze/material', data);
+        if (response.data.code !== 0) throw new Error(response.data.message || 'Analysis failed');
+        return response.data.data;
+    },
 };

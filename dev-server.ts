@@ -11,6 +11,7 @@ import subscriptionPlans from './api/subscription/plans';
 import apiKeysManage from './api/apikeys/manage';
 import historyList from './api/history/list';
 import historyDetail from './api/history/detail';
+import analyzeMaterial from './api/analyze/material';
 
 const app = createApp();
 
@@ -26,6 +27,7 @@ const handleRequest = (handler: Function) => eventHandler(async (event) => {
 });
 
 app.use('/api/analyze/text', handleRequest(analyzeText));
+app.use('/api/analyze/material', handleRequest(analyzeMaterial));
 app.use('/api/llm/generate', handleRequest(llmGenerate));
 app.use('/api/llm/image', handleRequest(llmImage));
 app.use('/api/llm/video', handleRequest(llmVideo));
