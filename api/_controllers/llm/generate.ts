@@ -197,7 +197,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 if (!customGeminiKey) {
                     // Internal Fallback Logic
                     if (modelId === 'gemini-1.5-pro' || modelId.includes('pro')) {
-                        geminiModelName = 'gemini-1.5-flash'; // Temporarily force Flash for internal
+                        geminiModelName = 'gemini-1.5-flash-latest'; // Temporarily force Flash for internal
                     }
                 }
 

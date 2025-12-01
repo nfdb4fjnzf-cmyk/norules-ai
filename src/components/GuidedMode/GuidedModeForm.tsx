@@ -75,11 +75,11 @@ const GuidedModeForm: React.FC<GuidedModeFormProps> = ({ onGenerate, isEnterpris
         }
 
         if (formData.format === 'Product Description') {
-            return 'gemini-1.5-flash'; // Fast & Cheap
+            return 'gemini-1.5-flash-latest'; // Fast & Cheap
         }
 
         // 4. Default Fallback
-        return 'gemini-1.5-pro';
+        return 'gemini-1.5-pro-latest';
     };
 
     const handleSubmit = () => {
@@ -208,7 +208,7 @@ Special Instructions:
                         onChange={e => setFormData({ ...formData, tone: e.target.value })}
                         className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 outline-none focus:border-blue-500/50"
                     >
-                        {TONES.map(t => <option key={t} value={t}>{t(`playground.guidedMode.options.tone.${t}`)}</option>)}
+                        {TONES.map(tone => <option key={tone} value={tone}>{t(`playground.guidedMode.options.tone.${tone}`)}</option>)}
                     </select>
                 </div>
             </div>
@@ -273,8 +273,8 @@ Special Instructions:
                                         key={el}
                                         onClick={() => handleElementChange(el)}
                                         className={`px-2 py-1 rounded text-xs border transition-colors ${formData.elements.includes(el)
-                                                ? 'bg-blue-500/20 border-blue-500 text-blue-300'
-                                                : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'
+                                            ? 'bg-blue-500/20 border-blue-500 text-blue-300'
+                                            : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'
                                             }`}
                                     >
                                         {t(`playground.guidedMode.options.elements.${el}`)}
