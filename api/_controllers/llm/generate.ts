@@ -196,8 +196,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 // But for BYOK (customGeminiKey), we should respect the user's choice
                 if (!customGeminiKey) {
                     // Internal Fallback Logic
-                    if (modelId === 'gemini-1.5-pro' || modelId.includes('pro')) {
-                        geminiModelName = 'gemini-1.5-flash-001'; // Temporarily force Flash for internal
+                    if (modelId === 'gemini-2.5-pro' || modelId.includes('pro')) {
+                        geminiModelName = 'gemini-2.5-flash'; // Temporarily force Flash for internal
                     }
                 }
 
