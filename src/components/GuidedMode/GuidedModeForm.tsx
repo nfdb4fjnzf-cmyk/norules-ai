@@ -82,8 +82,17 @@ const GuidedModeForm: React.FC<GuidedModeFormProps> = ({ onGenerate, isEnterpris
         return 'gemini-2.5-pro';
     };
 
-    const handleSubmit = () => {
-        const prompt = `Act as a professional creative generator for ${formData.platform}.
+    const buildTextPrompt = () => {
+        return `Role: ${formData.platform} Copywriter.
+Task: Write ${formData.format} for ${formData.brandName} ${formData.productName}.
+Goal: ${formData.marketingGoal}. Audience: ${formData.targetAudience}. Tone: ${formData.tone}.
+Points: ${formData.keySellingPoints}.
+Lang: ${formData.language}.
+Compliance: ${formData.compliance}.`;
+    };
+
+    const buildVisualPrompt = () => {
+        return `Act as a professional creative generator for ${formData.platform}.
 Please generate a ${formData.format} for the brand ${formData.brandName} and product ${formData.productName}.
 
 Key Selling Points: ${formData.keySellingPoints}.
@@ -105,7 +114,11 @@ Special Instructions:
 - If Image, resolution must be 1080p (unless Banner 1920x600).
 - If Video, resolution must be 720p.
 - Ensure content aligns with ${formData.platform} best practices.`;
+    };
 
+    const handleSubmit = () => {
+        const isVisualTask = ['Image', 'Video', 'Carousel', 'Banner'].includes(formData.creativeType);
+        const prompt = isVisualTask ? buildVisualPrompt() : buildTextPrompt();
         const modelId = getBestModel();
 
         // Determine action type for cost estimation
