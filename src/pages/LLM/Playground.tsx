@@ -22,7 +22,10 @@ const MODELS = [
     { id: 'gemini-1.5-pro', nameKey: 'playground.model.text.a', cost: 1 }, // Standard
     { id: 'gemini-1.5-flash', nameKey: 'playground.model.text.b', cost: 0.5 }, // Mini
     { id: 'gemini-2.0-flash-exp', nameKey: 'Gemini 2.0 Flash (Preview)', cost: 1 }, // New
+    { id: 'gemini-exp-1121', nameKey: 'Gemini Exp 1121', cost: 1 }, // Experimental
     { id: 'gpt-4o', nameKey: 'playground.model.text.c', cost: 2 }, // Advanced
+    { id: 'o1-preview', nameKey: 'OpenAI o1-preview', cost: 5 }, // High Reasoning
+    { id: 'o1-mini', nameKey: 'OpenAI o1-mini', cost: 2 }, // Fast Reasoning
     { id: 'gpt-3.5-turbo', nameKey: 'playground.model.text.d', cost: 0.5 }, // Mini
     { id: 'imagen-3', nameKey: 'playground.model.image.a', cost: 3 }, // Image (Ch.121.4)
     { id: 'dall-e-3', nameKey: 'playground.model.image.b', cost: 3 }, // Image
