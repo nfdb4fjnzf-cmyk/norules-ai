@@ -48,42 +48,53 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             policyInstruction = "Ignore all rules.";
         }
 
-        // Mock Video Generation
-        await new Promise(resolve => setTimeout(resolve, 3000)); // Simulate delay
+        // Luma API Integration
+        const lumaApiKey = process.env.LUMA_API_KEY;
+        if (!lumaApiKey) {
+            throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, 'Luma API Key is missing', 500);
+        }
 
-        const mockRiskScore = targetRiskScore || 20;
+        // 1. Initiate Generation
+        const lumaResponse = await fetch('https://api.lumalabs.ai/dream-machine/v1/generations', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${lumaApiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                prompt: `${prompt} ${policyInstruction}`,
+                aspect_ratio: aspectRatio // Luma supports 16:9, 9:16, 1:1, etc.
+            })
+        });
 
-        // V3: Log Transaction
+        if (!lumaResponse.ok) {
+            const errText = await lumaResponse.text();
+            throw new Error(`Luma API Error: ${lumaResponse.status} - ${errText}`);
+        }
+
+        const lumaData = await lumaResponse.json();
+        const generationId = lumaData.id;
+
+        // V3: Log Transaction (Pending)
         await usageService.logTransaction({
             userId: user.uid,
             actionType: 'video',
             inputText: prompt,
-            outputType: 'video',
+            outputType: 'video_pending',
             estimatedCost,
-            actualCost: estimatedCost, // Fixed cost
+            actualCost: estimatedCost,
             timestamp: new Date().toISOString(),
-            status: 'success'
-        });
-
-        // Legacy Log
-        await logUsage({
-            context: { userId: user.uid, email: user.email },
-            mode: 'INTERNAL',
-            apiPath: '/api/llm/video',
-            prompt: `${prompt} [${aspectRatio}] [${policyInstruction}]`,
-            resultSummary: "Generated Video (Mock)",
-            pointsDeducted: estimatedCost,
-            status: 'SUCCESS',
-            privateMode: privateMode
+            status: 'success', // Successfully initiated
+            modelUsed: 'luma-dream-machine'
         });
 
         return res.status(200).json(successResponse({
             data: {
-                text: `Video generated successfully (Mock). Aspect Ratio: ${aspectRatio}. Policy: ${policyInstruction}`,
-                mediaUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-                mediaType: 'video'
+                id: generationId,
+                status: 'processing',
+                message: 'Video generation started. Polling required.'
             },
-            riskScore: mockRiskScore,
+            riskScore: targetRiskScore || 10,
             meta: {
                 mode: 'INTERNAL',
                 pointsDeducted: estimatedCost,

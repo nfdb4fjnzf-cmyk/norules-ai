@@ -12,6 +12,7 @@ import apiKeysManage from './api/apikeys/manage';
 import historyList from './api/history/list';
 import historyDetail from './api/history/detail';
 import analyzeMaterial from './api/analyze/material';
+import llmVideoStatus from './api/llm/video_status';
 
 const app = createApp();
 
@@ -31,6 +32,7 @@ app.use('/api/analyze/material', handleRequest(analyzeMaterial));
 app.use('/api/llm/generate', handleRequest(llmGenerate));
 app.use('/api/llm/image', handleRequest(llmImage));
 app.use('/api/llm/video', handleRequest(llmVideo));
+app.use('/api/llm/video/status', handleRequest(llmVideoStatus));
 app.use('/api/secure-proxy', handleRequest(secureProxy));
 app.use('/api/subscription/manage', handleRequest(subscriptionManage));
 app.use('/api/subscription/plans', handleRequest(subscriptionPlans));
