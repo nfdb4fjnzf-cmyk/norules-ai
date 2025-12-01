@@ -190,10 +190,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 }
 
                 // Map frontend model IDs to Gemini models
-                // Fallback to Flash for better availability if Pro fails
-                let geminiModelName = 'gemini-1.5-flash';
-                if (modelId === 'gemini-1.5-pro' || modelId.includes('pro')) {
-                    geminiModelName = 'gemini-1.5-flash'; // Temporarily force Flash to ensure success
+                let geminiModelName = modelId;
+
+                // For Internal usage, we might want to force Flash for cost/stability
+                // But for BYOK (customGeminiKey), we should respect the user's choice
+                if (!customGeminiKey) {
+                    // Internal Fallback Logic
+                    if (modelId === 'gemini-1.5-pro' || modelId.includes('pro')) {
+                        geminiModelName = 'gemini-1.5-flash'; // Temporarily force Flash for internal
+                    }
                 }
 
                 const model = genAI.getGenerativeModel({ model: geminiModelName });
