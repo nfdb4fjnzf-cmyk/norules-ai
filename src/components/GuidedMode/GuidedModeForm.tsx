@@ -6,6 +6,7 @@ interface GuidedModeFormProps {
     isEnterprise: boolean;
     hasCustomKey: boolean;
     availableModels: { id: string; nameKey: string }[];
+    onCostChange?: (cost: number) => void;
 }
 
 const PLATFORMS = ['Facebook', 'Instagram', 'TikTok', 'YouTube', 'LinkedIn', 'Google Ads'];
@@ -66,7 +67,7 @@ const GuidedModeForm: React.FC<GuidedModeFormProps> = ({ onGenerate, isEnterpris
         }
 
         // 2. Creative Type Routing
-        if (formData.creativeType === 'Image' || formData.creativeType === 'Banner') return 'imagen-3';
+        if (formData.creativeType === 'Image' || formData.creativeType === 'Banner') return 'dall-e-3';
         if (formData.creativeType === 'Video') return 'sora';
 
         // 3. Text Complexity Routing
@@ -81,6 +82,20 @@ const GuidedModeForm: React.FC<GuidedModeFormProps> = ({ onGenerate, isEnterpris
         // 4. Default Fallback
         return 'gemini-2.5-pro';
     };
+
+    // Calculate and propagate cost estimate
+    useEffect(() => {
+        let cost = 0;
+        if (formData.creativeType === 'Image' || formData.creativeType === 'Banner') {
+            cost = 30;
+        } else if (formData.creativeType === 'Video') {
+            cost = 60;
+        } else {
+            // Rough text estimate
+            cost = 15;
+        }
+        onCostChange?.(cost);
+    }, [formData.creativeType, formData.format]);
 
     const buildTextPrompt = () => {
         return `Role: ${formData.platform} Copywriter.

@@ -313,8 +313,9 @@ const LLMPlayground: React.FC = () => {
                             <GuidedModeForm
                                 onGenerate={handleGuidedGenerate}
                                 isEnterprise={subscription?.plan === 'enterprise'}
-                                hasCustomKey={mode === 'EXTERNAL'}
+                                hasCustomKey={!!user?.customApiKey}
                                 availableModels={MODELS}
+                                onCostChange={setEstimatedCostValue}
                             />
                         </React.Suspense>
                     ) : (
@@ -450,7 +451,12 @@ const LLMPlayground: React.FC = () => {
                 <div className="rounded-2xl bg-white/5 border border-white/10 p-6 flex flex-col gap-4 overflow-hidden">
                     <h3 className="font-bold text-gray-200">{t('playground.output')}</h3>
 
-                    {response ? (
+                    {loading ? (
+                        <div className="flex-1 flex flex-col items-center justify-center space-y-4">
+                            <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+                            <p className="text-gray-400 animate-pulse">Generating creative content...</p>
+                        </div>
+                    ) : response ? (
                         <div className="flex-1 overflow-auto space-y-6">
                             {/* Compliance Score Section */}
                             <div className="flex items-center justify-between bg-black/20 p-4 rounded-xl border border-white/5">
