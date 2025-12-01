@@ -60,7 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             throw new AppError(ErrorCodes.BAD_REQUEST, 'Failed to fetch URL content', 400);
         }
 
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
         const prompt = `
       Analyze the following webpage content (HTML source) for landing page compliance.

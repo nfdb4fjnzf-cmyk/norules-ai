@@ -141,7 +141,7 @@ const LLMPlayground: React.FC = () => {
                     model: selectedModel
                 });
 
-                if (res.data.success) {
+                if (res.data.code === 0) {
                     setEstimatedCostValue(res.data.data.estimatedCost);
                     setShowCostModal(true);
                 } else {
