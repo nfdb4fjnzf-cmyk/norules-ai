@@ -102,7 +102,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     `;
 
-        if (modelId.startsWith('gpt')) {
+        if (modelId.startsWith('gpt') || modelId.startsWith('o1')) {
             // OpenAI Logic
             const apiKey = Array.isArray(customOpenAIKey) ? customOpenAIKey[0] : customOpenAIKey;
             const openai = new OpenAI({
