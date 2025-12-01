@@ -348,7 +348,7 @@ Special Instructions:
                         className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-200 outline-none focus:border-blue-500/50"
                     >
                         <option value="auto">{t('playground.guidedMode.autoSelectModel')}</option>
-                        {availableModels.map(m => (
+                        {availableModels?.map(m => (
                             <option key={m.id} value={m.id}>{t(m.nameKey)}</option>
                         ))}
                     </select>

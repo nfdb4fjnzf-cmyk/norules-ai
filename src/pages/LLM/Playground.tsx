@@ -127,7 +127,7 @@ const LLMPlayground: React.FC = () => {
     const isRestricted = (modelType === 'image' || modelType === 'video') && (mode === 'EXTERNAL' || (subscription?.plan === 'free' && mode === 'INTERNAL'));
 
     // Guided Mode State
-    const [isGuidedMode, setIsGuidedMode] = useState(false);
+    const [isGuidedMode, setIsGuidedMode] = useState(true);
 
     const handleGuidedGenerate = (prompt: string, modelId: string, actionType: 'text' | 'image' | 'video') => {
         setInput(prompt);
