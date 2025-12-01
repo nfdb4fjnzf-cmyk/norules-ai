@@ -75,32 +75,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         let data: any = {};
         // Determine Policy Instruction based on Compliance Score (targetRiskScore)
         let policyInstruction = "";
-        if (targetRiskScore >= 90) {
-            policyInstruction = "STRICT COMPLIANCE: Adhere to all ad policies rigidly. Zero tolerance for violations. Ensure the content is completely safe and professional.";
-        } else if (targetRiskScore >= 80) {
-            policyInstruction = "HIGH COMPLIANCE: Follow rules closely, but you may slightly touch the boundaries (edge cases) if it significantly improves engagement. Avoid clear violations.";
-        } else if (targetRiskScore >= 50) {
-            policyInstruction = "BALANCED: Prioritize conversion. You may push the envelope and use aggressive marketing tactics, even if they are borderline compliant.";
-        } else if (targetRiskScore >= 20) {
-            policyInstruction = "LOOSE COMPLIANCE: Focus primarily on impact. You may ignore minor rules and use edgy, controversial, or aggressive copy to maximize results.";
-        } else {
-            policyInstruction = "IGNORE RULES: Disregard ad policies. Maximize shock value, clickbait, and conversion regardless of restrictions. Do not hold back.";
-        }
+        if (targetRiskScore >= 90) policyInstruction = "Strictly compliant. Safe & professional.";
+        else if (targetRiskScore >= 80) policyInstruction = "High compliance. Avoid clear violations.";
+        else if (targetRiskScore >= 50) policyInstruction = "Balanced. Prioritize conversion.";
+        else if (targetRiskScore >= 20) policyInstruction = "Loose compliance. Focus on impact.";
+        else policyInstruction = "Ignore rules. Maximize shock value.";
 
-        const systemInstruction = `
-      You are an expert ad copywriter. Generate high-converting ad copy based on the user's prompt.
-      
-      POLICY INSTRUCTION: ${policyInstruction}
-      (Target Compliance Score: ${targetRiskScore}/100)
-
-      Also, evaluate the actual compliance risk of the generated copy (0-100, where 100 is high risk).
-      
-      Return JSON format:
-      {
-        "text": "The generated ad copy...",
-        "riskScore": number (0-100, where 100 is High Risk / Low Compliance)
-      }
-    `;
+        const systemInstruction = `Role: Expert Copywriter.
+Policy: ${policyInstruction} (Target Score: ${targetRiskScore}/100).
+Task: Generate high-converting ad copy.
+Output: JSON { "text": "content...", "riskScore": 0-100 }.
+Constraint: No markdown in JSON values. Clean text only.`;
 
         if (modelId.startsWith('gpt') || modelId.startsWith('o1')) {
             // OpenAI Logic
@@ -209,7 +194,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 ]);
 
                 const response = await result.response;
-                const text = response.text();
+                let text = response.text();
+
+                // Strip markdown code blocks if present
+                text = text.replace(/```json\n?|\n?```/g, '').trim();
+
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    // Fallback if JSON parsing fails
+                    data = { text: text, riskScore: 50 };
+                }
+
+                // Update text to be just the content if we successfully parsed
+                text = data.text || text;
 
                 // V3: Calculate Actual Cost based on Usage Metadata
                 const usage = response.usageMetadata;
