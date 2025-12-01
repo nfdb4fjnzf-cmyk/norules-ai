@@ -21,7 +21,7 @@ const LANGUAGES = ['Traditional Chinese', 'English', 'Tagalog', 'Vietnamese'];
 const COMPLIANCE_MODES = ['Meta Safe Mode', 'TikTok Safe Mode', 'High Stimulus'];
 const OUTPUT_FORMATS = ['PNG', 'JPG', 'MP4', 'ZIP'];
 
-const GuidedModeForm: React.FC<GuidedModeFormProps> = ({ onGenerate, isEnterprise, hasCustomKey, availableModels }) => {
+const GuidedModeForm: React.FC<GuidedModeFormProps> = ({ onGenerate, isEnterprise, hasCustomKey, availableModels, onCostChange }) => {
     const { t } = useTranslation();
 
     const [formData, setFormData] = useState({
