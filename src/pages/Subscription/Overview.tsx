@@ -80,15 +80,15 @@ const SubscriptionOverview: React.FC = () => {
         <div className="max-w-5xl mx-auto animate-fade-in p-6 space-y-8">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-bold text-white mb-2">Subscription Overview</h1>
-                    <p className="text-gray-400">Manage your plan, billing, and usage limits.</p>
+                    <h1 className="text-2xl font-bold text-white mb-2">訂閱方案</h1>
+                    <p className="text-gray-400">管理您的方案、帳單與使用額度。</p>
                 </div>
                 <Link
                     to="/subscription/plans"
                     className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-lg shadow-blue-500/20"
                 >
                     <ArrowUpCircle className="w-4 h-4" />
-                    Upgrade Plan
+                    升級方案
                 </Link>
             </div>
 
@@ -115,13 +115,13 @@ const SubscriptionOverview: React.FC = () => {
                                 </h2>
                                 <div className="flex items-center gap-2 mt-1">
                                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${subscription?.status === 'active'
-                                            ? 'bg-green-500/10 text-green-400 border-green-500/20'
-                                            : 'bg-gray-700 text-gray-400 border-gray-600'
+                                        ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                                        : 'bg-gray-700 text-gray-400 border-gray-600'
                                         }`}>
-                                        {subscription?.status === 'active' ? 'Active' : 'Inactive'}
+                                        {subscription?.status === 'active' ? '使用中' : '已停用'}
                                     </span>
                                     <span className="text-gray-400 text-sm capitalize">
-                                        • {subscription?.billingCycle || 'Monthly'} Billing
+                                        • {subscription?.billingCycle === 'monthly' ? '月付' : subscription?.billingCycle === 'quarterly' ? '季付' : '年付'} 方案
                                     </span>
                                 </div>
                             </div>
@@ -131,7 +131,7 @@ const SubscriptionOverview: React.FC = () => {
                             <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
                                 <div className="flex items-center gap-2 text-gray-400 mb-2">
                                     <Calendar className="w-4 h-4" />
-                                    <span className="text-sm">Start Date</span>
+                                    <span className="text-sm">開始日期</span>
                                 </div>
                                 <p className="text-lg font-semibold text-white">
                                     {formatDate(subscription?.startDate)}
@@ -140,7 +140,7 @@ const SubscriptionOverview: React.FC = () => {
                             <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
                                 <div className="flex items-center gap-2 text-gray-400 mb-2">
                                     <Clock className="w-4 h-4" />
-                                    <span className="text-sm">Next Billing</span>
+                                    <span className="text-sm">下次扣款</span>
                                 </div>
                                 <p className="text-lg font-semibold text-white">
                                     {formatDate(subscription?.nextBillingDate)}
@@ -149,19 +149,19 @@ const SubscriptionOverview: React.FC = () => {
                             <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
                                 <div className="flex items-center gap-2 text-gray-400 mb-2">
                                     <History className="w-4 h-4" />
-                                    <span className="text-sm">Remaining Days</span>
+                                    <span className="text-sm">剩餘天數</span>
                                 </div>
                                 <p className="text-lg font-semibold text-blue-400">
-                                    {subscription?.remainingDays ?? '-'} Days
+                                    {subscription?.remainingDays ?? '-'} 天
                                 </p>
                             </div>
                             <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
                                 <div className="flex items-center gap-2 text-gray-400 mb-2">
                                     <CheckCircle className="w-4 h-4" />
-                                    <span className="text-sm">Daily Limit</span>
+                                    <span className="text-sm">每日額度</span>
                                 </div>
                                 <p className="text-lg font-semibold text-white">
-                                    {subscription?.dailyLimit === -1 ? 'Unlimited' : subscription?.dailyLimit}
+                                    {subscription?.dailyLimit === -1 ? '無限次' : subscription?.dailyLimit}
                                 </p>
                             </div>
                         </div>
@@ -173,12 +173,12 @@ const SubscriptionOverview: React.FC = () => {
             <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 backdrop-blur-sm">
                 <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                     <History className="w-5 h-5 text-gray-400" />
-                    Upgrade History
+                    升級歷史
                 </h3>
 
                 {!loading && (!subscription?.upgradeHistory || subscription.upgradeHistory.length === 0) ? (
                     <div className="text-center py-8 text-gray-500">
-                        No upgrade history found.
+                        尚無升級記錄。
                     </div>
                 ) : (
                     <div className="relative border-l border-gray-800 ml-3 space-y-8">
@@ -190,16 +190,16 @@ const SubscriptionOverview: React.FC = () => {
                                         {new Date(event.timestamp).toLocaleString()}
                                     </span>
                                     <span className="text-xs font-medium px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase">
-                                        {event.action || 'Upgrade'}
+                                        {event.action === 'upgrade' ? '升級' : event.action}
                                     </span>
                                 </div>
                                 <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
                                     <p className="text-white font-medium">
-                                        Plan Change: <span className="text-gray-400">{event.oldPlan}</span> → <span className="text-blue-400">{event.newPlan}</span>
+                                        方案變更: <span className="text-gray-400">{event.oldPlan}</span> → <span className="text-blue-400">{event.newPlan}</span>
                                     </p>
                                     {event.chargeAmount > 0 && (
                                         <p className="text-sm text-gray-400 mt-1">
-                                            Charged: <span className="text-white">${event.chargeAmount}</span>
+                                            收費金額: <span className="text-white">${event.chargeAmount}</span>
                                         </p>
                                     )}
                                 </div>

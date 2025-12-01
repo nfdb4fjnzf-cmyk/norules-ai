@@ -16,36 +16,36 @@ export interface Plan {
 export const PLANS: Plan[] = [
     {
         id: 'light',
-        name: 'Light',
-        description: 'Perfect for beginners',
+        name: '輕量版 Light',
+        description: '適合初學者',
         monthlyPrice: 5,
         quarterlyPrice: 13.5, // 5 * 3 * 0.9
         yearlyPrice: 51,      // 5 * 12 * 0.85
         dailyLimit: 5,
         monthlyCredits: 500, // ~16.5 USD value
-        features: ['5 Daily Requests', '500 Monthly Credits', 'Basic Support', 'Standard Speed']
+        features: ['每日 5 次請求', '每月 500 點數', '基礎客服', '標準速度']
     },
     {
         id: 'medium',
-        name: 'Medium',
-        description: 'For growing businesses',
+        name: '中量版 Medium',
+        description: '適合成長中的使用者',
         monthlyPrice: 15,
         quarterlyPrice: 40.5, // 15 * 3 * 0.9
         yearlyPrice: 153,     // 15 * 12 * 0.85
         dailyLimit: 30,
         monthlyCredits: 2000, // ~66 USD value
-        features: ['30 Daily Requests', '2000 Monthly Credits', 'Priority Support', 'Fast Speed', 'All Models Access']
+        features: ['每日 30 次請求', '每月 2000 點數', '優先客服', '快速速度', '可使用所有模型']
     },
     {
         id: 'enterprise',
-        name: 'Enterprise',
-        description: 'For large scale needs',
+        name: '企業版 Enterprise',
+        description: '適合大型需求',
         monthlyPrice: 30,
         quarterlyPrice: 81,   // 30 * 3 * 0.9
         yearlyPrice: 306,     // 30 * 12 * 0.85
         dailyLimit: -1,       // Unlimited
         monthlyCredits: 10000, // Effectively unlimited for normal use
-        features: ['Unlimited Requests', '10,000 Monthly Credits', '24/7 Support', 'Max Speed', 'Custom Solutions']
+        features: ['無限次請求', '每月 10,000 點數', '24/7 客服', '最高速度', '客製化方案']
     }
 ];
 

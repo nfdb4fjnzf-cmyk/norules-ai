@@ -112,16 +112,16 @@ const Plans: React.FC = () => {
     };
 
     const getPeriodLabel = () => {
-        if (billingCycle === 'quarterly') return '/quarter';
-        if (billingCycle === 'yearly') return '/year';
-        return '/mo';
+        if (billingCycle === 'quarterly') return '/季';
+        if (billingCycle === 'yearly') return '/年';
+        return '/月';
     };
 
     return (
         <div className="max-w-7xl mx-auto px-4">
             <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold text-gray-100 mb-4">Choose Your Plan</h1>
-                <p className="text-gray-400 mb-8">Unlock more power with our flexible pricing tiers.</p>
+                <h1 className="text-3xl font-bold text-gray-100 mb-4">選擇你的方案</h1>
+                <p className="text-gray-400 mb-8">透過我們彈性的方案階層，解鎖更多功能。</p>
 
                 {/* Billing Cycle Toggle */}
                 <div className="inline-flex bg-[#151927] p-1 rounded-xl border border-white/10">
@@ -134,7 +134,7 @@ const Plans: React.FC = () => {
                                 : 'text-gray-400 hover:text-white'
                                 }`}
                         >
-                            {cycle.charAt(0).toUpperCase() + cycle.slice(1)}
+                            {cycle === 'monthly' ? '月付' : cycle === 'quarterly' ? '季付' : '年付'}
                             {cycle === 'quarterly' && <span className="ml-1 text-xs text-green-400">-10%</span>}
                             {cycle === 'yearly' && <span className="ml-1 text-xs text-green-400">-15%</span>}
                         </button>
@@ -173,7 +173,7 @@ const Plans: React.FC = () => {
                             >
                                 {isCurrent && (
                                     <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">
-                                        CURRENT
+                                        目前方案
                                     </div>
                                 )}
                                 <h3 className="text-lg font-bold text-gray-100 mb-2">{plan.name}</h3>
@@ -186,7 +186,7 @@ const Plans: React.FC = () => {
                                 <ul className="space-y-4 mb-8 flex-1">
                                     <li className="flex items-start text-sm text-gray-300">
                                         <span className="mr-2 text-blue-400 mt-0.5 material-symbols-outlined text-base">schedule</span>
-                                        <span className="leading-tight">{plan.dailyLimit === -1 ? 'Unlimited' : `${plan.dailyLimit} Daily`} Requests</span>
+                                        <span className="leading-tight">{plan.dailyLimit === -1 ? '無限次' : `每日 ${plan.dailyLimit} 次`} 請求</span>
                                     </li>
                                     {plan.features.map((feature, idx) => (
                                         <li key={idx} className="flex items-start text-sm text-gray-300">
@@ -204,7 +204,7 @@ const Plans: React.FC = () => {
                                         : 'bg-blue-500 hover:bg-blue-600 text-white hover:opacity-80'
                                         }`}
                                 >
-                                    {isCurrent ? 'Current Plan' : 'Subscribe'}
+                                    {isCurrent ? '目前方案' : '訂閱'}
                                 </button>
                             </div>
                         );
