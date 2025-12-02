@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import UpgradeModal from '../../components/Subscription/UpgradeModal';
 import { useToast } from '../../components/Toast';
 import SkeletonLoader from '../../components/SkeletonLoader';
-import { useAuth } from '../../contexts/AuthContext';
+import api from '../../services/api';
+import { useNavigate } from 'react-router-dom';
+import { Check, Loader2 } from 'lucide-react';
 
 interface Plan {
     id: string;
@@ -11,97 +12,98 @@ interface Plan {
     monthlyPrice: number;
     quarterlyPrice: number;
     yearlyPrice: number;
-    dailyLimit: number;
+    discount: string;
     features: string[];
 }
+
+const PLANS: Plan[] = [
+    {
+        id: 'lite',
+        name: 'Lite',
+        description: 'Perfect for starters',
+        monthlyPrice: 5,
+        quarterlyPrice: 13.5, // 10% off
+        yearlyPrice: 48, // 20% off
+        discount: '20%',
+        features: ['20% Off Credits', 'Basic Support', 'Standard Access']
+    },
+    {
+        id: 'pro',
+        name: 'Pro',
+        description: 'Best for professionals',
+        monthlyPrice: 10,
+        quarterlyPrice: 27,
+        yearlyPrice: 96,
+        discount: '40%',
+        features: ['40% Off Credits', 'Priority Support', 'Faster Generation', 'Access to New Models']
+    },
+    {
+        id: 'ultra',
+        name: 'Ultra',
+        description: 'For power users',
+        monthlyPrice: 30,
+        quarterlyPrice: 81,
+        yearlyPrice: 288,
+        discount: '60%',
+        features: ['60% Off Credits', '24/7 Support', 'Highest Priority', 'Early Access Features']
+    }
+];
 
 type BillingCycle = 'monthly' | 'quarterly' | 'yearly';
 
 const Plans: React.FC = () => {
-    const [plans, setPlans] = useState<Plan[]>([]);
-    const [currentPlanId, setCurrentPlanId] = useState<string>('lite');
+    const [currentPlanId, setCurrentPlanId] = useState<string>('free');
     const [loading, setLoading] = useState(true);
-    const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
-    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+    const [processing, setProcessing] = useState(false);
     const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
     const { showToast } = useToast();
-
-    const { user } = useAuth();
+    const navigate = useNavigate();
 
     useEffect(() => {
-        if (user) {
-            fetchData();
-        }
-    }, [user]);
+        fetchStatus();
+    }, []);
 
-    const fetchData = async () => {
-        if (!user) return;
+    const fetchStatus = async () => {
         try {
-            const token = await user.getIdToken();
-            const headers = { 'Authorization': `Bearer ${token}` };
-
-            const [plansRes, subRes] = await Promise.all([
-                fetch('/api/subscription/plans', { headers }),
-                fetch('/api/subscription/manage', { headers })
-            ]);
-
-            const plansData = await plansRes.json();
-            const subData = await subRes.json();
-
-            if (plansData.code === 0) setPlans(plansData.data);
-            if (subData.code === 0) setCurrentPlanId(subData.data.plan);
-        } catch (error: any) {
-            console.error('Failed to fetch data', error);
-            const errorMessage = error.response?.data?.error || error.message || 'Failed to load plans';
-            showToast('error', errorMessage);
+            const response = await api.get('/subscription/status');
+            if (response.data.success) {
+                const sub = response.data.data.subscription;
+                if (sub && sub.status === 'active') {
+                    setCurrentPlanId(sub.planId);
+                    setBillingCycle(sub.billingCycle as BillingCycle);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to fetch status', error);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleSubscribeClick = (planId: string) => {
+    const handleSubscribe = async (planId: string) => {
         if (planId === currentPlanId) return;
-        setSelectedPlanId(planId);
-        setIsUpgradeModalOpen(true);
-    };
 
-    const handleConfirmUpgrade = async (planId: string) => {
+        if (!confirm(`Confirm subscription to ${planId.toUpperCase()} plan (${billingCycle})?`)) return;
+
         try {
-            if (!user) {
-                showToast('error', 'Please log in first');
-                return;
-            }
-
-            const token = await user.getIdToken();
-
-            // 2. Create Invoice
-            const res = await fetch('/api/payment/create-invoice', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    userId: user.uid,
-                    planId: planId,
-                    billingCycle: billingCycle
-                })
+            setProcessing(true);
+            const response = await api.post('/subscription/create', {
+                planId,
+                billingCycle
             });
 
-            const data = await res.json();
-
-            if (data.code === 0 && data.data.invoice_url) {
-                // 3. Redirect to Payment
-                window.open(data.data.invoice_url, '_blank');
-                showToast('success', 'Redirecting to payment...');
-                setIsUpgradeModalOpen(false);
+            if (response.data.success) {
+                showToast('success', 'Subscription updated successfully!');
+                await fetchStatus();
+                navigate('/subscription'); // Redirect to overview
             } else {
-                throw new Error(data.message || 'Failed to create invoice');
+                showToast('error', 'Failed to update subscription');
             }
-
         } catch (error: any) {
-            console.error('Payment Error:', error);
-            showToast('error', error.message || 'Payment initialization failed');
+            console.error('Subscribe error:', error);
+            showToast('error', error.message || 'Failed to subscribe');
+        } finally {
+            setProcessing(false);
         }
     };
 
@@ -118,7 +120,7 @@ const Plans: React.FC = () => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-7xl mx-auto px-4 animate-fade-in">
             <div className="text-center mb-8">
                 <h1 className="text-3xl font-bold text-gray-100 mb-4">選擇你的方案</h1>
                 <p className="text-gray-400 mb-8">透過我們彈性的方案階層，解鎖更多功能。</p>
@@ -136,7 +138,7 @@ const Plans: React.FC = () => {
                         >
                             {cycle === 'monthly' ? '月付' : cycle === 'quarterly' ? '季付' : '年付'}
                             {cycle === 'quarterly' && <span className="ml-1 text-xs text-green-400">-10%</span>}
-                            {cycle === 'yearly' && <span className="ml-1 text-xs text-green-400">-15%</span>}
+                            {cycle === 'yearly' && <span className="ml-1 text-xs text-green-400">-20%</span>}
                         </button>
                     ))}
                 </div>
@@ -151,20 +153,15 @@ const Plans: React.FC = () => {
                             <div className="space-y-3 mb-8">
                                 <SkeletonLoader type="small" className="w-full" />
                                 <SkeletonLoader type="small" className="w-full" />
-                                <SkeletonLoader type="small" className="w-full" />
                             </div>
-                            <SkeletonLoader type="large" className="w-full rounded-xl" />
                         </div>
                     ))}
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {plans.map((plan) => {
+                    {PLANS.map((plan) => {
                         const isCurrent = plan.id === currentPlanId;
                         const displayPrice = getPrice(plan);
-
-                        const isLightMonthly = plan.id === 'light' && billingCycle === 'monthly';
-                        const isDisabled = isCurrent || isLightMonthly;
 
                         return (
                             <div
@@ -181,49 +178,36 @@ const Plans: React.FC = () => {
                                 )}
                                 <h3 className="text-lg font-bold text-gray-100 mb-2">{plan.name}</h3>
                                 <p className="text-sm text-gray-400 mb-4">{plan.description}</p>
-                                <div className="flex items-baseline mb-6">
+                                <div className="flex items-baseline mb-2">
                                     <span className="text-3xl font-extrabold text-gray-100">${displayPrice}</span>
                                     <span className="text-gray-500 ml-1">{getPeriodLabel()}</span>
                                 </div>
+                                <p className="text-sm text-green-400 mb-6 font-medium">{plan.discount} Discount on Credits</p>
 
                                 <ul className="space-y-4 mb-8 flex-1">
-                                    <li className="flex items-start text-sm text-gray-300">
-                                        <span className="mr-2 text-blue-400 mt-0.5 material-symbols-outlined text-base">schedule</span>
-                                        <span className="leading-tight">{plan.dailyLimit === -1 ? '無限次' : `每日 ${plan.dailyLimit} 次`} 請求</span>
-                                    </li>
                                     {plan.features.map((feature, idx) => (
                                         <li key={idx} className="flex items-start text-sm text-gray-300">
-                                            <span className="mr-2 text-green-500 mt-0.5 material-symbols-outlined text-base">check</span>
+                                            <Check className="mr-2 text-green-500 w-4 h-4 mt-0.5" />
                                             <span className="leading-tight">{feature}</span>
                                         </li>
                                     ))}
                                 </ul>
 
                                 <button
-                                    onClick={() => handleSubscribeClick(plan.id)}
-                                    disabled={isDisabled}
-                                    className={`w-full rounded-xl px-4 py-2 font-semibold transition-all duration-150 ease-out active:scale-95 ${isCurrent
-                                            ? 'bg-white/10 text-gray-400 cursor-default'
-                                            : isLightMonthly
-                                                ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                                                : 'bg-blue-500 hover:bg-blue-600 text-white hover:opacity-80'
+                                    onClick={() => handleSubscribe(plan.id)}
+                                    disabled={isCurrent || processing}
+                                    className={`w-full rounded-xl px-4 py-2 font-semibold transition-all duration-150 ease-out active:scale-95 flex justify-center items-center ${isCurrent
+                                        ? 'bg-white/10 text-gray-400 cursor-default'
+                                        : 'bg-blue-500 hover:bg-blue-600 text-white hover:opacity-80'
                                         }`}
                                 >
-                                    {isCurrent ? '目前方案' : isLightMonthly ? '僅限季付' : '訂閱'}
+                                    {processing && !isCurrent ? <Loader2 className="w-4 h-4 animate-spin" /> : isCurrent ? '目前方案' : '訂閱'}
                                 </button>
                             </div>
                         );
                     })}
                 </div>
             )}
-
-            <UpgradeModal
-                open={isUpgradeModalOpen}
-                onClose={() => setIsUpgradeModalOpen(false)}
-                currentPlan={currentPlanId}
-                targetPlan={selectedPlanId || ''}
-                onConfirm={handleConfirmUpgrade}
-            />
         </div>
     );
 };

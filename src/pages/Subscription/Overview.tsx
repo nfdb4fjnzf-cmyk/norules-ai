@@ -4,76 +4,96 @@ import SkeletonLoader from '../../components/SkeletonLoader';
 import { useToast } from '../../components/Toast';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
-import { Calendar, Clock, CreditCard, History, ArrowUpCircle, CheckCircle } from 'lucide-react';
+import { Calendar, Clock, CreditCard, History, ArrowUpCircle, CheckCircle, AlertTriangle } from 'lucide-react';
+import api from '../../services/api';
+import { Button } from '../../components/ui/Button';
 
 interface SubscriptionData {
-    plan: string;
-    billingCycle: string;
-    dailyLimit: number;
-    startDate?: string;
-    endDate?: string;
-    nextBillingDate?: string;
-    remainingDays?: number;
-    status: string;
-    upgradeHistory?: Array<{
-        timestamp: string;
-        oldPlan: string;
-        newPlan: string;
-        chargeAmount: number;
-        action: string;
-    }>;
+    userId: string;
+    planId: 'free' | 'lite' | 'pro' | 'ultra';
+    billingCycle: 'monthly' | 'quarterly' | 'yearly';
+    status: 'active' | 'canceled' | 'expired';
+    startDate: { _seconds: number, _nanoseconds: number } | string;
+    currentPeriodEnd: { _seconds: number, _nanoseconds: number } | string;
+    cancelAtPeriodEnd: boolean;
 }
 
 const SubscriptionOverview: React.FC = () => {
     const { t } = useTranslation();
     const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [processing, setProcessing] = useState(false);
     const { showToast } = useToast();
     const { user } = useAuth();
 
     useEffect(() => {
-        const fetchSubscription = async () => {
-            if (!user) return;
-
-            try {
-                const token = await user.getIdToken();
-                const res = await fetch('/api/subscription/manage', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                const data = await res.json();
-
-                if (data.code === 0) {
-                    setSubscription(data.data);
-                } else {
-                    showToast('error', data.message || 'Failed to load subscription details');
-                }
-            } catch (err: any) {
-                console.error(err);
-                const errorMessage = err.response?.data?.error || err.message || 'Network error';
-                showToast('error', errorMessage);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchSubscription();
     }, [user]);
 
+    const fetchSubscription = async () => {
+        if (!user) return;
+
+        try {
+            const res = await api.get('/subscription/status');
+            if (res.data.success) {
+                setSubscription(res.data.data.subscription);
+            } else {
+                showToast('error', 'Failed to load subscription details');
+            }
+        } catch (err: any) {
+            console.error(err);
+            // Don't show error if just no subscription (404 or null)
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCancel = async () => {
+        if (!confirm('Are you sure you want to cancel your subscription? You will lose your benefits at the end of the current period.')) return;
+
+        try {
+            setProcessing(true);
+            const response = await api.post('/subscription/cancel');
+            if (response.data.success) {
+                showToast('success', 'Subscription canceled. It will remain active until the end of the period.');
+                await fetchSubscription();
+            } else {
+                showToast('error', 'Failed to cancel subscription');
+            }
+        } catch (err: any) {
+            console.error('Cancel error:', err);
+            showToast('error', err.message || 'Failed to cancel');
+        } finally {
+            setProcessing(false);
+        }
+    };
+
     const getPlanName = (plan: string) => {
         switch (plan) {
-            case 'light': return 'Light Plan';
-            case 'medium': return 'Medium Plan';
-            case 'enterprise': return 'Enterprise Plan';
+            case 'lite': return 'Lite Plan';
+            case 'pro': return 'Pro Plan';
+            case 'ultra': return 'Ultra Plan';
             case 'free': return 'Free Plan';
             default: return plan;
         }
     };
 
-    const formatDate = (dateStr?: string) => {
-        if (!dateStr) return '-';
-        return new Date(dateStr).toLocaleDateString();
+    const formatDate = (dateVal: any) => {
+        if (!dateVal) return '-';
+        if (typeof dateVal === 'string') return new Date(dateVal).toLocaleDateString();
+        if (dateVal._seconds) return new Date(dateVal._seconds * 1000).toLocaleDateString();
+        return '-';
+    };
+
+    const calculateRemainingDays = (endDateVal: any) => {
+        if (!endDateVal) return 0;
+        let end = new Date();
+        if (typeof endDateVal === 'string') end = new Date(endDateVal);
+        else if (endDateVal._seconds) end = new Date(endDateVal._seconds * 1000);
+
+        const now = new Date();
+        const diff = end.getTime() - now.getTime();
+        return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
     };
 
     return (
@@ -114,26 +134,36 @@ const SubscriptionOverview: React.FC = () => {
                     </div>
                 ) : (
                     <>
-                        <div className="flex items-center gap-4 mb-8">
-                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                                <CreditCard className="w-8 h-8 text-white" />
-                            </div>
-                            <div>
-                                <h2 className="text-3xl font-bold text-white capitalize">
-                                    {getPlanName(subscription?.plan || 'free')}
-                                </h2>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${subscription?.status === 'active'
-                                        ? 'bg-green-500/10 text-green-400 border-green-500/20'
-                                        : 'bg-gray-700 text-gray-400 border-gray-600'
-                                        }`}>
-                                        {subscription?.status === 'active' ? '使用中' : '已停用'}
-                                    </span>
-                                    <span className="text-gray-400 text-sm capitalize">
-                                        • {subscription?.billingCycle === 'monthly' ? '月付' : subscription?.billingCycle === 'quarterly' ? '季付' : '年付'} 方案
-                                    </span>
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                            <div className="flex items-center gap-4">
+                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                                    <CreditCard className="w-8 h-8 text-white" />
+                                </div>
+                                <div>
+                                    <h2 className="text-3xl font-bold text-white capitalize">
+                                        {getPlanName(subscription?.planId || 'free')}
+                                    </h2>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${subscription?.status === 'active'
+                                            ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                                            : 'bg-gray-700 text-gray-400 border-gray-600'
+                                            }`}>
+                                            {subscription?.status === 'active' ? (subscription?.cancelAtPeriodEnd ? '已取消 (目前有效)' : '使用中') : '已停用'}
+                                        </span>
+                                        {subscription?.planId !== 'free' && (
+                                            <span className="text-gray-400 text-sm capitalize">
+                                                • {subscription?.billingCycle === 'monthly' ? '月付' : subscription?.billingCycle === 'quarterly' ? '季付' : '年付'} 方案
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
+
+                            {subscription?.status === 'active' && !subscription?.cancelAtPeriodEnd && subscription?.planId !== 'free' && (
+                                <Button variant="danger" onClick={handleCancel} disabled={processing}>
+                                    取消訂閱
+                                </Button>
+                            )}
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -149,10 +179,10 @@ const SubscriptionOverview: React.FC = () => {
                             <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
                                 <div className="flex items-center gap-2 text-gray-400 mb-2">
                                     <Clock className="w-4 h-4" />
-                                    <span className="text-sm">下次扣款</span>
+                                    <span className="text-sm">到期/續約日</span>
                                 </div>
                                 <p className="text-lg font-semibold text-white">
-                                    {formatDate(subscription?.nextBillingDate)}
+                                    {formatDate(subscription?.currentPeriodEnd)}
                                 </p>
                             </div>
                             <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
@@ -161,16 +191,16 @@ const SubscriptionOverview: React.FC = () => {
                                     <span className="text-sm">剩餘天數</span>
                                 </div>
                                 <p className="text-lg font-semibold text-blue-400">
-                                    {subscription?.remainingDays ?? '-'} 天
+                                    {calculateRemainingDays(subscription?.currentPeriodEnd)} 天
                                 </p>
                             </div>
                             <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
                                 <div className="flex items-center gap-2 text-gray-400 mb-2">
                                     <CheckCircle className="w-4 h-4" />
-                                    <span className="text-sm">每日額度</span>
+                                    <span className="text-sm">方案狀態</span>
                                 </div>
-                                <p className="text-lg font-semibold text-white">
-                                    {subscription?.dailyLimit === -1 ? '無限次' : subscription?.dailyLimit}
+                                <p className="text-lg font-semibold text-white capitalize">
+                                    {subscription?.status || 'Active'}
                                 </p>
                             </div>
                         </div>
@@ -178,44 +208,16 @@ const SubscriptionOverview: React.FC = () => {
                 )}
             </div>
 
-            {/* Upgrade History */}
-            <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 backdrop-blur-sm">
-                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                    <History className="w-5 h-5 text-gray-400" />
-                    升級歷史
-                </h3>
-
-                {!loading && (!subscription?.upgradeHistory || subscription.upgradeHistory.length === 0) ? (
-                    <div className="text-center py-8 text-gray-500">
-                        尚無升級記錄。
-                    </div>
-                ) : (
-                    <div className="relative border-l border-gray-800 ml-3 space-y-8">
-                        {subscription?.upgradeHistory?.map((event, index) => (
-                            <div key={index} className="relative pl-8">
-                                <div className="absolute -left-1.5 top-1.5 w-3 h-3 rounded-full bg-blue-500 border-2 border-gray-900 shadow-[0_0_0_4px_rgba(59,130,246,0.2)]" />
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1">
-                                    <span className="text-sm text-gray-400 font-mono">
-                                        {new Date(event.timestamp).toLocaleString()}
-                                    </span>
-                                    <span className="text-xs font-medium px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase">
-                                        {event.action === 'upgrade' ? '升級' : event.action}
-                                    </span>
-                                </div>
-                                <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
-                                    <p className="text-white font-medium">
-                                        方案變更: <span className="text-gray-400">{event.oldPlan}</span> → <span className="text-blue-400">{event.newPlan}</span>
-                                    </p>
-                                    {event.chargeAmount > 0 && (
-                                        <p className="text-sm text-gray-400 mt-1">
-                                            收費金額: <span className="text-white">${event.chargeAmount}</span>
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+            {/* Note about upgrades */}
+            <div className="bg-blue-900/20 border border-blue-500/30 rounded-2xl p-6 flex items-start gap-4">
+                <AlertTriangle className="w-6 h-6 text-blue-400 flex-shrink-0" />
+                <div>
+                    <h3 className="text-lg font-semibold text-white mb-1">關於升級與降級</h3>
+                    <p className="text-gray-400 text-sm">
+                        升級方案會立即生效，並重新計算週期。降級或取消訂閱將在當前週期結束後生效。
+                        如果您有任何疑問，請聯繫客服。
+                    </p>
+                </div>
             </div>
         </div>
     );
