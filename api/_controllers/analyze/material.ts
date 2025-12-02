@@ -88,147 +88,143 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 }
 `;
 
-        let text = '';
-        let analysisSource = 'gemini';
-        let geminiSuccess = false;
+        // --- MULTI-PROVIDER STRATEGY ---
+        // Priority: Gemini -> DeepSeek -> Grok -> OpenAI
 
-        // --- STRATEGY 1: GEMINI ---
-        const geminiApiKey = process.env.GEMINI_API_KEY;
+        let analysisResultText = '';
+        let successProvider = '';
+        let errorLog: string[] = [];
 
-        if (geminiApiKey) {
-            const genAI = new GoogleGenerativeAI(geminiApiKey);
-            const parts: any[] = [];
-            parts.push(systemPrompt);
+        // 1. GEMINI (Google)
+        // Native support for Video & Image. Best for initial attempt.
+        if (process.env.GEMINI_API_KEY) {
+            try {
+                const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+                const parts: any[] = [systemPrompt];
 
-            if (copywriting) parts.push(`\nCopywriting: ${copywriting}`);
-            if (landing_page_url) parts.push(`\nLanding Page URL: ${landing_page_url}`);
+                if (copywriting) parts.push(`\nCopywriting: ${copywriting}`);
+                if (landing_page_url) parts.push(`\nLanding Page URL: ${landing_page_url}`);
 
-            if (image_base64) {
-                const match = image_base64.match(/^data:(image\/\w+);base64,/);
-                const mimeType = match ? match[1] : "image/jpeg";
-                const base64Data = image_base64.replace(/^data:image\/\w+;base64,/, "");
-                parts.push({ inlineData: { data: base64Data, mimeType: mimeType } });
-            }
-
-            if (video_base64) {
-                const match = video_base64.match(/^data:(video\/\w+);base64,/);
-                const mimeType = match ? match[1] : "video/mp4";
-                const base64Data = video_base64.replace(/^data:video\/\w+;base64,/, "");
-                parts.push({ inlineData: { data: base64Data, mimeType: mimeType } });
-            }
-
-            const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-flash-001', 'gemini-1.5-pro', 'gemini-1.5-pro-001', 'gemini-pro'];
-
-            for (const modelName of modelsToTry) {
-                try {
-                    console.log(`Attempting analysis with Gemini model: ${modelName}`);
-                    const model = genAI.getGenerativeModel({ model: modelName });
-                    const result = await model.generateContent(parts);
-                    const response = await result.response;
-                    text = response.text();
-                    geminiSuccess = true;
-                    analysisSource = `gemini:${modelName}`;
-                    break;
-                } catch (e: any) {
-                    console.error(`Gemini (${modelName}) failed:`, e.message);
+                if (image_base64) {
+                    const match = image_base64.match(/^data:(image\/\w+);base64,/);
+                    const mimeType = match ? match[1] : "image/jpeg";
+                    const base64Data = image_base64.replace(/^data:image\/\w+;base64,/, "");
+                    parts.push({ inlineData: { data: base64Data, mimeType: mimeType } });
                 }
+
+                if (video_base64) {
+                    const match = video_base64.match(/^data:(video\/\w+);base64,/);
+                    const mimeType = match ? match[1] : "video/mp4";
+                    const base64Data = video_base64.replace(/^data:video\/\w+;base64,/, "");
+                    parts.push({ inlineData: { data: base64Data, mimeType: mimeType } });
+                }
+
+                const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-flash-001', 'gemini-1.5-pro', 'gemini-1.5-pro-001', 'gemini-pro'];
+
+                for (const modelName of modelsToTry) {
+                    try {
+                        console.log(`Attempting analysis with Gemini model: ${modelName}`);
+                        const model = genAI.getGenerativeModel({ model: modelName });
+                        const result = await model.generateContent(parts);
+                        const response = await result.response;
+                        analysisResultText = response.text();
+                        successProvider = `gemini:${modelName}`;
+                        break; // Success!
+                    } catch (e: any) {
+                        console.error(`Gemini (${modelName}) failed:`, e.message);
+                        errorLog.push(`Gemini(${modelName}): ${e.message}`);
+                    }
+                }
+            } catch (e: any) {
+                errorLog.push(`Gemini Init Failed: ${e.message}`);
             }
         } else {
-            console.warn("GEMINI_API_KEY is not set. Skipping Gemini analysis.");
+            errorLog.push("Gemini Skipped (No Key)");
         }
 
-        // --- STRATEGY 2: OPENAI (Fallback) ---
-        let openaiErrorMsg = '';
-
-        // Check if we should even try OpenAI
-        // OpenAI cannot handle video files directly. If we ONLY have video and no other context, OpenAI is useless.
-        const hasNonVideoContent = !!image_base64 || !!copywriting || !!landing_page_url;
-
-        if (!geminiSuccess) {
-            if (!process.env.OPENAI_API_KEY) {
-                console.warn("OPENAI_API_KEY is not set. Skipping OpenAI fallback analysis.");
-                openaiErrorMsg = "OpenAI API Key is missing on server.";
-            } else if (!hasNonVideoContent && video_base64) {
-                console.warn("Only video content provided. OpenAI cannot analyze video files directly.");
-                openaiErrorMsg = "Gemini failed, and OpenAI does not support direct video file analysis. Please add text or image context.";
-            } else {
-                console.log("Gemini failed or skipped. Attempting fallback to OpenAI GPT-4o-mini...");
-                try {
-                    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-                    const messages: any[] = [
-                        { role: "system", content: systemPrompt }
-                    ];
-
-                    const userContent: any[] = [];
-                    if (copywriting) userContent.push({ type: "text", text: `Copywriting: ${copywriting}` });
-                    if (landing_page_url) userContent.push({ type: "text", text: `Landing Page URL: ${landing_page_url}` });
-
-                    if (image_base64) {
-                        userContent.push({
-                            type: "image_url",
-                            image_url: { url: image_base64 }
-                        });
-                    }
-
-                    if (video_base64) {
-                        userContent.push({
-                            type: "text",
-                            text: "[WARNING: Video content was uploaded but OpenAI API does not support direct video file analysis. Please analyze the video manually or rely on other inputs.]"
-                        });
-                    }
-
-                    if (userContent.length > 0) {
-                        messages.push({ role: "user", content: userContent });
-                    } else {
-                        messages.push({ role: "user", content: "Please analyze the provided context." });
-                    }
-
-                    const completion = await openai.chat.completions.create({
-                        model: "gpt-4o-mini", // Use mini for speed/cost
-                        messages: messages,
-                        response_format: { type: "json_object" },
-                        max_tokens: 4000
-                    });
-
-                    text = completion.choices[0].message.content || '{}';
-                    geminiSuccess = true; // Mark as success since we got a result from OpenAI
-                    analysisSource = 'openai:gpt-4o-mini';
-
-                } catch (openaiError: any) {
-                    console.error("OpenAI Fallback Failed:", openaiError);
-                    openaiErrorMsg = `OpenAI Error: ${openaiError.message}`;
-                }
+        // Helper for OpenAI-compatible providers
+        const tryOpenAICompatible = async (providerName: string, apiKey: string | undefined, baseURL: string, model: string) => {
+            if (successProvider) return; // Already succeeded
+            if (!apiKey) {
+                errorLog.push(`${providerName} Skipped (No Key)`);
+                return;
             }
-        }
 
-        if (!geminiSuccess) {
+            // Skip if only video (OpenAI-compatible APIs usually don't support video upload directly)
+            const hasNonVideoContent = !!image_base64 || !!copywriting || !!landing_page_url;
+            if (!hasNonVideoContent && video_base64) {
+                errorLog.push(`${providerName} Skipped (Video Only - Not Supported)`);
+                return;
+            }
+
+            console.log(`Attempting analysis with ${providerName} (${model})...`);
+            try {
+                const client = new OpenAI({ apiKey, baseURL });
+
+                const messages: any[] = [{ role: "system", content: systemPrompt }];
+                const userContent: any[] = [];
+
+                if (copywriting) userContent.push({ type: "text", text: `Copywriting: ${copywriting}` });
+                if (landing_page_url) userContent.push({ type: "text", text: `Landing Page URL: ${landing_page_url}` });
+
+                if (image_base64) {
+                    // Note: DeepSeek/Grok vision support varies. If they fail on image, catch block handles it.
+                    userContent.push({ type: "image_url", image_url: { url: image_base64 } });
+                }
+
+                if (video_base64) {
+                    userContent.push({ type: "text", text: "[WARNING: Video content provided but not supported by this API. Analyze based on text/image context.]" });
+                }
+
+                if (userContent.length > 0) messages.push({ role: "user", content: userContent });
+                else messages.push({ role: "user", content: "Analyze provided context." });
+
+                const completion = await client.chat.completions.create({
+                    model: model,
+                    messages: messages,
+                    response_format: { type: "json_object" },
+                    max_tokens: 4000
+                });
+
+                analysisResultText = completion.choices[0].message.content || '{}';
+                successProvider = `${providerName.toLowerCase()}:${model}`;
+
+            } catch (e: any) {
+                console.error(`${providerName} Failed:`, e.message);
+                errorLog.push(`${providerName}: ${e.message}`);
+            }
+        };
+
+        // 2. DEEPSEEK (High Performance, Low Cost)
+        // BaseURL: https://api.deepseek.com
+        await tryOpenAICompatible('DeepSeek', process.env.DEEPSEEK_API_KEY, 'https://api.deepseek.com', 'deepseek-chat');
+
+        // 3. GROK (xAI - Marketing Value)
+        // BaseURL: https://api.x.ai/v1
+        await tryOpenAICompatible('Grok', process.env.GROK_API_KEY || process.env.XAI_API_KEY, 'https://api.x.ai/v1', 'grok-beta');
+
+        // 4. OPENAI (Final Fallback)
+        // BaseURL: Default (undefined)
+        await tryOpenAICompatible('OpenAI', process.env.OPENAI_API_KEY, 'https://api.openai.com/v1', 'gpt-4o-mini');
+
+
+        if (!successProvider) {
             // Refund if all failed
             await userService.addCredits(user.uid, COST);
-
-            // Construct detailed error message
-            let finalErrorMessage = "All AI models failed.";
-            if (openaiErrorMsg) {
-                finalErrorMessage += ` (Gemini: 404/Error, OpenAI: ${openaiErrorMsg})`;
-            } else {
-                finalErrorMessage += " (Gemini: 404/Error)";
-            }
-
-            throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, finalErrorMessage, 500);
+            throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, `All AI models failed. Details: ${errorLog.join(' | ')}`, 500);
         }
 
         // Clean JSON
-        text = text.replace(/```json\n?|\n?```/g, '').trim();
+        let text = analysisResultText.replace(/```json\n?|\n?```/g, '').trim();
         let analysisData;
         try {
             analysisData = JSON.parse(text);
         } catch (e) {
             console.error("JSON Parse Error", text);
-            // Fallback structure
             analysisData = {
                 error: "Failed to parse AI response",
                 raw: text,
-                reports: {} // Ensure structure exists to prevent frontend crash
+                reports: {}
             };
         }
 
@@ -243,7 +239,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     copyLength: copywriting?.length || 0,
                     url: landing_page_url
                 },
-                source: analysisSource,
+                source: successProvider,
                 ...analysisData
             });
         } catch (logError) {
