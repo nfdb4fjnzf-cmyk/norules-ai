@@ -44,6 +44,7 @@ function App() {
               {/* Subscription Routes */}
               <Route path="/billing" element={<Billing />} />
               <Route path="/subscription" element={<SubscriptionOverview />} />
+              <Route path="/subscription/overview" element={<SubscriptionOverview />} />
               <Route path="/subscription/plans" element={<Plans />} />
               <Route path="/subscription/topup" element={<TopUp />} />
 
