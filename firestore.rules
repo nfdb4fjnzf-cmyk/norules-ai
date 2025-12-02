@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user is accessing their own data
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Users Collection
+    // Allow read/write for own profile, but PROTECT critical fields
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId); // Allow user creation on sign up
+      allow update: if isOwner(userId) 
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['credits', 'plan', 'subscriptionStatus', 'role']);
+      // 'credits', 'plan', 'subscriptionStatus', 'role' can ONLY be updated by Admin SDK (Backend)
+    }
+
+    // Credit Ledger
+    // Read-only for users (history)
+    match /credit_ledger/{docId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow write: if false; // Only Backend
+    }
+
+    // Usage Operations
+    // Read-only for users (history)
+    match /usage_operations/{docId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow write: if false; // Only Backend
+    }
+
+    // Analysis Reports
+    // Read-only for users
+    match /analysis_reports/{docId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow write: if false; // Only Backend
+    }
+
+    // Generations (Text, Image, Video)
+    // Read-only for users
+    match /generations/{docId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow write: if false; // Only Backend
+    }
+
+    // Subscriptions
+    // Read-only for users
+    match /subscriptions/{docId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow write: if false; // Only Backend
+    }
+
+    // Subscription Events
+    // Read-only for users
+    match /subscription_events/{docId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow write: if false; // Only Backend
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
