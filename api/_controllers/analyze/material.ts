@@ -36,7 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, 'Gemini API Key is missing', 500);
         }
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-001' });
+        // Model initialized in loop below
         const parts: any[] = [];
 
         // Fixed System Prompt
@@ -129,17 +129,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             });
         }
 
-        // 3. Generate Content
+        // 3. Generate Content with Fallback Strategy
+        const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-pro'];
         let text = '';
-        try {
-            const result = await model.generateContent(parts);
-            const response = await result.response;
-            text = response.text();
-        } catch (geminiError: any) {
-            console.error("Gemini Generation Error:", geminiError);
-            // Refund on Gemini failure
-            await userService.addCredits(user.uid, COST);
-            throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, `AI Analysis Failed: ${geminiError.message}`, 500);
+        let lastError;
+
+        for (const modelName of modelsToTry) {
+            try {
+                console.log(`Attempting analysis with model: ${modelName}`);
+                const model = genAI.getGenerativeModel({ model: modelName });
+                const result = await model.generateContent(parts);
+                const response = await result.response;
+                text = response.text();
+
+                // If successful, break the loop
+                break;
+            } catch (geminiError: any) {
+                console.error(`Gemini Generation Error (${modelName}):`, geminiError);
+                lastError = geminiError;
+                // If this was the last model, throw the error
+                if (modelName === modelsToTry[modelsToTry.length - 1]) {
+                    // Refund on final failure
+                    await userService.addCredits(user.uid, COST);
+                    throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, `AI Analysis Failed after retries: ${geminiError.message}`, 500);
+                }
+                // Otherwise continue to next model
+            }
         }
 
         // Clean JSON
