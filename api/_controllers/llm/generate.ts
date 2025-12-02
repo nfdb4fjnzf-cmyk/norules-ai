@@ -95,7 +95,7 @@ Constraint: No markdown in JSON values. Clean text only.`;
             });
 
             // V3: Estimate Cost
-            const estimatedCost = usageService.estimateCost('chat', prompt.length);
+            const estimatedCost = usageService.estimateCost('chat', prompt.length, modelId);
 
             // V3: Deduct Estimated Cost
             await checkRateLimit(user.uid, plan);
@@ -165,7 +165,7 @@ Constraint: No markdown in JSON values. Clean text only.`;
                 const genAI = new GoogleGenerativeAI(apiKey);
 
                 // V3: Estimate Cost
-                const estimatedCost = usageService.estimateCost('chat', prompt.length);
+                const estimatedCost = usageService.estimateCost('chat', prompt.length, modelId);
 
                 // V3: Deduct Estimated Cost
                 await checkRateLimit(user.uid, plan);

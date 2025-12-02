@@ -46,7 +46,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         await checkRateLimit(user.uid, plan);
 
         // V3: Estimate Cost
-        const estimatedCost = usageService.estimateCost('analysis', text.length);
+        const estimatedCost = usageService.estimateCost('analysis', text.length, 'gemini-1.5-flash');
 
         // V3: Deduct Estimated Cost
         const hasSufficientCredits = await userService.deductCredits(user.uid, estimatedCost);
