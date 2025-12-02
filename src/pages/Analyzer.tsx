@@ -165,7 +165,8 @@ const Analyzer: React.FC = () => {
 
         } catch (error: any) {
             console.error(error);
-            showToast('error', error.message || "Analysis failed");
+            const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || "Analysis failed";
+            showToast('error', errorMessage);
         } finally {
             setIsAnalyzing(false);
         }
