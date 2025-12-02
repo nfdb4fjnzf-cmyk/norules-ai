@@ -8,6 +8,7 @@ import { userService } from '../../_services/userService.js';
 import { db } from '../../_config/firebaseAdmin.js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { usageService } from '../../_services/usageService.js';
+import admin from 'firebase-admin';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
@@ -256,26 +257,62 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // 4. Log to Firestore
         try {
-            await db.collection('ad_analysis_logs').add({
+            // Finalize Operation (Success)
+            await usageService.finalizeUsageOperation(operationId, 'SUCCEEDED', COST, null);
+
+            // Save Analysis Report
+            const reportRef = db.collection('analysis_reports').doc();
+            await reportRef.set({
                 userId: user.uid,
-                timestamp: new Date().toISOString(),
-                inputs: {
-                    hasImage: !!image_base64,
-                    hasVideo: !!video_base64,
-                    copyLength: copywriting?.length || 0,
-                    url: landing_page_url
-                },
-                source: successProvider,
-                ...analysisData
+                sourceType: video_url || video_base64 ? 'video' : (image_base64 ? 'image' : 'text'),
+                inputSummary: copywriting ? copywriting.substring(0, 100) : 'Media Analysis',
+                platforms: platforms,
+                riskSummary: 'See details', // Could extract from parsedResult
+                resultJson: analysisData, // Use analysisData here
+                language: language,
+                usageOperationId: operationId,
+                creditsUsed: COST,
+                createdAt: admin.firestore.Timestamp.now()
             });
+
+            // Update Operation with Result Ref
+            await db.collection('usage_operations').doc(operationId).update({
+                result_ref: `analysis_reports/${reportRef.id}`
+            });
+
+            // Log Transaction (Legacy - optional)
+            await usageService.logTransaction({
+                userId: user.uid,
+                actionType: 'analysis',
+                estimatedCost: COST,
+                actualCost: COST,
+                timestamp: new Date().toISOString(),
+                status: 'success',
+                modelUsed: successProvider
+            });
+
+            return res.status(200).json(successResponse({
+                ...analysisData, // Use analysisData here
+                reportId: reportRef.id // Return ID to frontend
+            }));
+
         } catch (logError) {
             console.error("Logging failed", logError);
+            // Even if logging fails, we return success if analysis worked?
+            // But we already returned in the try block.
+            // If we are here, it means logging failed BEFORE return.
+            // We should probably still return success but maybe warn?
+            return res.status(200).json(successResponse(analysisData));
         }
 
-        return res.status(200).json(successResponse(analysisData));
-
     } catch (error: any) {
-        console.error('Material Analysis Error:', error);
+        console.error('Analysis Error:', error);
+
+        // Finalize Operation (Failed -> Refund)
+        if (operationId) {
+            await usageService.finalizeUsageOperation(operationId, 'FAILED', 0, null, error.message);
+        }
+
         const code = error.code || ErrorCodes.INTERNAL_SERVER_ERROR;
         const status = error.statusCode || 500;
         const message = error.message || 'Internal Server Error';

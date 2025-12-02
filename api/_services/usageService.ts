@@ -140,6 +140,32 @@ export const usageService = {
         return 0;
     },
 
+    /**
+     * Estimate Cost (for Frontend)
+     */
+    estimateCost: (actionType: string, inputLength: number = 0, model: string = 'default'): number => {
+        if (actionType === 'image') return 30;
+        if (actionType === 'video') return 60;
+
+        if (actionType === 'chat' || actionType === 'analysis') {
+            // Estimate: 1 token ~= 4 chars. 
+            // Input + Expected Output (assume 500 chars output for estimate?)
+            const estimatedTokensIn = Math.ceil(inputLength / 4);
+            const estimatedTokensOut = 200; // Buffer
+
+            let multiplier = 1; // Default Standard
+
+            if (model.includes('flash') || model.includes('gpt-3.5')) {
+                multiplier = 0.5;
+            } else if (model.includes('gpt-4') || model.includes('o1')) {
+                multiplier = 2;
+            }
+
+            return Math.ceil((estimatedTokensIn + estimatedTokensOut) * multiplier);
+        }
+        return 0;
+    },
+
     // Legacy support for logging (can be deprecated)
     logTransaction: async (log: any) => {
         // We can map this to a usage operation if needed, but for now just log to old collection

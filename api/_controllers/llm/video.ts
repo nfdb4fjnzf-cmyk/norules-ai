@@ -7,6 +7,8 @@ import { logUsage } from '../../_utils/historyLogger.js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 import { usageService } from '../../_services/usageService.js';
+import { db } from '../../_config/firebaseAdmin.js';
+import admin from 'firebase-admin';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
@@ -93,6 +95,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         await usageService.finalizeUsageOperation(operationId, 'SUCCEEDED', COST, generationId);
 
+        // Save Generation (Pending)
+        const genRef = db.collection('generations').doc();
+        await genRef.set({
+            userId: user.uid,
+            type: 'video',
+            model: 'luma-dream-machine',
+            prompt: prompt,
+            resultRef: generationId, // Luma ID
+            thumbnailUrl: null,
+            usageOperationId: operationId,
+            creditsUsed: COST,
+            createdAt: admin.firestore.Timestamp.now()
+        });
+
         return res.status(200).json(successResponse({
             data: {
                 id: generationId,
@@ -103,7 +119,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             meta: {
                 mode: 'INTERNAL',
                 pointsDeducted: COST,
-                quotaUsage: { used: COST, limit: 100 }
+                quotaUsage: { used: COST, limit: 100 },
+                generationId: genRef.id
             }
         }));
 

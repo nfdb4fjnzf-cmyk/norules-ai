@@ -7,6 +7,8 @@ import { userService } from '../../_services/userService.js';
 import { usageService } from '../../_services/usageService.js';
 import OpenAI from 'openai';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { db } from '../../_config/firebaseAdmin.js';
+import admin from 'firebase-admin';
 
 // ... existing imports ...
 
@@ -91,6 +93,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Finalize Operation (Success)
         await usageService.finalizeUsageOperation(operationId, 'SUCCEEDED', COST, imageUrl);
 
+        // Save Generation
+        const genRef = db.collection('generations').doc();
+        await genRef.set({
+            userId: user.uid,
+            type: 'image',
+            model: modelId,
+            prompt: prompt,
+            resultRef: imageUrl,
+            thumbnailUrl: imageUrl,
+            usageOperationId: operationId,
+            creditsUsed: COST,
+            createdAt: admin.firestore.Timestamp.now()
+        });
+
         return res.status(200).json(successResponse({
             data: {
                 text: `Image generated with prompt: "${prompt}"`,
@@ -101,7 +117,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             meta: {
                 mode: 'INTERNAL',
                 pointsDeducted: COST,
-                quotaUsage: { used: 1, limit: 100 }
+                quotaUsage: { used: 1, limit: 100 },
+                generationId: genRef.id
             }
         }));
 

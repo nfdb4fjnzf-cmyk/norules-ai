@@ -8,6 +8,8 @@ import { logUsage } from '../../_utils/historyLogger.js';
 import { logUsage as logUsageStats, usageService } from '../../_services/usageService.js';
 import { userService } from '../../_services/userService.js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { db } from '../../_config/firebaseAdmin.js';
+import admin from 'firebase-admin';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Manual CORS
@@ -229,6 +231,19 @@ Constraint: No markdown in JSON values. Clean text only.`;
             // Finalize Operation
             await usageService.finalizeUsageOperation(operationId, 'SUCCEEDED', finalActualCost, null);
 
+            // Save Generation
+            const genRef = db.collection('generations').doc();
+            await genRef.set({
+                userId: user.uid,
+                type: 'text',
+                model: actualModelUsed,
+                prompt: prompt,
+                textContent: finalData.text || JSON.stringify(finalData),
+                usageOperationId: operationId,
+                creditsUsed: finalActualCost,
+                createdAt: admin.firestore.Timestamp.now()
+            });
+
             return res.status(200).json(successResponse({
                 data: { text: finalData.text },
                 riskScore: 0,
@@ -237,7 +252,8 @@ Constraint: No markdown in JSON values. Clean text only.`;
                     model: actualModelUsed,
                     pointsDeducted: finalActualCost,
                     quotaRemaining: 0,
-                    usage: { tokensIn: finalTokensIn, tokensOut: finalTokensOut, total: finalTokensIn + finalTokensOut }
+                    usage: { tokensIn: finalTokensIn, tokensOut: finalTokensOut, total: finalTokensIn + finalTokensOut },
+                    generationId: genRef.id
                 }
             }));
         }
