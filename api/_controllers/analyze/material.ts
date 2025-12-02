@@ -7,8 +7,6 @@ import { userService } from '../../_services/userService.js';
 import { db } from '../../_config/firebaseAdmin.js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
         return res.status(405).json(errorResponse(ErrorCodes.BAD_REQUEST, 'Method not allowed'));
@@ -26,8 +24,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const COST = 5;
         const userProfile = await userService.getUserProfile(user.uid);
 
-        // Check Plan/Mode restrictions if needed (e.g. Free plan might not allow video)
-
         await checkRateLimit(user.uid, userProfile.subscription?.plan || 'free');
         const hasCredits = await userService.deductCredits(user.uid, COST);
         if (!hasCredits) {
@@ -35,6 +31,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // 2. Prepare Gemini Input
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, 'Gemini API Key is missing', 500);
+        }
+        const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
         const parts: any[] = [];
 
@@ -101,30 +102,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (landing_page_url) parts.push(`\nLanding Page URL: ${landing_page_url}`);
 
         if (image_base64) {
+            // Extract mime type
+            const match = image_base64.match(/^data:(image\/\w+);base64,/);
+            const mimeType = match ? match[1] : "image/jpeg";
             const base64Data = image_base64.replace(/^data:image\/\w+;base64,/, "");
+
             parts.push({
                 inlineData: {
                     data: base64Data,
-                    mimeType: "image/jpeg" // Assuming jpeg or handle dynamic mime
+                    mimeType: mimeType
                 }
             });
         }
 
-        // Video handling (Note: inlineData has size limits, but for MVP/Feature request we use it)
         if (video_base64) {
+            // Extract mime type
+            const match = video_base64.match(/^data:(video\/\w+);base64,/);
+            const mimeType = match ? match[1] : "video/mp4";
             const base64Data = video_base64.replace(/^data:video\/\w+;base64,/, "");
+
             parts.push({
                 inlineData: {
                     data: base64Data,
-                    mimeType: "video/mp4" // Assuming mp4
+                    mimeType: mimeType
                 }
             });
         }
 
         // 3. Generate Content
-        const result = await model.generateContent(parts);
-        const response = await result.response;
-        let text = response.text();
+        let text = '';
+        try {
+            const result = await model.generateContent(parts);
+            const response = await result.response;
+            text = response.text();
+        } catch (geminiError: any) {
+            console.error("Gemini Generation Error:", geminiError);
+            // Refund on Gemini failure
+            await userService.addCredits(user.uid, COST);
+            throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, `AI Analysis Failed: ${geminiError.message}`, 500);
+        }
 
         // Clean JSON
         text = text.replace(/```json\n?|\n?```/g, '').trim();
@@ -136,7 +152,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             // Fallback structure
             analysisData = {
                 error: "Failed to parse AI response",
-                raw: text
+                raw: text,
+                reports: {} // Ensure structure exists to prevent frontend crash
             };
         }
 
