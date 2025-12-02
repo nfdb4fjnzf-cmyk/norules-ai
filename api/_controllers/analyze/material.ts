@@ -36,7 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, 'Gemini API Key is missing', 500);
         }
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-001' });
         const parts: any[] = [];
 
         // Fixed System Prompt
