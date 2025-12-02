@@ -117,7 +117,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
 
         return res.status(200).json(successResponse({
-            imageUrl: imageUrl,
+            data: {
+                text: `Image generated with prompt: "${prompt}"`,
+                mediaUrl: imageUrl,
+                mediaType: 'image'
+            },
             riskScore: riskScore,
             meta: {
                 mode: 'INTERNAL',

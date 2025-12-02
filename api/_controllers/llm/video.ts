@@ -63,7 +63,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             },
             body: JSON.stringify({
                 prompt: `${prompt} ${policyInstruction}`,
-                aspect_ratio: aspectRatio // Luma supports 16:9, 9:16, 1:1, etc.
+                aspect_ratio: aspectRatio, // Luma supports 16:9, 9:16, 1:1, etc.
+                model: "ray-1-6"
             })
         });
 
