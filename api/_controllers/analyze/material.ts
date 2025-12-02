@@ -130,7 +130,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // 3. Generate Content with Fallback Strategy
-        const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-pro'];
+        const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-flash-001', 'gemini-1.5-pro', 'gemini-1.5-pro-001', 'gemini-pro'];
         let text = '';
         let lastError;
 
