@@ -344,5 +344,67 @@
                 "removed": "External API Key removed"
             }
         }
+    },
+    "admin": {
+        "menu": {
+            "console": "Admin Console",
+            "overview": "Overview",
+            "users": "Users",
+            "credits": "Credits",
+            "subscriptions": "Subscriptions",
+            "moderation": "Moderation",
+            "exit": "Exit Admin"
+        },
+        "dashboard": {
+            "title": "Platform Overview",
+            "totalUsers": "Total Users",
+            "dau": "Daily Active Users",
+            "engagement": "Engagement",
+            "activeSubscriptions": "Active Subscriptions",
+            "estRevenue": "Est. Revenue",
+            "creditsConsumed": "Credits Consumed (24h)",
+            "ops": "Ops",
+            "systemHealth": "System Health",
+            "errorRate": "Error Rate (24h)",
+            "failedOps": "Failed Operations",
+            "failedLoad": "Failed to load stats"
+        },
+        "users": {
+            "title": "User Management",
+            "totalUsers": "Total Users",
+            "searchPlaceholder": "Search Email...",
+            "table": {
+                "user": "User",
+                "role": "Role",
+                "status": "Status",
+                "joined": "Joined",
+                "actions": "Actions"
+            },
+            "roles": {
+                "admin": "Admin",
+                "user": "User"
+            },
+            "status": {
+                "active": "Active",
+                "inactive": "Inactive"
+            },
+            "actions": {
+                "edit": "Edit",
+                "ban": "Ban",
+                "delete": "Delete",
+                "adjustCredits": "Adjust Credits"
+            },
+            "adjustModal": {
+                "title": "Adjust Credits",
+                "user": "User",
+                "amount": "Amount (Positive to Add, Negative to Deduct)",
+                "reason": "Reason",
+                "reasonPlaceholder": "e.g. Bonus, Refund, Correction",
+                "cancel": "Cancel",
+                "confirm": "Confirm",
+                "success": "Credits adjusted successfully",
+                "failed": "Adjustment failed"
+            }
+        }
     }
 }

@@ -2,10 +2,12 @@ import React, { useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../lib/utils';
+import { useTranslation } from 'react-i18next';
 
 const AdminLayout: React.FC = () => {
     const { userProfile, loading } = useAuth();
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     useEffect(() => {
         if (!loading) {
@@ -15,14 +17,14 @@ const AdminLayout: React.FC = () => {
         }
     }, [userProfile, loading, navigate]);
 
-    if (loading) return <div className="min-h-screen bg-[#0B0E14] flex items-center justify-center text-white">Loading...</div>;
+    if (loading) return <div className="min-h-screen bg-[#0B0E14] flex items-center justify-center text-white">{t('common.loading')}</div>;
 
     const menuItems = [
-        { path: '/admin', label: 'Overview', icon: 'dashboard' },
-        { path: '/admin/users', label: 'Users', icon: 'group' },
-        { path: '/admin/credits', label: 'Credits', icon: 'payments' },
-        { path: '/admin/subscriptions', label: 'Subscriptions', icon: 'card_membership' },
-        { path: '/admin/moderation', label: 'Moderation', icon: 'gavel' },
+        { path: '/admin', label: t('admin.menu.overview'), icon: 'dashboard' },
+        { path: '/admin/users', label: t('admin.menu.users'), icon: 'group' },
+        { path: '/admin/credits', label: t('admin.menu.credits'), icon: 'payments' },
+        { path: '/admin/subscriptions', label: t('admin.menu.subscriptions'), icon: 'card_membership' },
+        { path: '/admin/moderation', label: t('admin.menu.moderation'), icon: 'gavel' },
     ];
 
     return (
@@ -33,7 +35,7 @@ const AdminLayout: React.FC = () => {
                     <div className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
                         <span className="material-symbols-outlined text-white text-sm">admin_panel_settings</span>
                     </div>
-                    <span className="text-lg font-bold tracking-tight">Admin Console</span>
+                    <span className="text-lg font-bold tracking-tight">{t('admin.menu.console')}</span>
                 </div>
 
                 <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
@@ -58,7 +60,7 @@ const AdminLayout: React.FC = () => {
                 <div className="p-4 border-t border-white/5">
                     <NavLink to="/dashboard" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-400 hover:text-white transition-colors">
                         <span className="material-symbols-outlined">logout</span>
-                        Exit Admin
+                        {t('admin.menu.exit')}
                     </NavLink>
                 </div>
             </aside>

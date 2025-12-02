@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../services/api';
 import SkeletonLoader from '../../components/SkeletonLoader';
+import { useTranslation } from 'react-i18next';
 
 interface AdminStats {
     totalUsers: number;
@@ -33,6 +34,7 @@ const StatCard: React.FC<{ title: string; value: string | number; subValue?: str
 const AdminDashboard: React.FC = () => {
     const [stats, setStats] = useState<AdminStats | null>(null);
     const [loading, setLoading] = useState(true);
+    const { t } = useTranslation();
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -61,37 +63,37 @@ const AdminDashboard: React.FC = () => {
         );
     }
 
-    if (!stats) return <div className="p-8 text-red-400">Failed to load stats</div>;
+    if (!stats) return <div className="p-8 text-red-400">{t('admin.dashboard.failedLoad')}</div>;
 
     return (
         <div className="p-8 animate-fade-in">
-            <h1 className="text-2xl font-bold text-white mb-8">Platform Overview</h1>
+            <h1 className="text-2xl font-bold text-white mb-8">{t('admin.dashboard.title')}</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <StatCard
-                    title="Total Users"
+                    title={t('admin.dashboard.totalUsers')}
                     value={stats.totalUsers}
                     icon="group"
                     color="blue"
                 />
                 <StatCard
-                    title="Daily Active Users"
+                    title={t('admin.dashboard.dau')}
                     value={stats.dau}
-                    subValue={`${((stats.dau / stats.totalUsers) * 100).toFixed(1)}% Engagement`}
+                    subValue={`${((stats.dau / stats.totalUsers) * 100).toFixed(1)}% ${t('admin.dashboard.engagement')}`}
                     icon="trending_up"
                     color="green"
                 />
                 <StatCard
-                    title="Active Subscriptions"
+                    title={t('admin.dashboard.activeSubscriptions')}
                     value={stats.activeSubscriptions}
-                    subValue={`Est. Rev: $${stats.estimatedMonthlyRevenue}`}
+                    subValue={`${t('admin.dashboard.estRevenue')}: $${stats.estimatedMonthlyRevenue}`}
                     icon="card_membership"
                     color="purple"
                 />
                 <StatCard
-                    title="Credits Consumed (24h)"
+                    title={t('admin.dashboard.creditsConsumed')}
                     value={stats.usage.totalCreditsConsumed}
-                    subValue={`${stats.usage.totalOperations} Ops`}
+                    subValue={`${stats.usage.totalOperations} ${t('admin.dashboard.ops')}`}
                     icon="bolt"
                     color="yellow"
                 />
@@ -99,16 +101,16 @@ const AdminDashboard: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-[#151927] p-6 rounded-2xl border border-white/5">
-                    <h3 className="text-lg font-bold text-white mb-4">System Health</h3>
+                    <h3 className="text-lg font-bold text-white mb-4">{t('admin.dashboard.systemHealth')}</h3>
                     <div className="space-y-4">
                         <div className="flex justify-between items-center p-4 bg-black/20 rounded-xl">
-                            <span className="text-gray-400">Error Rate (24h)</span>
+                            <span className="text-gray-400">{t('admin.dashboard.errorRate')}</span>
                             <span className={`font-bold ${stats.usage.errorRate > 0.05 ? 'text-red-400' : 'text-green-400'}`}>
                                 {(stats.usage.errorRate * 100).toFixed(2)}%
                             </span>
                         </div>
                         <div className="flex justify-between items-center p-4 bg-black/20 rounded-xl">
-                            <span className="text-gray-400">Failed Operations</span>
+                            <span className="text-gray-400">{t('admin.dashboard.failedOps')}</span>
                             <span className="text-white font-bold">{stats.usage.failedOperations}</span>
                         </div>
                     </div>

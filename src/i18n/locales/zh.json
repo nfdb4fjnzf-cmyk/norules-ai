@@ -346,5 +346,67 @@
                 "removed": "外部 API 金鑰已移除"
             }
         }
+    },
+    "admin": {
+        "menu": {
+            "console": "管理控制台",
+            "overview": "總覽",
+            "users": "使用者",
+            "credits": "點數管理",
+            "subscriptions": "訂閱管理",
+            "moderation": "內容審核",
+            "exit": "離開後台"
+        },
+        "dashboard": {
+            "title": "平台總覽",
+            "totalUsers": "總使用者數",
+            "dau": "每日活躍使用者",
+            "engagement": "互動率",
+            "activeSubscriptions": "活躍訂閱",
+            "estRevenue": "預估營收",
+            "creditsConsumed": "點數消耗 (24h)",
+            "ops": "次操作",
+            "systemHealth": "系統健康度",
+            "errorRate": "錯誤率 (24h)",
+            "failedOps": "失敗操作",
+            "failedLoad": "無法載入統計數據"
+        },
+        "users": {
+            "title": "使用者管理",
+            "totalUsers": "總使用者",
+            "searchPlaceholder": "搜尋 Email...",
+            "table": {
+                "user": "使用者",
+                "role": "角色",
+                "status": "狀態",
+                "joined": "加入時間",
+                "actions": "操作"
+            },
+            "roles": {
+                "admin": "管理員",
+                "user": "使用者"
+            },
+            "status": {
+                "active": "活躍",
+                "inactive": "停用"
+            },
+            "actions": {
+                "edit": "編輯",
+                "ban": "封鎖",
+                "delete": "刪除",
+                "adjustCredits": "調整點數"
+            },
+            "adjustModal": {
+                "title": "調整點數",
+                "user": "使用者",
+                "amount": "數量 (正數增加，負數扣除)",
+                "reason": "原因",
+                "reasonPlaceholder": "例如：獎勵、退款、修正",
+                "cancel": "取消",
+                "confirm": "確認",
+                "success": "點數調整成功",
+                "failed": "調整失敗"
+            }
+        }
     }
 }
