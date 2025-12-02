@@ -7,11 +7,15 @@ import OpenAI from 'openai';
 import { userService } from '../../_services/userService.js';
 import { db } from '../../_config/firebaseAdmin.js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { usageService } from '../../_services/usageService.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
         return res.status(405).json(errorResponse(ErrorCodes.BAD_REQUEST, 'Method not allowed'));
     }
+
+    let operationId = '';
+    const COST = 5;
 
     try {
         const user = await validateRequest(req.headers);
@@ -21,15 +25,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             throw new AppError(ErrorCodes.BAD_REQUEST, 'At least one input (image, video, copy, or url) is required', 400);
         }
 
-        // 1. Check Credits (Fixed Cost: 5 credits for comprehensive analysis)
-        const COST = 5;
-        const userProfile = await userService.getUserProfile(user.uid);
-
+        // 1. Start Usage Operation (Check & Deduct Credits)
+        const userProfile = await userService.getUserProfile(user.uid); // Still need userProfile for rate limiting
         await checkRateLimit(user.uid, userProfile.subscription?.plan || 'free');
-        const hasCredits = await userService.deductCredits(user.uid, COST);
-        if (!hasCredits) {
-            throw new AppError(ErrorCodes.INSUFFICIENT_POINTS, `Insufficient credits. Required: ${COST}`, 402);
-        }
+
+        const usageOp = await usageService.startUsageOperation(
+            user.uid,
+            'ANALYZE',
+            COST,
+            { platforms, language, hasImage: !!image_base64, hasVideo: !!video_base64 || !!video_url }
+        );
+        operationId = usageOp.operationId;
+
 
         // Fixed System Prompt
         const systemPrompt = `

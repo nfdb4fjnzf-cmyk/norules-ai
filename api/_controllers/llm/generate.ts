@@ -28,12 +28,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(405).json(errorResponse(ErrorCodes.BAD_REQUEST, 'Method not allowed'));
     }
 
-    let user: any = null;
-    let privateMode = false;
-    let pointsToDeduct = 1; // Default Standard
+    let operationId = '';
+    let estimatedCost = 0;
 
     try {
-        user = await validateRequest(req.headers);
+        const user = await validateRequest(req.headers);
         const { prompt, model: modelId, targetRiskScore, plan = 'FREE' } = req.body;
 
         // Check for BYOK Headers
@@ -41,7 +40,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const customOpenAIKey = req.headers['x-openai-api-key'];
 
         const privateModeHeader = req.headers['x-private-mode'];
-        privateMode = privateModeHeader === 'true' || (Array.isArray(privateModeHeader) && privateModeHeader[0] === 'true');
+        const privateMode = privateModeHeader === 'true' || (Array.isArray(privateModeHeader) && privateModeHeader[0] === 'true');
 
         if (!prompt) {
             throw new AppError(ErrorCodes.BAD_REQUEST, 'Prompt is required', 400);
@@ -54,23 +53,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
         }
 
-        // Calculate Cost based on Model (Ch.121.5)
-        if (modelId === 'gemini-2.5-flash' || modelId === 'gpt-3.5-turbo') {
-            pointsToDeduct = 0.5; // Mini
-        } else if (modelId === 'gemini-2.5-pro') {
-            pointsToDeduct = 1; // Standard
-        } else if (modelId === 'gpt-4o') {
-            pointsToDeduct = 2; // Advanced
-        } else {
-            pointsToDeduct = 1; // Fallback
-        }
+        // 1. Estimate Cost & Start Operation
+        estimatedCost = usageService.estimateCost('chat', prompt.length, modelId);
 
-        await checkRateLimit(user.uid, plan);
+        const userProfile = await userService.getUserProfile(user.uid);
+        await checkRateLimit(user.uid, userProfile.subscription?.plan || 'free');
 
-        const hasSufficientCredits = await userService.deductCredits(user.uid, pointsToDeduct);
-        if (!hasSufficientCredits) {
-            throw new AppError(ErrorCodes.INSUFFICIENT_POINTS, 'Insufficient credits', 402);
-        }
+        const usageOp = await usageService.startUsageOperation(
+            user.uid,
+            'LLM_CHAT',
+            estimatedCost,
+            { prompt, model: modelId, targetRiskScore }
+        );
+        operationId = usageOp.operationId;
 
         let data: any = {};
         // Determine Policy Instruction based on Compliance Score (targetRiskScore)
@@ -94,16 +89,6 @@ Constraint: No markdown in JSON values. Clean text only.`;
                 apiKey: apiKey || process.env.OPENAI_API_KEY,
             });
 
-            // V3: Estimate Cost
-            const estimatedCost = usageService.estimateCost('chat', prompt.length, modelId);
-
-            // V3: Deduct Estimated Cost
-            await checkRateLimit(user.uid, plan);
-            const hasSufficientCredits = await userService.deductCredits(user.uid, estimatedCost);
-            if (!hasSufficientCredits) {
-                throw new AppError(ErrorCodes.INSUFFICIENT_POINTS, `Insufficient credits. Estimated: ${estimatedCost}`, 402);
-            }
-
             const completion = await openai.chat.completions.create({
                 messages: [
                     { role: "system", content: systemInstruction },
@@ -120,37 +105,23 @@ Constraint: No markdown in JSON values. Clean text only.`;
                 data = { text: content, riskScore: 50 };
             }
 
-            // V3: Calculate Actual Cost based on Usage Metadata
+            // Calculate Actual Cost
             const usage = completion.usage;
             const tokensIn = usage?.prompt_tokens || Math.ceil(prompt.length / 4);
             const tokensOut = usage?.completion_tokens || Math.ceil(content.length / 4);
-
             const actualCost = usageService.calculateCost('chat', modelId, tokensIn, tokensOut);
 
-            // V3: Adjust Balance
-            const costDiff = actualCost - estimatedCost;
-            if (costDiff > 0) {
-                // Deduct extra
-                await userService.deductCredits(user.uid, costDiff);
-            } else if (costDiff < 0) {
-                // Refund difference
-                await userService.addCredits(user.uid, Math.abs(costDiff));
-            }
+            // Finalize Operation
+            await usageService.finalizeUsageOperation(operationId, 'SUCCEEDED', actualCost, null);
 
-            // V3: Log Transaction
-            await usageService.logTransaction({
-                userId: user.uid,
-                actionType: 'chat',
-                inputText: prompt,
-                outputType: 'json',
-                estimatedCost,
-                actualCost,
-                timestamp: new Date().toISOString(),
-                modelUsed: modelId,
-                tokensIn,
-                tokensOut,
-                status: 'success'
-            });
+            return res.status(200).json(successResponse({
+                data: data,
+                riskScore: (data as any).riskScore,
+                meta: {
+                    mode: 'INTERNAL',
+                    quotaUsage: { used: actualCost, limit: 100 }
+                }
+            }));
 
         } else {
             // --- GEMINI LOGIC (With Fallback to DeepSeek -> Grok -> OpenAI) ---
@@ -180,13 +151,6 @@ Constraint: No markdown in JSON values. Clean text only.`;
                     }
 
                     const model = genAI.getGenerativeModel({ model: geminiModelName });
-
-                    // V3: Estimate Cost
-                    const estimatedCost = usageService.estimateCost('chat', prompt.length, modelId);
-                    await checkRateLimit(user.uid, plan);
-                    const hasSufficientCredits = await userService.deductCredits(user.uid, estimatedCost);
-                    if (!hasSufficientCredits) throw new AppError(ErrorCodes.INSUFFICIENT_POINTS, `Insufficient credits.`, 402);
-
                     const result = await model.generateContent([systemInstruction, prompt]);
                     const response = await result.response;
                     let text = response.text();
@@ -204,17 +168,10 @@ Constraint: No markdown in JSON values. Clean text only.`;
                     finalTokensOut = usage?.candidatesTokenCount || Math.ceil(text.length / 4);
                     finalActualCost = usageService.calculateCost('chat', geminiModelName, finalTokensIn, finalTokensOut);
                     actualModelUsed = geminiModelName;
-
-                    // Adjust Balance
-                    const costDiff = finalActualCost - estimatedCost;
-                    if (costDiff > 0) await userService.deductCredits(user.uid, costDiff);
-                    else if (costDiff < 0) await userService.addCredits(user.uid, Math.abs(costDiff));
-
                     success = true;
 
                 } catch (e: any) {
                     console.error(`Gemini Attempt Failed: ${e.message}`);
-                    // Don't throw yet, try fallbacks
                 }
             }
 
@@ -247,7 +204,6 @@ Constraint: No markdown in JSON values. Clean text only.`;
                     finalTokensIn = usage?.prompt_tokens || Math.ceil(prompt.length / 4);
                     finalTokensOut = usage?.completion_tokens || Math.ceil(content.length / 4);
 
-                    // Use generic cost calculation for fallbacks (assume similar to gpt-4o-mini or standard)
                     finalActualCost = usageService.calculateCost('chat', 'gpt-4o-mini', finalTokensIn, finalTokensOut);
                     actualModelUsed = `${providerName}:${fallbackModel}`;
                     success = true;
@@ -267,27 +223,11 @@ Constraint: No markdown in JSON values. Clean text only.`;
             await tryFallback('OpenAI', process.env.OPENAI_API_KEY, 'https://api.openai.com/v1', 'gpt-4o-mini');
 
             if (!success) {
-                // If we deducted credits for Gemini but failed all, we should refund.
-                // However, logic above only deducted inside Gemini try block.
-                // If Gemini failed, we might have deducted.
-                // For simplicity in this patch, we assume if !success, we throw error and let the catch block handle refund.
                 throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, 'All AI models failed to generate content.', 500);
             }
 
-            // Log Transaction for whichever succeeded
-            await usageService.logTransaction({
-                userId: user.uid,
-                actionType: 'chat',
-                inputText: prompt,
-                outputType: 'text',
-                estimatedCost: finalActualCost, // Approximate
-                actualCost: finalActualCost,
-                timestamp: new Date().toISOString(),
-                modelUsed: actualModelUsed,
-                tokensIn: finalTokensIn,
-                tokensOut: finalTokensOut,
-                status: 'success'
-            });
+            // Finalize Operation
+            await usageService.finalizeUsageOperation(operationId, 'SUCCEEDED', finalActualCost, null);
 
             return res.status(200).json(successResponse({
                 data: { text: finalData.text },
@@ -302,41 +242,11 @@ Constraint: No markdown in JSON values. Clean text only.`;
             }));
         }
 
-        await logUsage({
-            context: { userId: user.uid, email: user.email },
-            mode: 'INTERNAL',
-            apiPath: '/api/llm/generate',
-            prompt: prompt,
-            resultSummary: JSON.stringify(data),
-            pointsDeducted: pointsToDeduct, // This will be deprecated for V3, actualCost will be used
-            status: 'SUCCESS',
-            privateMode: privateMode
-        });
-
-        return res.status(200).json(successResponse({
-            data: data,
-            riskScore: (data as any).riskScore,
-            meta: {
-                mode: 'INTERNAL',
-                quotaUsage: { used: pointsToDeduct, limit: 100 }
-            }
-        }));
-
     } catch (error: any) {
         console.error('LLM Generate Error:', error);
 
-        if (user) {
-            await logUsage({
-                context: { userId: user.uid, email: user.email },
-                mode: 'INTERNAL',
-                apiPath: '/api/llm/generate',
-                prompt: 'Error',
-                resultSummary: error.message,
-                pointsDeducted: 0,
-                errorCode: error.code || 500,
-                status: 'FAILURE',
-                privateMode: privateMode
-            });
+        if (operationId) {
+            await usageService.finalizeUsageOperation(operationId, 'FAILED', 0, null, error.message);
         }
 
         const code = error.code || ErrorCodes.INTERNAL_SERVER_ERROR;

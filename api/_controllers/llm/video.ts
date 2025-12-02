@@ -13,26 +13,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(405).json(errorResponse(ErrorCodes.BAD_REQUEST, 'Method not allowed'));
     }
 
-    let user: any = null;
-    let privateMode = false;
-
-    // V3: Fixed Cost for Video
-    const estimatedCost = 60;
+    let operationId = '';
+    const COST = 60; // V3: Fixed Cost for Video
 
     try {
-        user = await validateRequest(req.headers);
+        const user = await validateRequest(req.headers);
         const { prompt, targetRiskScore, aspectRatio = '16:9', plan = 'FREE' } = req.body;
 
         const privateModeHeader = req.headers['x-private-mode'];
-        privateMode = privateModeHeader === 'true' || (Array.isArray(privateModeHeader) && privateModeHeader[0] === 'true');
+        const privateMode = privateModeHeader === 'true' || (Array.isArray(privateModeHeader) && privateModeHeader[0] === 'true');
 
-        await checkRateLimit(user.uid, plan);
+        // 1. Start Usage Operation
+        const userProfile = await userService.getUserProfile(user.uid);
+        await checkRateLimit(user.uid, userProfile.subscription?.plan || 'free');
 
-        // V3: Deduct Fixed Cost
-        const hasSufficientCredits = await userService.deductCredits(user.uid, estimatedCost);
-        if (!hasSufficientCredits) {
-            throw new AppError(ErrorCodes.INSUFFICIENT_POINTS, `Insufficient credits. Required: ${estimatedCost}`, 402);
-        }
+        const usageOp = await usageService.startUsageOperation(
+            user.uid,
+            'VIDEO_GEN',
+            COST,
+            { prompt, aspectRatio }
+        );
+        operationId = usageOp.operationId;
 
         // Determine Policy Instruction based on Compliance Score
         let policyInstruction = "";
@@ -76,18 +77,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const lumaData = await lumaResponse.json();
         const generationId = lumaData.id;
 
-        // V3: Log Transaction (Pending)
-        await usageService.logTransaction({
-            userId: user.uid,
-            actionType: 'video',
-            inputText: prompt,
-            outputType: 'video_pending',
-            estimatedCost,
-            actualCost: estimatedCost,
-            timestamp: new Date().toISOString(),
-            status: 'success', // Successfully initiated
-            modelUsed: 'luma-dream-machine'
-        });
+        // Note: Video generation is async. 
+        // We mark the operation as RUNNING (or keep PENDING) and return the ID.
+        // The client polls for status.
+        // However, usageService.finalizeUsageOperation expects SUCCEEDED/FAILED.
+        // For async video, we might need a separate 'RUNNING' state or just leave it PENDING.
+        // But we already deducted credits.
+        // If we return now, the operation is PENDING.
+        // We need a way to finalize it later when polling completes?
+        // OR, we assume "Initiation Success" = "Charge Success" for now, 
+        // and if it fails later (during polling), we might refund?
+        // Luma charges per generation initiation usually.
+        // Let's mark it as SUCCEEDED (Initiated) for billing purposes.
+        // The actual content delivery is separate.
+
+        await usageService.finalizeUsageOperation(operationId, 'SUCCEEDED', COST, generationId);
 
         return res.status(200).json(successResponse({
             data: {
@@ -98,36 +102,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             riskScore: targetRiskScore || 10,
             meta: {
                 mode: 'INTERNAL',
-                pointsDeducted: estimatedCost,
-                quotaUsage: { used: estimatedCost, limit: 100 }
+                pointsDeducted: COST,
+                quotaUsage: { used: COST, limit: 100 }
             }
         }));
 
     } catch (error: any) {
         console.error('LLM Video Error:', error);
 
-        // REFUND ON FAILURE
-        if (user) {
-            try {
-                if (error.statusCode !== 402) {
-                    await userService.addCredits(user.uid, estimatedCost);
-                    console.log(`Refunded ${estimatedCost} credits to ${user.uid} due to failure`);
-                }
-            } catch (refundError) {
-                console.error('Failed to refund credits:', refundError);
-            }
-
-            // Log Failure
-            await usageService.logTransaction({
-                userId: user.uid,
-                actionType: 'video',
-                inputText: req.body?.prompt || 'Unknown',
-                estimatedCost,
-                actualCost: 0,
-                timestamp: new Date().toISOString(),
-                status: 'failed',
-                errorMessage: error.message
-            });
+        // Finalize Operation (Failed)
+        if (operationId) {
+            await usageService.finalizeUsageOperation(operationId, 'FAILED', 0, null, error.message);
         }
 
         const code = error.code || ErrorCodes.INTERNAL_SERVER_ERROR;
