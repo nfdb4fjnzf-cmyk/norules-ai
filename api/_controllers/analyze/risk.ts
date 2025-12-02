@@ -21,12 +21,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     try {
         // 1. Auth & Validation
-        user = await validateRequest(req.headers);
+        const user = await validateRequest(req.headers);
         const { content, platform = 'general', plan = 'FREE' } = req.body;
-
-        // Check Private Mode Header
-        const privateModeHeader = req.headers['x-private-mode'];
-        privateMode = privateModeHeader === 'true' || (Array.isArray(privateModeHeader) && privateModeHeader[0] === 'true');
 
         if (!content) {
             throw new AppError(ErrorCodes.BAD_REQUEST, 'Content is required', 400);
