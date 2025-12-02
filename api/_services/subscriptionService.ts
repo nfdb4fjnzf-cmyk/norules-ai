@@ -1,72 +1,142 @@
 import { db } from '../_config/firebaseAdmin.js';
-import { PLANS, PlanType } from '../_types/plans.js';
+import admin from 'firebase-admin';
+import { userService } from './userService.js';
 
-export interface SubscriptionInfo {
-    plan: PlanType;
+export interface Subscription {
+    userId: string;
+    planId: 'free' | 'lite' | 'pro' | 'ultra';
     billingCycle: 'monthly' | 'quarterly' | 'yearly';
-    daily_limit: number; // Keep snake_case for frontend compatibility if needed, or switch to camelCase? Frontend likely expects snake_case based on previous code. Let's keep daily_limit mapping.
-    dailyLimit?: number; // V3 uses camelCase
-    startDate?: string;
-    endDate?: string;
-    nextBillingDate?: string;
-    status: 'active' | 'canceled' | 'past_due';
-    upgradeHistory?: any[];
-    provider?: string;
+    status: 'active' | 'canceled' | 'expired';
+    startDate: admin.firestore.Timestamp;
+    currentPeriodEnd: admin.firestore.Timestamp;
+    cancelAtPeriodEnd: boolean;
+    createdAt: admin.firestore.Timestamp;
+    updatedAt: admin.firestore.Timestamp;
 }
 
-export async function getSubscription(userId: string): Promise<SubscriptionInfo> {
-    // V3: Read from root 'subscriptions' collection
-    const doc = await db.collection('subscriptions').doc(userId).get();
+export const subscriptionService = {
+    /**
+     * Get active subscription for a user
+     */
+    getSubscription: async (userId: string): Promise<Subscription | null> => {
+        const snapshot = await db.collection('subscriptions')
+            .where('userId', '==', userId)
+            .where('status', 'in', ['active', 'canceled']) // 'canceled' means active until period end
+            .limit(1)
+            .get();
 
-    if (!doc.exists) {
-        // Fallback to Free/Lite default
-        const defaultPlan = PLANS.find(p => p.id === 'light') || PLANS[0];
-        return {
-            plan: 'free', // Default to free if no sub
-            billingCycle: 'monthly',
-            daily_limit: 5,
-            dailyLimit: 5,
-            status: 'active'
+        if (snapshot.empty) return null;
+        return snapshot.docs[0].data() as Subscription;
+    },
+
+    /**
+     * Create or Update Subscription
+     * (Simulates successful payment)
+     */
+    createSubscription: async (
+        userId: string,
+        planId: 'lite' | 'pro' | 'ultra',
+        billingCycle: 'monthly' | 'quarterly' | 'yearly'
+    ): Promise<void> => {
+        // 1. Calculate Period End
+        const now = admin.firestore.Timestamp.now();
+        const startDate = now;
+        let endDate = new Date();
+
+        if (billingCycle === 'monthly') endDate.setMonth(endDate.getMonth() + 1);
+        else if (billingCycle === 'quarterly') endDate.setMonth(endDate.getMonth() + 3);
+        else if (billingCycle === 'yearly') endDate.setFullYear(endDate.getFullYear() + 1);
+
+        const currentPeriodEnd = admin.firestore.Timestamp.fromDate(endDate);
+
+        // 2. Check existing subscription
+        const existingSub = await subscriptionService.getSubscription(userId);
+
+        const subData: Partial<Subscription> = {
+            userId,
+            planId,
+            billingCycle,
+            status: 'active',
+            startDate: existingSub ? existingSub.startDate : startDate, // Keep original start date if upgrading? Or reset? Let's reset for simplicity or keep if just plan change.
+            // Actually, usually a new plan starts a new period.
+            currentPeriodEnd,
+            cancelAtPeriodEnd: false,
+            updatedAt: now
         };
+
+        if (!existingSub) {
+            (subData as any).createdAt = now;
+        }
+
+        // 3. Save to Firestore
+        const batch = db.batch();
+
+        // Update/Create Subscription Doc
+        // We use userId as doc ID for simplicity to ensure 1 sub per user? 
+        // Or random ID? Random ID allows history. 
+        // Let's use 'subscriptions' collection with random ID, but query by userId.
+        // If existing, update it.
+        let subRef;
+        if (existingSub) {
+            // Find the doc ID
+            const snapshot = await db.collection('subscriptions')
+                .where('userId', '==', userId)
+                .where('status', 'in', ['active', 'canceled'])
+                .limit(1)
+                .get();
+            subRef = snapshot.docs[0].ref;
+        } else {
+            subRef = db.collection('subscriptions').doc();
+        }
+
+        batch.set(subRef, subData, { merge: true });
+
+        // 4. Update User Profile (Sync Plan)
+        const userRef = db.collection('users').doc(userId);
+        batch.update(userRef, {
+            plan: planId,
+            subscriptionStatus: 'active'
+        });
+
+        // 5. Log Event
+        const eventRef = db.collection('subscription_events').doc();
+        batch.set(eventRef, {
+            userId,
+            type: existingSub ? 'UPDATE' : 'CREATE',
+            planId,
+            billingCycle,
+            createdAt: now
+        });
+
+        await batch.commit();
+    },
+
+    /**
+     * Cancel Subscription
+     * (Sets cancelAtPeriodEnd = true)
+     */
+    cancelSubscription: async (userId: string): Promise<void> => {
+        const snapshot = await db.collection('subscriptions')
+            .where('userId', '==', userId)
+            .where('status', '==', 'active')
+            .limit(1)
+            .get();
+
+        if (snapshot.empty) throw new Error('No active subscription found');
+
+        const subRef = snapshot.docs[0].ref;
+        const subData = snapshot.docs[0].data() as Subscription;
+
+        await subRef.update({
+            status: 'canceled', // In Stripe terms, this usually means "active until end". 
+            // But here we use 'canceled' status to indicate "will expire".
+            // Logic elsewhere should check (status == active OR (status == canceled AND end > now))
+            cancelAtPeriodEnd: true,
+            updatedAt: admin.firestore.Timestamp.now()
+        });
+
+        // We do NOT downgrade user plan immediately. 
+        // A cron job should check for expired subscriptions and downgrade them.
+        // For now, we leave user.plan as is.
     }
-
-    const data = doc.data();
-    return {
-        plan: data?.plan || 'free',
-        billingCycle: data?.billingCycle || 'monthly',
-        daily_limit: data?.dailyLimit || 5, // Map camel to snake for legacy support
-        dailyLimit: data?.dailyLimit || 5,
-        startDate: data?.startDate,
-        endDate: data?.endDate,
-        nextBillingDate: data?.nextBillingDate || data?.endDate, // Fallback
-        status: data?.status || 'active',
-        upgradeHistory: data?.upgradeHistory || [],
-        provider: data?.provider
-    };
-}
-
-export async function upgradePlan(userId: string, newPlan: PlanType, billingCycle: 'monthly' | 'quarterly' | 'yearly' = 'monthly'): Promise<void> {
-    // This function might be deprecated in favor of payment webhook, but keeping for manual overrides
-    const planConfig = PLANS.find(p => p.id === newPlan);
-    if (!planConfig) throw new Error('Invalid plan');
-
-    let durationDays = 30;
-    if (billingCycle === 'quarterly') durationDays = 90;
-    if (billingCycle === 'yearly') durationDays = 365;
-
-    const now = new Date();
-    const endDate = new Date(now.getTime() + (durationDays * 24 * 60 * 60 * 1000));
-
-    const subscription = {
-        plan: newPlan,
-        billingCycle: billingCycle,
-        dailyLimit: planConfig.dailyLimit,
-        status: 'active',
-        startDate: now.toISOString(),
-        endDate: endDate.toISOString(),
-        nextBillingDate: endDate.toISOString(),
-        updatedAt: now.toISOString()
-    };
-
-    await db.collection('subscriptions').doc(userId).set(subscription, { merge: true });
-}
+};
