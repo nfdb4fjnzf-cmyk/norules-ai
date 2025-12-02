@@ -40,6 +40,7 @@ const Analyzer: React.FC = () => {
     const [materialPreview, setMaterialPreview] = useState<string | null>(null);
     const [copyText, setCopyText] = useState('');
     const [linkUrl, setLinkUrl] = useState('');
+    const [reportLanguage, setReportLanguage] = useState('Traditional Chinese');
 
     // Analysis State
     const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -156,7 +157,8 @@ const Analyzer: React.FC = () => {
                 image_base64,
                 video_base64,
                 copywriting: copyText,
-                landing_page_url: linkUrl
+                landing_page_url: linkUrl,
+                language: reportLanguage
             });
 
             setResult(data);
@@ -212,19 +214,46 @@ const Analyzer: React.FC = () => {
                     <p className="text-gray-400 text-sm mt-1">{t('analyzer.subtitle')}</p>
                 </div>
                 {result && (
-                    <button
-                        onClick={downloadPDF}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
-                    >
-                        <span className="material-symbols-outlined">download</span>
-                        Download PDF
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={downloadPDF}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
+                        >
+                            <span className="material-symbols-outlined">download</span>
+                            Download PDF
+                        </button>
+                    </div>
                 )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
                 {/* Left Column: Inputs */}
                 <div className="lg:col-span-1 flex flex-col gap-6 overflow-y-auto pr-2">
+                    {/* Language Selector */}
+                    <Card className="bg-white/5 border-white/10">
+                        <CardHeader>
+                            <CardTitle className="text-base text-gray-200 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-yellow-400">translate</span>
+                                Report Language
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex gap-2">
+                                {['Traditional Chinese', 'Simplified Chinese', 'English'].map((lang) => (
+                                    <button
+                                        key={lang}
+                                        onClick={() => setReportLanguage(lang)}
+                                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors border ${reportLanguage === lang
+                                            ? 'bg-yellow-500/20 border-yellow-500 text-yellow-400'
+                                            : 'bg-black/20 border-white/5 text-gray-400 hover:bg-white/5'
+                                            }`}
+                                    >
+                                        {lang}
+                                    </button>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
                     {/* Material */}
                     <Card className="bg-white/5 border-white/10">
                         <CardHeader>

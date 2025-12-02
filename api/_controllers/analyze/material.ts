@@ -15,7 +15,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     try {
         const user = await validateRequest(req.headers);
-        const { image_base64, video_base64, copywriting, landing_page_url, platforms = ['meta', 'tiktok', 'google'] } = req.body;
+        const { image_base64, video_base64, copywriting, landing_page_url, platforms = ['meta', 'tiktok', 'google'], language = 'Traditional Chinese' } = req.body;
 
         if (!image_base64 && !video_base64 && !copywriting && !landing_page_url) {
             throw new AppError(ErrorCodes.BAD_REQUEST, 'At least one input (image, video, copy, or url) is required', 400);
@@ -42,6 +42,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 - 登陸頁內容摘要
 
 請回傳固定三份報告：Meta、TikTok、Google。
+請使用 ${language} 撰寫所有報告內容。
 
 每个平台請依以下 11 項分類檢查違規：
 1. 賭博、博彩、金融投資風險

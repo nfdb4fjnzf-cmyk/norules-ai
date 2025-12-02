@@ -57,6 +57,7 @@ export const analyzerService = {
         video_base64?: string;
         copywriting?: string;
         landing_page_url?: string;
+        language?: string;
     }): Promise<any> => {
         const response = await api.post('/analyze/material', data);
         if (response.data.code !== 0) throw new Error(response.data.message || 'Analysis failed');
