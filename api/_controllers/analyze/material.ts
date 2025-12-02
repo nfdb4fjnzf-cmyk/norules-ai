@@ -138,61 +138,83 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // --- STRATEGY 2: OPENAI (Fallback) ---
-        if (!geminiSuccess && process.env.OPENAI_API_KEY) {
-            console.log("Gemini failed or skipped. Attempting fallback to OpenAI GPT-4o...");
-            try {
-                const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+        let openaiErrorMsg = '';
 
-                const messages: any[] = [
-                    { role: "system", content: systemPrompt }
-                ];
+        // Check if we should even try OpenAI
+        // OpenAI cannot handle video files directly. If we ONLY have video and no other context, OpenAI is useless.
+        const hasNonVideoContent = !!image_base64 || !!copywriting || !!landing_page_url;
 
-                const userContent: any[] = [];
-                if (copywriting) userContent.push({ type: "text", text: `Copywriting: ${copywriting}` });
-                if (landing_page_url) userContent.push({ type: "text", text: `Landing Page URL: ${landing_page_url}` });
+        if (!geminiSuccess) {
+            if (!process.env.OPENAI_API_KEY) {
+                console.warn("OPENAI_API_KEY is not set. Skipping OpenAI fallback analysis.");
+                openaiErrorMsg = "OpenAI API Key is missing on server.";
+            } else if (!hasNonVideoContent && video_base64) {
+                console.warn("Only video content provided. OpenAI cannot analyze video files directly.");
+                openaiErrorMsg = "Gemini failed, and OpenAI does not support direct video file analysis. Please add text or image context.";
+            } else {
+                console.log("Gemini failed or skipped. Attempting fallback to OpenAI GPT-4o-mini...");
+                try {
+                    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-                if (image_base64) {
-                    userContent.push({
-                        type: "image_url",
-                        image_url: { url: image_base64 }
+                    const messages: any[] = [
+                        { role: "system", content: systemPrompt }
+                    ];
+
+                    const userContent: any[] = [];
+                    if (copywriting) userContent.push({ type: "text", text: `Copywriting: ${copywriting}` });
+                    if (landing_page_url) userContent.push({ type: "text", text: `Landing Page URL: ${landing_page_url}` });
+
+                    if (image_base64) {
+                        userContent.push({
+                            type: "image_url",
+                            image_url: { url: image_base64 }
+                        });
+                    }
+
+                    if (video_base64) {
+                        userContent.push({
+                            type: "text",
+                            text: "[WARNING: Video content was uploaded but OpenAI API does not support direct video file analysis. Please analyze the video manually or rely on other inputs.]"
+                        });
+                    }
+
+                    if (userContent.length > 0) {
+                        messages.push({ role: "user", content: userContent });
+                    } else {
+                        messages.push({ role: "user", content: "Please analyze the provided context." });
+                    }
+
+                    const completion = await openai.chat.completions.create({
+                        model: "gpt-4o-mini", // Use mini for speed/cost
+                        messages: messages,
+                        response_format: { type: "json_object" },
+                        max_tokens: 4000
                     });
+
+                    text = completion.choices[0].message.content || '{}';
+                    geminiSuccess = true; // Mark as success since we got a result from OpenAI
+                    analysisSource = 'openai:gpt-4o-mini';
+
+                } catch (openaiError: any) {
+                    console.error("OpenAI Fallback Failed:", openaiError);
+                    openaiErrorMsg = `OpenAI Error: ${openaiError.message}`;
                 }
-
-                if (video_base64) {
-                    userContent.push({
-                        type: "text",
-                        text: "[WARNING: Video content was uploaded but OpenAI API does not support direct video file analysis. Please analyze the video manually or rely on other inputs.]"
-                    });
-                }
-
-                if (userContent.length > 0) {
-                    messages.push({ role: "user", content: userContent });
-                } else {
-                    messages.push({ role: "user", content: "Please analyze the provided context." });
-                }
-
-                const completion = await openai.chat.completions.create({
-                    model: "gpt-4o",
-                    messages: messages,
-                    response_format: { type: "json_object" },
-                    max_tokens: 4000
-                });
-
-                text = completion.choices[0].message.content || '{}';
-                geminiSuccess = true; // Mark as success since we got a result from OpenAI
-                analysisSource = 'openai:gpt-4o';
-
-            } catch (openaiError: any) {
-                console.error("OpenAI Fallback Failed:", openaiError);
             }
-        } else if (!geminiSuccess && !process.env.OPENAI_API_KEY) {
-            console.warn("OPENAI_API_KEY is not set. Skipping OpenAI fallback analysis.");
         }
 
         if (!geminiSuccess) {
             // Refund if all failed
             await userService.addCredits(user.uid, COST);
-            throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, "All AI models (Gemini & OpenAI) failed to analyze the material.", 500);
+
+            // Construct detailed error message
+            let finalErrorMessage = "All AI models failed.";
+            if (openaiErrorMsg) {
+                finalErrorMessage += ` (Gemini: 404/Error, OpenAI: ${openaiErrorMsg})`;
+            } else {
+                finalErrorMessage += " (Gemini: 404/Error)";
+            }
+
+            throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, finalErrorMessage, 500);
         }
 
         // Clean JSON
