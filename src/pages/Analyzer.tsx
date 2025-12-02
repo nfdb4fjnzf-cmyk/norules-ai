@@ -96,6 +96,7 @@ const Analyzer: React.FC = () => {
         try {
             let image_base64 = undefined;
             let video_base64 = undefined;
+            let video_url = undefined;
 
             if (materialFile) {
                 if (materialFile.type.startsWith('image')) {
@@ -139,23 +140,27 @@ const Analyzer: React.FC = () => {
                     image_base64 = canvas.toDataURL('image/jpeg', 0.7);
 
                 } else if (materialFile.type.startsWith('video')) {
-                    // Video Size Check
-                    if (materialFile.size > 4.5 * 1024 * 1024) {
-                        throw new Error("Video file too large (Max 4.5MB). Please upload a smaller clip.");
+                    // Video Size Check (Increased to 20MB for Firebase Storage upload)
+                    if (materialFile.size > 20 * 1024 * 1024) {
+                        throw new Error("Video file too large (Max 20MB). Please upload a smaller clip.");
                     }
 
-                    const reader = new FileReader();
-                    const base64Promise = new Promise<string>((resolve) => {
-                        reader.onload = () => resolve(reader.result as string);
-                        reader.readAsDataURL(materialFile);
-                    });
-                    video_base64 = await base64Promise;
+                    // Upload to Firebase Storage
+                    const { storage } = await import('../config/firebaseClient');
+                    const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+
+                    if (!storage) throw new Error("Storage not initialized");
+
+                    const storageRef = ref(storage, `analysis_uploads/${userProfile?.uid}/${Date.now()}_${materialFile.name}`);
+                    const snapshot = await uploadBytes(storageRef, materialFile);
+                    video_url = await getDownloadURL(snapshot.ref);
                 }
             }
 
             const data = await analyzerService.analyzeMaterial({
                 image_base64,
                 video_base64,
+                video_url,
                 copywriting: copyText,
                 landing_page_url: linkUrl,
                 language: reportLanguage

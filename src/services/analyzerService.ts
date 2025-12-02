@@ -55,6 +55,7 @@ export const analyzerService = {
     analyzeMaterial: async (data: {
         image_base64?: string;
         video_base64?: string;
+        video_url?: string;
         copywriting?: string;
         landing_page_url?: string;
         language?: string;

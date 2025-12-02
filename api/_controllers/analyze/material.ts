@@ -15,9 +15,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     try {
         const user = await validateRequest(req.headers);
-        const { image_base64, video_base64, copywriting, landing_page_url, platforms = ['meta', 'tiktok', 'google'], language = 'Traditional Chinese' } = req.body;
+        const { image_base64, video_base64, video_url, copywriting, landing_page_url, platforms = ['meta', 'tiktok', 'google'], language = 'Traditional Chinese' } = req.body;
 
-        if (!image_base64 && !video_base64 && !copywriting && !landing_page_url) {
+        if (!image_base64 && !video_base64 && !video_url && !copywriting && !landing_page_url) {
             throw new AppError(ErrorCodes.BAD_REQUEST, 'At least one input (image, video, copy, or url) is required', 400);
         }
 
@@ -96,6 +96,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         let successProvider = '';
         let errorLog: string[] = [];
 
+        // Prepare Video Data (Base64)
+        let finalVideoBase64 = video_base64;
+
+        // If video_url is provided, fetch it and convert to base64
+        if (video_url && !finalVideoBase64) {
+            try {
+                console.log(`Fetching video from URL: ${video_url}`);
+                const videoResp = await fetch(video_url);
+                if (!videoResp.ok) throw new Error(`Failed to fetch video: ${videoResp.statusText}`);
+                const arrayBuffer = await videoResp.arrayBuffer();
+                const buffer = Buffer.from(arrayBuffer);
+                finalVideoBase64 = `data:video/mp4;base64,${buffer.toString('base64')}`;
+            } catch (e: any) {
+                console.error("Failed to fetch video from URL", e);
+                errorLog.push(`Video Fetch Failed: ${e.message}`);
+            }
+        }
+
         // 1. GEMINI (Google)
         // Native support for Video & Image. Best for initial attempt.
         if (process.env.GEMINI_API_KEY) {
@@ -113,10 +131,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     parts.push({ inlineData: { data: base64Data, mimeType: mimeType } });
                 }
 
-                if (video_base64) {
-                    const match = video_base64.match(/^data:(video\/\w+);base64,/);
+                if (finalVideoBase64) {
+                    const match = finalVideoBase64.match(/^data:(video\/\w+);base64,/);
                     const mimeType = match ? match[1] : "video/mp4";
-                    const base64Data = video_base64.replace(/^data:video\/\w+;base64,/, "");
+                    const base64Data = finalVideoBase64.replace(/^data:video\/\w+;base64,/, "");
                     parts.push({ inlineData: { data: base64Data, mimeType: mimeType } });
                 }
 

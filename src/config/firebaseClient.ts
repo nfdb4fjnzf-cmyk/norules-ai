@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -14,12 +14,14 @@ const firebaseConfig = {
 let app;
 let auth: any = { currentUser: null };
 let db: any = {};
+let storage: any = {};
 
 try {
     if (firebaseConfig.apiKey && firebaseConfig.projectId) {
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
+        storage = getStorage(app);
     } else {
         console.warn('Firebase config missing. Auth features will be disabled.');
     }
@@ -27,4 +29,4 @@ try {
     console.error('Firebase initialization error:', error);
 }
 
-export { auth, db };
+export { auth, db, storage };
