@@ -16,6 +16,9 @@ import LLMPlayground from './pages/LLM/Playground';
 import Login from './pages/Auth/Login';
 import SignUp from './pages/Auth/SignUp';
 import Landing from './pages/Landing';
+import AdminLayout from './layouts/AdminLayout';
+import AdminDashboard from './pages/Admin/Dashboard';
+import AdminUsers from './pages/Admin/Users';
 
 import { ToastProvider } from './components/Toast';
 import { ModalProvider } from './contexts/ModalContext';
@@ -48,10 +51,17 @@ function App() {
               <Route path="/subscription/plans" element={<Plans />} />
               <Route path="/subscription/topup" element={<TopUp />} />
 
-              {/* Settings Routes */}
-              <Route path="/settings" element={<div className="p-10 text-center text-gray-500">Settings under construction</div>} />
               <Route path="/settings/apikeys" element={<ApiKeys />} />
               <Route path="/settings/external-key" element={<ExternalKey />} />
+            </Route>
+
+            {/* Admin Routes */}
+            <Route element={<AdminLayout />}>
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/credits" element={<div className="p-10 text-center text-gray-500">Credits Management Coming Soon</div>} />
+              <Route path="/admin/subscriptions" element={<div className="p-10 text-center text-gray-500">Subscription Management Coming Soon</div>} />
+              <Route path="/admin/moderation" element={<div className="p-10 text-center text-gray-500">Moderation Coming Soon</div>} />
             </Route>
           </Routes>
         </Router>

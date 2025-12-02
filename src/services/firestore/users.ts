@@ -11,6 +11,10 @@ export interface UserProfile {
     credits: number;   // Replaces 'points'
     mode: 'internal' | 'external';
     updatedAt?: string;
+    role?: 'user' | 'admin';
+    isBanned?: boolean;
+    total_spent_points?: number;
+    total_purchased_points?: number;
     subscription?: {
         plan: string;
         status: string; // 'active' | 'trial' | 'expired'

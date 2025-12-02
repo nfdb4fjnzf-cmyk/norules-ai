@@ -135,5 +135,57 @@ export const creditService = {
     getBalance: async (userId: string): Promise<number> => {
         const doc = await db.collection('users').doc(userId).get();
         return doc.data()?.credits || 0;
+    },
+
+    /**
+     * Admin Manual Adjustment
+     */
+    adjustCredits: async (userId: string, amount: number, type: 'ADD' | 'DEDUCT', reason: string, adminId: string): Promise<void> => {
+        return await db.runTransaction(async (transaction) => {
+            const userRef = db.collection('users').doc(userId);
+            const userDoc = await transaction.get(userRef);
+
+            if (!userDoc.exists) {
+                throw new AppError(ErrorCodes.NOT_FOUND, 'User not found', 404);
+            }
+
+            const userData = userDoc.data();
+            const currentCredits = userData?.credits || 0;
+
+            let newBalance = currentCredits;
+            let ledgerType: LedgerEntry['type'] = 'ADJUST';
+
+            if (type === 'ADD') {
+                newBalance += amount;
+                transaction.update(userRef, {
+                    credits: newBalance,
+                    // Optional: Track admin added points separately? Or as purchased?
+                    // Let's just update credits for now.
+                    updatedAt: admin.firestore.Timestamp.now()
+                });
+            } else {
+                if (currentCredits < amount) {
+                    throw new AppError(ErrorCodes.INSUFFICIENT_POINTS, 'Insufficient credits to deduct', 400);
+                }
+                newBalance -= amount;
+                transaction.update(userRef, {
+                    credits: newBalance,
+                    updatedAt: admin.firestore.Timestamp.now()
+                });
+            }
+
+            const ledgerRef = db.collection('credit_ledger').doc();
+            transaction.set(ledgerRef, {
+                userId,
+                type: ledgerType,
+                reason: `${reason} (by Admin ${adminId})`,
+                related_operation_id: null,
+                amount: amount, // Always positive in ledger, type determines sign? Or context?
+                // Usually ledger amount is the magnitude.
+                balance_after: newBalance,
+                metadata: { adminId, adjustmentType: type },
+                createdAt: admin.firestore.Timestamp.now()
+            });
+        });
     }
 };
