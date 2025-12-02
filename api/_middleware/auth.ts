@@ -38,7 +38,13 @@ export const validateRequest = async (headers: Headers | Record<string, string> 
     let decodedToken;
     try {
         decodedToken = await auth.verifyIdToken(token);
-    } catch (error) {
+
+        // Check for Banned Status (Custom Claim)
+        if (decodedToken.banned) {
+            throw new AppError(ErrorCodes.FORBIDDEN, 'User is banned', 403);
+        }
+    } catch (error: any) {
+        if (error instanceof AppError) throw error;
         throw new AppError(ErrorCodes.INVALID_JWT, 'Invalid or expired JWT', 401);
     }
 

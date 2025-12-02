@@ -391,8 +391,12 @@
             "actions": {
                 "edit": "Edit",
                 "ban": "Ban",
+                "unban": "Unban",
                 "delete": "Delete",
-                "adjustCredits": "Adjust Credits"
+                "adjustCredits": "Adjust Credits",
+                "banConfirm": "Are you sure you want to ban {{email}}?",
+                "bannedSuccess": "User banned successfully",
+                "unbannedSuccess": "User unbanned successfully"
             },
             "adjustModal": {
                 "title": "Adjust Credits",

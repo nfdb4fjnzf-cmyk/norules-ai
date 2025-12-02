@@ -393,8 +393,12 @@
             "actions": {
                 "edit": "編輯",
                 "ban": "封鎖",
+                "unban": "解除封鎖",
                 "delete": "刪除",
-                "adjustCredits": "調整點數"
+                "adjustCredits": "調整點數",
+                "banConfirm": "確定要封鎖 {{email}} 嗎？",
+                "bannedSuccess": "使用者已封鎖",
+                "unbannedSuccess": "使用者已解除封鎖"
             },
             "adjustModal": {
                 "title": "調整點數",

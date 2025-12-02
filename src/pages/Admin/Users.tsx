@@ -10,6 +10,7 @@ interface User {
     displayName: string;
     credits: number;
     role?: string;
+    status?: string; // 'active' | 'banned'
     subscription?: {
         plan: string;
         status: string;
@@ -124,17 +125,44 @@ const AdminUsers: React.FC = () => {
                                     {new Date(user.lastLogin).toLocaleDateString()}
                                 </td>
                                 <td className="px-6 py-4">
-                                    <button
-                                        onClick={() => {
-                                            setSelectedUser(user);
-                                            setAdjustAmount(0);
-                                            setAdjustReason('');
-                                            setAdjustModalOpen(true);
-                                        }}
-                                        className="text-blue-400 hover:text-blue-300 text-sm font-medium"
-                                    >
-                                        {t('admin.users.actions.adjustCredits')}
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => {
+                                                setSelectedUser(user);
+                                                setAdjustAmount(0);
+                                                setAdjustReason('');
+                                                setAdjustModalOpen(true);
+                                            }}
+                                            className="text-blue-400 hover:text-blue-300 text-sm font-medium"
+                                        >
+                                            {t('admin.users.actions.adjustCredits')}
+                                        </button>
+
+                                        {user.role !== 'admin' && (
+                                            <button
+                                                onClick={async () => {
+                                                    if (!confirm(t('admin.users.actions.banConfirm', { email: user.email }))) return;
+
+                                                    try {
+                                                        const isBanned = user.status === 'banned';
+                                                        const newBanStatus = !isBanned;
+
+                                                        await api.post('/admin/user/ban', {
+                                                            userId: user.uid,
+                                                            ban: newBanStatus
+                                                        });
+                                                        showToast('success', newBanStatus ? t('admin.users.actions.bannedSuccess') : t('admin.users.actions.unbannedSuccess'));
+                                                        fetchUsers();
+                                                    } catch (e) {
+                                                        showToast('error', t('common.error'));
+                                                    }
+                                                }}
+                                                className={`${user.status === 'banned' ? 'text-green-400 hover:text-green-300' : 'text-red-400 hover:text-red-300'} text-sm font-medium`}
+                                            >
+                                                {user.status === 'banned' ? t('admin.users.actions.unban') : t('admin.users.actions.ban')}
+                                            </button>
+                                        )}
+                                    </div>
                                 </td>
                             </tr>
                         ))}
