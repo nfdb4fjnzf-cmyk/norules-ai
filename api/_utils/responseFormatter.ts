@@ -2,6 +2,7 @@
  * Standard API Response Structure
  */
 export interface ApiResponse<T = any> {
+    success: boolean;
     code: number;
     message: string;
     data?: T;
@@ -17,6 +18,7 @@ export interface ApiResponse<T = any> {
  */
 export const successResponse = <T>(data: T, message = 'OK', meta = {}): ApiResponse<T> => {
     return {
+        success: true,
         code: 0,
         message,
         data,
@@ -32,6 +34,7 @@ export const successResponse = <T>(data: T, message = 'OK', meta = {}): ApiRespo
  */
 export const errorResponse = (code: number, message: string, meta = {}): ApiResponse => {
     return {
+        success: false,
         code,
         message,
         meta: {
