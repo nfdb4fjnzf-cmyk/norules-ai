@@ -3,13 +3,24 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../contexts/AuthContext';
+import { auth } from '../config/firebaseClient';
 
 const MainLayout: React.FC = () => {
   const { t } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, userProfile, loading } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed', error);
+    }
+  };
 
   React.useEffect(() => {
     if (!loading && !user) {
@@ -79,18 +90,61 @@ const MainLayout: React.FC = () => {
               <span className="material-symbols-outlined">notifications</span>
               <span className="absolute top-2 right-2 w-2 h-2 bg-danger rounded-full border-2 border-background"></span>
             </button>
-            <div className="flex items-center gap-3 pl-4 border-l border-border">
-              <div className="text-right hidden xl:block">
-                <p className="text-sm font-bold text-white">{user?.displayName || 'User'}</p>
-                <p className="text-xs text-secondary capitalize">{userProfile?.mode || 'Internal'} Mode</p>
+            <div className="flex items-center gap-3 pl-4 border-l border-border relative">
+              <div
+                className="flex items-center gap-3 cursor-pointer"
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+              >
+                <div className="text-right hidden xl:block">
+                  <p className="text-sm font-bold text-white">{user?.displayName || 'User'}</p>
+                  <p className="text-xs text-secondary capitalize">{userProfile?.mode || 'Internal'} Mode</p>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-purple-500 flex items-center justify-center text-white font-bold shadow-lg overflow-hidden hover:ring-2 hover:ring-white/20 transition-all">
+                  {user?.photoURL ? (
+                    <img src={user.photoURL} alt="User" className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{user?.displayName?.charAt(0) || 'U'}</span>
+                  )}
+                </div>
               </div>
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-purple-500 flex items-center justify-center text-white font-bold shadow-lg overflow-hidden">
-                {user?.photoURL ? (
-                  <img src={user.photoURL} alt="User" className="w-full h-full object-cover" />
-                ) : (
-                  <span>{user?.displayName?.charAt(0) || 'U'}</span>
-                )}
-              </div>
+
+              {/* Profile Dropdown */}
+              {isProfileOpen && (
+                <div className="absolute top-full right-0 mt-2 w-48 bg-[#151927] border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in">
+                  <div className="py-1">
+                    {userProfile?.role === 'admin' && (
+                      <button
+                        onClick={() => {
+                          navigate('/admin');
+                          setIsProfileOpen(false);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white flex items-center gap-2"
+                      >
+                        <span className="material-symbols-outlined text-sm">admin_panel_settings</span>
+                        Admin Console
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        navigate('/settings/apikeys');
+                        setIsProfileOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white flex items-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-sm">settings</span>
+                      Settings
+                    </button>
+                    <div className="border-t border-white/5 my-1"></div>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-sm">logout</span>
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </header>
