@@ -98,12 +98,12 @@ const TopUp: React.FC = () => {
                     </div>
                     <h3 className="text-xl font-bold text-white mb-2">Enterprise Custom</h3>
                     <div className="w-full mb-4">
-                        <label className="block text-xs text-gray-400 mb-2 text-left">Enter Amount (&gt;10,000)</label>
+                        <label className="block text-xs text-gray-400 mb-2 text-left">Enter Amount (≥ 10,000)</label>
                         <input
                             type="number"
-                            min="10001"
+                            min="10000"
                             value={customPoints}
-                            onChange={(e) => setCustomPoints(Math.max(10001, parseInt(e.target.value) || 0))}
+                            onChange={(e) => setCustomPoints(parseInt(e.target.value) || 0)}
                             className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white text-center font-bold text-xl outline-none focus:border-green-500"
                         />
                     </div>
@@ -113,8 +113,8 @@ const TopUp: React.FC = () => {
                     </div>
                     <button
                         onClick={() => handleTopUp(customPoints)}
-                        disabled={loading}
-                        className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold transition-colors disabled:opacity-50"
+                        disabled={loading || customPoints < 10000}
+                        className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {loading ? 'Processing...' : 'Buy Now'}
                     </button>

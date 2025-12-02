@@ -23,7 +23,7 @@ const PLANS: Plan[] = [
         description: 'Perfect for starters',
         monthlyPrice: 5,
         quarterlyPrice: 13.5, // 10% off
-        yearlyPrice: 48, // 20% off
+        yearlyPrice: 51, // 15% off (5 * 12 * 0.85)
         discount: '20%',
         features: ['20% Off Credits', 'Basic Support', 'Standard Access']
     },
@@ -33,7 +33,7 @@ const PLANS: Plan[] = [
         description: 'Best for professionals',
         monthlyPrice: 10,
         quarterlyPrice: 27,
-        yearlyPrice: 96,
+        yearlyPrice: 102, // 15% off (10 * 12 * 0.85)
         discount: '40%',
         features: ['40% Off Credits', 'Priority Support', 'Faster Generation', 'Access to New Models']
     },
@@ -43,7 +43,7 @@ const PLANS: Plan[] = [
         description: 'For power users',
         monthlyPrice: 30,
         quarterlyPrice: 81,
-        yearlyPrice: 288,
+        yearlyPrice: 306, // 15% off (30 * 12 * 0.85)
         discount: '60%',
         features: ['60% Off Credits', '24/7 Support', 'Highest Priority', 'Early Access Features']
     }
@@ -138,7 +138,7 @@ const Plans: React.FC = () => {
                         >
                             {cycle === 'monthly' ? '月付' : cycle === 'quarterly' ? '季付' : '年付'}
                             {cycle === 'quarterly' && <span className="ml-1 text-xs text-green-400">-10%</span>}
-                            {cycle === 'yearly' && <span className="ml-1 text-xs text-green-400">-20%</span>}
+                            {cycle === 'yearly' && <span className="ml-1 text-xs text-green-400">-15%</span>}
                         </button>
                     ))}
                 </div>
@@ -163,13 +163,17 @@ const Plans: React.FC = () => {
                         const isCurrent = plan.id === currentPlanId;
                         const displayPrice = getPrice(plan);
 
+                        // Lite plan cannot be monthly
+                        const isLiteMonthly = plan.id === 'lite' && billingCycle === 'monthly';
+                        const isDisabled = isCurrent || processing || isLiteMonthly;
+
                         return (
                             <div
                                 key={plan.id}
                                 className={`relative rounded-2xl bg-[#151927] p-6 border flex flex-col transition-all duration-200 ease-out ${isCurrent
                                     ? 'border-blue-500 transform scale-105 z-10 shadow-xl'
                                     : 'border-white/10 hover:scale-105 hover:bg-[#1a1f2e]'
-                                    }`}
+                                    } ${isLiteMonthly ? 'opacity-50 grayscale' : ''}`}
                             >
                                 {isCurrent && (
                                     <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">
@@ -195,13 +199,15 @@ const Plans: React.FC = () => {
 
                                 <button
                                     onClick={() => handleSubscribe(plan.id)}
-                                    disabled={isCurrent || processing}
+                                    disabled={isDisabled}
                                     className={`w-full rounded-xl px-4 py-2 font-semibold transition-all duration-150 ease-out active:scale-95 flex justify-center items-center ${isCurrent
                                         ? 'bg-white/10 text-gray-400 cursor-default'
-                                        : 'bg-blue-500 hover:bg-blue-600 text-white hover:opacity-80'
+                                        : isLiteMonthly
+                                            ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                                            : 'bg-blue-500 hover:bg-blue-600 text-white hover:opacity-80'
                                         }`}
                                 >
-                                    {processing && !isCurrent ? <Loader2 className="w-4 h-4 animate-spin" /> : isCurrent ? '目前方案' : '訂閱'}
+                                    {processing && !isCurrent ? <Loader2 className="w-4 h-4 animate-spin" /> : isCurrent ? '目前方案' : isLiteMonthly ? '僅限季/年付' : '訂閱'}
                                 </button>
                             </div>
                         );
