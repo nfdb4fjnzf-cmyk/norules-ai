@@ -3,6 +3,7 @@ import { checkRateLimit } from '../../_middleware/rateLimit.js';
 import { successResponse, errorResponse } from '../../_utils/responseFormatter.js';
 import { AppError, ErrorCodes } from '../../_utils/errorHandler.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import OpenAI from 'openai';
 import { userService } from '../../_services/userService.js';
 import { db } from '../../_config/firebaseAdmin.js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -29,15 +30,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!hasCredits) {
             throw new AppError(ErrorCodes.INSUFFICIENT_POINTS, `Insufficient credits. Required: ${COST}`, 402);
         }
-
-        // 2. Prepare Gemini Input
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, 'Gemini API Key is missing', 500);
-        }
-        const genAI = new GoogleGenerativeAI(apiKey);
-        // Model initialized in loop below
-        const parts: any[] = [];
 
         // Fixed System Prompt
         const systemPrompt = `
@@ -95,66 +87,112 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 `;
-        parts.push(systemPrompt);
 
-        // Add User Inputs
-        if (copywriting) parts.push(`\nCopywriting: ${copywriting}`);
-        if (landing_page_url) parts.push(`\nLanding Page URL: ${landing_page_url}`);
-
-        if (image_base64) {
-            // Extract mime type
-            const match = image_base64.match(/^data:(image\/\w+);base64,/);
-            const mimeType = match ? match[1] : "image/jpeg";
-            const base64Data = image_base64.replace(/^data:image\/\w+;base64,/, "");
-
-            parts.push({
-                inlineData: {
-                    data: base64Data,
-                    mimeType: mimeType
-                }
-            });
-        }
-
-        if (video_base64) {
-            // Extract mime type
-            const match = video_base64.match(/^data:(video\/\w+);base64,/);
-            const mimeType = match ? match[1] : "video/mp4";
-            const base64Data = video_base64.replace(/^data:video\/\w+;base64,/, "");
-
-            parts.push({
-                inlineData: {
-                    data: base64Data,
-                    mimeType: mimeType
-                }
-            });
-        }
-
-        // 3. Generate Content with Fallback Strategy
-        const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-flash-001', 'gemini-1.5-pro', 'gemini-1.5-pro-001', 'gemini-pro'];
         let text = '';
-        let lastError;
+        let analysisSource = 'gemini';
+        let geminiSuccess = false;
 
-        for (const modelName of modelsToTry) {
-            try {
-                console.log(`Attempting analysis with model: ${modelName}`);
-                const model = genAI.getGenerativeModel({ model: modelName });
-                const result = await model.generateContent(parts);
-                const response = await result.response;
-                text = response.text();
+        // --- STRATEGY 1: GEMINI ---
+        const geminiApiKey = process.env.GEMINI_API_KEY;
 
-                // If successful, break the loop
-                break;
-            } catch (geminiError: any) {
-                console.error(`Gemini Generation Error (${modelName}):`, geminiError);
-                lastError = geminiError;
-                // If this was the last model, throw the error
-                if (modelName === modelsToTry[modelsToTry.length - 1]) {
-                    // Refund on final failure
-                    await userService.addCredits(user.uid, COST);
-                    throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, `AI Analysis Failed after retries: ${geminiError.message}`, 500);
-                }
-                // Otherwise continue to next model
+        if (geminiApiKey) {
+            const genAI = new GoogleGenerativeAI(geminiApiKey);
+            const parts: any[] = [];
+            parts.push(systemPrompt);
+
+            if (copywriting) parts.push(`\nCopywriting: ${copywriting}`);
+            if (landing_page_url) parts.push(`\nLanding Page URL: ${landing_page_url}`);
+
+            if (image_base64) {
+                const match = image_base64.match(/^data:(image\/\w+);base64,/);
+                const mimeType = match ? match[1] : "image/jpeg";
+                const base64Data = image_base64.replace(/^data:image\/\w+;base64,/, "");
+                parts.push({ inlineData: { data: base64Data, mimeType: mimeType } });
             }
+
+            if (video_base64) {
+                const match = video_base64.match(/^data:(video\/\w+);base64,/);
+                const mimeType = match ? match[1] : "video/mp4";
+                const base64Data = video_base64.replace(/^data:video\/\w+;base64,/, "");
+                parts.push({ inlineData: { data: base64Data, mimeType: mimeType } });
+            }
+
+            const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-flash-001', 'gemini-1.5-pro', 'gemini-1.5-pro-001', 'gemini-pro'];
+
+            for (const modelName of modelsToTry) {
+                try {
+                    console.log(`Attempting analysis with Gemini model: ${modelName}`);
+                    const model = genAI.getGenerativeModel({ model: modelName });
+                    const result = await model.generateContent(parts);
+                    const response = await result.response;
+                    text = response.text();
+                    geminiSuccess = true;
+                    analysisSource = `gemini:${modelName}`;
+                    break;
+                } catch (e: any) {
+                    console.error(`Gemini (${modelName}) failed:`, e.message);
+                }
+            }
+        } else {
+            console.warn("GEMINI_API_KEY is not set. Skipping Gemini analysis.");
+        }
+
+        // --- STRATEGY 2: OPENAI (Fallback) ---
+        if (!geminiSuccess && process.env.OPENAI_API_KEY) {
+            console.log("Gemini failed or skipped. Attempting fallback to OpenAI GPT-4o...");
+            try {
+                const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+                const messages: any[] = [
+                    { role: "system", content: systemPrompt }
+                ];
+
+                const userContent: any[] = [];
+                if (copywriting) userContent.push({ type: "text", text: `Copywriting: ${copywriting}` });
+                if (landing_page_url) userContent.push({ type: "text", text: `Landing Page URL: ${landing_page_url}` });
+
+                if (image_base64) {
+                    userContent.push({
+                        type: "image_url",
+                        image_url: { url: image_base64 }
+                    });
+                }
+
+                if (video_base64) {
+                    userContent.push({
+                        type: "text",
+                        text: "[WARNING: Video content was uploaded but OpenAI API does not support direct video file analysis. Please analyze the video manually or rely on other inputs.]"
+                    });
+                }
+
+                if (userContent.length > 0) {
+                    messages.push({ role: "user", content: userContent });
+                } else {
+                    messages.push({ role: "user", content: "Please analyze the provided context." });
+                }
+
+                const completion = await openai.chat.completions.create({
+                    model: "gpt-4o",
+                    messages: messages,
+                    response_format: { type: "json_object" },
+                    max_tokens: 4000
+                });
+
+                text = completion.choices[0].message.content || '{}';
+                geminiSuccess = true; // Mark as success since we got a result from OpenAI
+                analysisSource = 'openai:gpt-4o';
+
+            } catch (openaiError: any) {
+                console.error("OpenAI Fallback Failed:", openaiError);
+            }
+        } else if (!geminiSuccess && !process.env.OPENAI_API_KEY) {
+            console.warn("OPENAI_API_KEY is not set. Skipping OpenAI fallback analysis.");
+        }
+
+        if (!geminiSuccess) {
+            // Refund if all failed
+            await userService.addCredits(user.uid, COST);
+            throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, "All AI models (Gemini & OpenAI) failed to analyze the material.", 500);
         }
 
         // Clean JSON
@@ -183,6 +221,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     copyLength: copywriting?.length || 0,
                     url: landing_page_url
                 },
+                source: analysisSource,
                 ...analysisData
             });
         } catch (logError) {
