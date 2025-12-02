@@ -3,15 +3,12 @@ import { checkRateLimit } from '../../_middleware/rateLimit.js';
 import { successResponse, errorResponse } from '../../_utils/responseFormatter.js';
 import { AppError, ErrorCodes } from '../../_utils/errorHandler.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { logUsage } from '../../_utils/historyLogger.js';
-import { logUsage as logUsageStats } from '../../_services/usageService.js';
+import { usageService } from '../../_services/usageService.js';
 import { userService } from '../../_services/userService.js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-
-import { usageService } from '../../_services/usageService.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
@@ -20,6 +17,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     let user: any = null;
     let privateMode = false;
+
+    let operationId = '';
+    let estimatedCost = 0;
 
     try {
         // 1. Auth & Validation
@@ -45,16 +45,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // 3. Rate Limit
         await checkRateLimit(user.uid, plan);
 
-        // V3: Estimate Cost
-        const estimatedCost = usageService.estimateCost('analysis', text.length, 'gemini-1.5-flash');
+        // 4. Estimate Cost
+        estimatedCost = usageService.estimateCost('analysis', text.length, 'gemini-1.5-flash');
 
-        // V3: Deduct Estimated Cost
-        const hasSufficientCredits = await userService.deductCredits(user.uid, estimatedCost);
-        if (!hasSufficientCredits) {
-            throw new AppError(ErrorCodes.INSUFFICIENT_POINTS, `Insufficient credits. Estimated: ${estimatedCost}`, 402);
-        }
+        // 5. Start Usage Operation (Reserve Credits)
+        const op = await usageService.startUsageOperation(
+            user.uid,
+            'ANALYZE',
+            estimatedCost,
+            { textSummary: text.substring(0, 50) }
+        );
+        operationId = op.operationId;
 
-        // 5. Call Gemini
+        // 6. Call Gemini
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
             throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, 'Gemini API Key is missing on server', 500);
@@ -96,52 +99,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             analysisData = { raw: textOutput };
         }
 
-        // V3: Calculate Actual Cost based on Usage Metadata
+        // 7. Calculate Actual Cost
         const usage = response.usageMetadata;
         const tokensIn = usage?.promptTokenCount || Math.ceil(prompt.length / 4);
         const tokensOut = usage?.candidatesTokenCount || Math.ceil(textOutput.length / 4);
-
         const actualCost = usageService.calculateCost('analysis', modelName, tokensIn, tokensOut);
 
-        // V3: Adjust Balance
-        const costDiff = actualCost - estimatedCost;
-        if (costDiff > 0) {
-            await userService.deductCredits(user.uid, costDiff);
-        } else if (costDiff < 0) {
-            await userService.addCredits(user.uid, Math.abs(costDiff));
-        }
-
-        // V3: Log Transaction
-        await usageService.logTransaction({
-            userId: user.uid,
-            actionType: 'analysis',
-            inputText: text,
-            outputType: 'json',
-            estimatedCost,
+        // 8. Finalize Usage Operation (Success)
+        await usageService.finalizeUsageOperation(
+            operationId,
+            'SUCCEEDED',
             actualCost,
-            timestamp: new Date().toISOString(),
-            modelUsed: modelName,
-            tokensIn,
-            tokensOut,
-            status: 'success'
-        });
+            null // Result Ref
+        );
 
-        // Legacy Log
-        await logUsage({
-            context: { userId: user.uid, email: user.email },
-            mode: 'INTERNAL',
-            apiPath: '/api/analyze/text',
-            prompt: text,
-            resultSummary: JSON.stringify(analysisData),
-            pointsDeducted: actualCost,
-            status: 'SUCCESS',
-            privateMode: privateMode
-        });
-
-        // 7. Log Usage Stats
-        await logUsageStats(user.uid, 'text_analysis', actualCost);
-
-        // 8. Return Response
+        // 9. Return Response
         return res.status(200).json(successResponse(analysisData, 'OK', {
             pointsDeducted: actualCost,
             quotaRemaining: 0
@@ -150,29 +122,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } catch (error: any) {
         console.error('Text Analysis Error:', error);
 
-        // REFUND ESTIMATED CREDITS ON FAILURE
-        const estimatedCostForRefund = usageService.estimateCost('analysis', req.body?.text?.length || 0);
-
-        if (user) {
-            try {
-                if (error.statusCode !== 402) {
-                    await userService.addCredits(user.uid, estimatedCostForRefund);
-                }
-            } catch (refundError) {
-                console.error('Failed to refund credits:', refundError);
-            }
-
-            // Log Failure
-            await usageService.logTransaction({
-                userId: user.uid,
-                actionType: 'analysis',
-                inputText: req.body?.text || 'Unknown',
-                estimatedCost: estimatedCostForRefund,
-                actualCost: 0,
-                timestamp: new Date().toISOString(),
-                status: 'failed',
-                errorMessage: error.message
-            });
+        if (operationId) {
+            await usageService.finalizeUsageOperation(
+                operationId,
+                'FAILED',
+                0,
+                null,
+                error.message
+            );
         }
 
         const code = error.code || ErrorCodes.INTERNAL_SERVER_ERROR;

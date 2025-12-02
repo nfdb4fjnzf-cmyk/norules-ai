@@ -3,9 +3,8 @@ import { checkRateLimit } from '../../_middleware/rateLimit.js';
 import { successResponse, errorResponse } from '../../_utils/responseFormatter.js';
 import { AppError, ErrorCodes } from '../../_utils/errorHandler.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { usageService } from '../../_services/usageService.js';
 import { userService } from '../../_services/userService.js';
-import { logUsage } from '../../_utils/historyLogger.js';
-import { logUsage as logUsageStats } from '../../_services/usageService.js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -17,7 +16,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     let user: any = null;
     let privateMode = false;
-    const pointsToDeduct = 3; // URL Analysis Cost (Ch.121.4)
+    let operationId = '';
+    const ESTIMATED_COST = 3; // URL Analysis Cost
 
     try {
         user = await validateRequest(req.headers);
@@ -42,11 +42,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // 2. Rate Limit
         await checkRateLimit(user.uid, plan);
 
-        // 3. Point Deduction
-        const hasSufficientCredits = await userService.deductCredits(user.uid, pointsToDeduct);
-        if (!hasSufficientCredits) {
-            throw new AppError(ErrorCodes.INSUFFICIENT_POINTS, 'Insufficient credits', 402);
-        }
+        // 3. Start Usage Operation (Reserve Credits)
+        const op = await usageService.startUsageOperation(
+            user.uid,
+            'ANALYZE',
+            ESTIMATED_COST,
+            { url }
+        );
+        operationId = op.operationId;
 
         // Fetch URL content (Simple fetch for MVP)
         let pageContent = '';
@@ -100,41 +103,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             analysisData = { raw: textOutput };
         }
 
-        // 4. Log Usage
-        await logUsage({
-            context: { userId: user.uid, email: user.email },
-            mode: 'INTERNAL',
-            apiPath: '/api/analyze/url',
-            prompt: url,
-            resultSummary: JSON.stringify(analysisData),
-            pointsDeducted: pointsToDeduct,
-            status: 'SUCCESS',
-            privateMode: privateMode
-        });
-
-        // 5. Log Usage Stats
-        await logUsageStats(user.uid, 'url_analysis', pointsToDeduct);
+        // 4. Finalize Usage Operation (Success)
+        await usageService.finalizeUsageOperation(
+            operationId,
+            'SUCCEEDED',
+            ESTIMATED_COST,
+            null // Result Ref
+        );
 
         return res.status(200).json(successResponse(analysisData, 'OK', {
-            pointsDeducted: pointsToDeduct,
+            pointsDeducted: ESTIMATED_COST,
             quotaRemaining: 0
         }));
 
     } catch (error: any) {
         console.error('URL Analysis Error:', error);
 
-        if (user) {
-            await logUsage({
-                context: { userId: user.uid, email: user.email },
-                mode: 'INTERNAL',
-                apiPath: '/api/analyze/url',
-                prompt: 'Error',
-                resultSummary: error.message,
-                pointsDeducted: 0,
-                errorCode: error.code || 500,
-                status: 'FAILURE',
-                privateMode: privateMode
-            });
+        if (operationId) {
+            await usageService.finalizeUsageOperation(
+                operationId,
+                'FAILED',
+                0,
+                null,
+                error.message
+            );
         }
 
         const code = error.code || ErrorCodes.INTERNAL_SERVER_ERROR;

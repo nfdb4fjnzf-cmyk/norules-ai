@@ -3,8 +3,7 @@ import { checkRateLimit } from '../../_middleware/rateLimit.js';
 import { successResponse, errorResponse } from '../../_utils/responseFormatter.js';
 import { AppError, ErrorCodes } from '../../_utils/errorHandler.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { logUsage } from '../../_utils/historyLogger.js';
-import { logUsage as logUsageStats } from '../../_services/usageService.js';
+import { usageService } from '../../_services/usageService.js';
 import { userService } from '../../_services/userService.js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
@@ -17,9 +16,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
 
-    let user: any = null;
-    let privateMode = false;
-    const pointsToDeduct = 2; // Risk Analyzer Cost (Ch.121.3)
+    let operationId = '';
+    const ESTIMATED_COST = 2; // Risk Analyzer Cost
 
     try {
         // 1. Auth & Validation
@@ -45,11 +43,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // 3. Rate Limit
         await checkRateLimit(user.uid, plan);
 
-        // 4. Point Deduction
-        const hasSufficientCredits = await userService.deductCredits(user.uid, pointsToDeduct);
-        if (!hasSufficientCredits) {
-            throw new AppError(ErrorCodes.INSUFFICIENT_POINTS, 'Insufficient credits', 402);
-        }
+        // 4. Start Usage Operation (Reserve Credits)
+        const op = await usageService.startUsageOperation(
+            user.uid,
+            'ANALYZE', // Action Type
+            ESTIMATED_COST,
+            { platform, contentSummary: content.substring(0, 50) } // Payload Meta
+        );
+        operationId = op.operationId;
 
         // 5. Call Gemini with Specialized Risk Prompt
         const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' }); // Use Flash for better availability
@@ -89,42 +90,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             analysisData = { raw: textOutput };
         }
 
-        // 6. Log History
-        await logUsage({
-            context: { userId: user.uid, email: user.email },
-            mode: 'INTERNAL',
-            apiPath: '/api/analyze/risk',
-            prompt: `[${platform}] ${content.substring(0, 100)}...`,
-            resultSummary: JSON.stringify(analysisData),
-            pointsDeducted: pointsToDeduct,
-            status: 'SUCCESS',
-            privateMode: privateMode
-        });
+        // 6. Log History (Legacy) - Optional, can be removed if usageService handles it
+        // Keeping it for now if needed, but usageService is the source of truth.
+        // Actually, let's remove legacy logUsage to avoid double counting or confusion.
+        // But the code imported logUsage from historyLogger.js too.
+        // Let's keep historyLogger if it does something specific for "History" page.
+        // But usageService also logs to usage_operations.
+        // The History page likely reads from usage_operations now (based on my previous work).
+        // So I can remove legacy logging.
 
-        // 7. Log Usage Stats
-        await logUsageStats(user.uid, 'risk_analysis', pointsToDeduct);
+        // 7. Finalize Usage Operation (Success)
+        await usageService.finalizeUsageOperation(
+            operationId,
+            'SUCCEEDED',
+            ESTIMATED_COST,
+            null // Result Ref
+        );
 
         // 8. Return Response
         return res.status(200).json(successResponse(analysisData, 'OK', {
-            pointsDeducted: pointsToDeduct,
+            pointsDeducted: ESTIMATED_COST,
             quotaRemaining: 0
         }));
 
     } catch (error: any) {
         console.error('Risk Analysis Error:', error);
 
-        if (user) {
-            await logUsage({
-                context: { userId: user.uid, email: user.email },
-                mode: 'INTERNAL',
-                apiPath: '/api/analyze/risk',
-                prompt: 'Error',
-                resultSummary: error.message,
-                pointsDeducted: 0,
-                errorCode: error.code || 500,
-                status: 'FAILURE',
-                privateMode: privateMode
-            });
+        if (operationId) {
+            await usageService.finalizeUsageOperation(
+                operationId,
+                'FAILED',
+                0,
+                null,
+                error.message
+            );
         }
 
         const code = error.code || ErrorCodes.INTERNAL_SERVER_ERROR;
