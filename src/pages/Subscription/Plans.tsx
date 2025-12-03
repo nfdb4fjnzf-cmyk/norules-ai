@@ -28,7 +28,7 @@ const Plans: React.FC = () => {
     const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
     const { showToast } = useToast();
     const navigate = useNavigate();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
 
     const PLANS: Plan[] = [
         {
@@ -81,6 +81,7 @@ const Plans: React.FC = () => {
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+    const [modalBillingCycle, setModalBillingCycle] = useState<BillingCycle>('monthly');
 
     useEffect(() => {
         fetchStatus();
@@ -103,9 +104,10 @@ const Plans: React.FC = () => {
         }
     };
 
-    const handleSubscribeClick = (plan: Plan) => {
+    const handleSubscribeClick = (plan: Plan, cycle: BillingCycle) => {
         if (plan.id === currentPlanId) return;
         setSelectedPlan(plan);
+        setModalBillingCycle(cycle);
         setIsModalOpen(true);
     };
 
@@ -115,7 +117,7 @@ const Plans: React.FC = () => {
         try {
             const response = await api.post('/subscription/create', {
                 planId: selectedPlan.id,
-                billingCycle,
+                billingCycle: modalBillingCycle,
                 couponCode
             });
 
@@ -140,9 +142,9 @@ const Plans: React.FC = () => {
     };
 
     const getPeriodLabel = () => {
-        if (billingCycle === 'quarterly') return '/季';
-        if (billingCycle === 'yearly') return '/年';
-        return '/月';
+        if (billingCycle === 'quarterly') return i18n.language === 'zh' || i18n.language === 'zh-TW' ? '/季' : '/qtr';
+        if (billingCycle === 'yearly') return i18n.language === 'zh' || i18n.language === 'zh-TW' ? '/年' : '/yr';
+        return i18n.language === 'zh' || i18n.language === 'zh-TW' ? '/月' : '/mo';
     };
 
     return (
@@ -187,12 +189,19 @@ const Plans: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {PLANS.map((plan) => {
                         const isCurrent = plan.id === currentPlanId;
-                        const displayPrice = getPrice(plan);
 
-                        // Lite plan cannot be monthly? Removed that restriction based on new plans.ts
-                        // But if we want to keep it, we can.
-                        // Let's assume all plans support all cycles for now as per plans.ts
-                        const isLiteMonthly = false;
+                        // Lite Plan is Mandatory Quarterly
+                        const isLite = plan.id === 'lite';
+                        const effectiveBillingCycle = isLite ? 'quarterly' : billingCycle;
+
+                        let displayPrice = getPrice(plan);
+                        let periodLabel = getPeriodLabel();
+
+                        if (isLite) {
+                            displayPrice = plan.quarterlyPrice;
+                            periodLabel = i18n.language === 'zh' || i18n.language === 'zh-TW' ? '/季' : '/qtr';
+                        }
+
                         const isDisabled = isCurrent;
 
                         return (
@@ -212,7 +221,7 @@ const Plans: React.FC = () => {
                                 <p className="text-sm text-gray-400 mb-4">{plan.description}</p>
                                 <div className="flex items-baseline mb-2">
                                     <span className="text-3xl font-extrabold text-gray-100">${displayPrice}</span>
-                                    <span className="text-gray-500 ml-1">{getPeriodLabel()}</span>
+                                    <span className="text-gray-500 ml-1">{periodLabel}</span>
                                 </div>
                                 <p className="text-sm text-green-400 mb-6 font-medium">
                                     {t('subscription.features.discountOnCredits', { percent: plan.discount.replace('%', '') })}
@@ -228,7 +237,7 @@ const Plans: React.FC = () => {
                                 </ul>
 
                                 <button
-                                    onClick={() => handleSubscribeClick(plan)}
+                                    onClick={() => handleSubscribeClick(plan, effectiveBillingCycle)}
                                     disabled={isDisabled}
                                     className={`w-full rounded-xl px-4 py-2 font-semibold transition-all duration-150 ease-out active:scale-95 flex justify-center items-center ${isCurrent
                                         ? 'bg-white/10 text-gray-400 cursor-default'
@@ -249,8 +258,8 @@ const Plans: React.FC = () => {
                     onClose={() => setIsModalOpen(false)}
                     onConfirm={handleConfirmSubscription}
                     planName={selectedPlan.name}
-                    billingCycle={billingCycle}
-                    price={getPrice(selectedPlan)}
+                    billingCycle={modalBillingCycle}
+                    price={modalBillingCycle === 'quarterly' ? selectedPlan.quarterlyPrice : modalBillingCycle === 'yearly' ? selectedPlan.yearlyPrice : selectedPlan.monthlyPrice}
                     planId={selectedPlan.id}
                 />
             )}

@@ -1,7 +1,6 @@
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { db } from '../_config/firebaseAdmin.js';
+import { Timestamp } from 'firebase-admin/firestore';
 import { AppError, ErrorCodes } from '../_utils/errorHandler.js';
-
-const db = getFirestore();
 
 export interface Coupon {
     code: string;
@@ -16,7 +15,9 @@ export interface Coupon {
 }
 
 class CouponService {
-    private collection = db.collection('coupons');
+    private get collection() {
+        return db.collection('coupons');
+    }
 
     async validateCoupon(code: string, planId: string): Promise<Coupon> {
         const snapshot = await this.collection.where('code', '==', code).limit(1).get();
