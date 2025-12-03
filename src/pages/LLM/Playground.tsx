@@ -299,13 +299,13 @@ const LLMPlayground: React.FC = () => {
                             onClick={() => setIsGuidedMode(false)}
                             className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${!isGuidedMode ? 'bg-blue-500 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
                         >
-                            Free Input
+                            {t('playground.input.freeInput')}
                         </button>
                         <button
                             onClick={() => setIsGuidedMode(true)}
                             className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${isGuidedMode ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
                         >
-                            ✨ Guided Mode
+                            ✨ {t('playground.input.guidedMode')}
                         </button>
                     </div>
 

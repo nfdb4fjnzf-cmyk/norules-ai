@@ -188,12 +188,12 @@ const LandingPageEditor: React.FC = () => {
                                         onChange={(e) => setConfig({ ...config, industry: e.target.value })}
                                         className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none appearance-none"
                                     >
-                                        <option value="">Select Industry</option>
-                                        <option value="gaming">Gaming / Casino</option>
-                                        <option value="ecommerce">E-commerce</option>
-                                        <option value="finance">Finance / Crypto</option>
-                                        <option value="app">Mobile App</option>
-                                        <option value="service">Local Service</option>
+                                        <option value="">{t('landingPage.editor.options.industry.select')}</option>
+                                        <option value="gaming">{t('landingPage.editor.options.industry.gaming')}</option>
+                                        <option value="ecommerce">{t('landingPage.editor.options.industry.ecommerce')}</option>
+                                        <option value="finance">{t('landingPage.editor.options.industry.finance')}</option>
+                                        <option value="app">{t('landingPage.editor.options.industry.app')}</option>
+                                        <option value="service">{t('landingPage.editor.options.industry.service')}</option>
                                     </select>
                                 </div>
 
@@ -228,11 +228,11 @@ const LandingPageEditor: React.FC = () => {
                                             onChange={(e) => setConfig({ ...config, tone: e.target.value })}
                                             className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none appearance-none"
                                         >
-                                            <option value="Professional">Professional</option>
-                                            <option value="Exciting">Exciting / Hype</option>
-                                            <option value="Friendly">Friendly</option>
-                                            <option value="Urgent">Urgent / FOMO</option>
-                                            <option value="Luxury">Luxury</option>
+                                            <option value="Professional">{t('landingPage.editor.options.tone.Professional')}</option>
+                                            <option value="Exciting">{t('landingPage.editor.options.tone.Exciting')}</option>
+                                            <option value="Friendly">{t('landingPage.editor.options.tone.Friendly')}</option>
+                                            <option value="Urgent">{t('landingPage.editor.options.tone.Urgent')}</option>
+                                            <option value="Luxury">{t('landingPage.editor.options.tone.Luxury')}</option>
                                         </select>
                                     </div>
 
@@ -243,13 +243,13 @@ const LandingPageEditor: React.FC = () => {
                                             onChange={(e) => setConfig({ ...config, language: e.target.value })}
                                             className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none appearance-none"
                                         >
-                                            <option value="zh-TW">Traditional Chinese</option>
-                                            <option value="zh-CN">Simplified Chinese</option>
-                                            <option value="en">English</option>
-                                            <option value="ja">Japanese</option>
-                                            <option value="ko">Korean</option>
-                                            <option value="vi">Vietnamese</option>
-                                            <option value="th">Thai</option>
+                                            <option value="zh-TW">{t('landingPage.editor.options.language.zh-TW')}</option>
+                                            <option value="zh-CN">{t('landingPage.editor.options.language.zh-CN')}</option>
+                                            <option value="en">{t('landingPage.editor.options.language.en')}</option>
+                                            <option value="ja">{t('landingPage.editor.options.language.ja')}</option>
+                                            <option value="ko">{t('landingPage.editor.options.language.ko')}</option>
+                                            <option value="vi">{t('landingPage.editor.options.language.vi')}</option>
+                                            <option value="th">{t('landingPage.editor.options.language.th')}</option>
                                         </select>
                                     </div>
                                 </div>

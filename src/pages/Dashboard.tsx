@@ -78,7 +78,7 @@ const Dashboard: React.FC = () => {
               <div className="p-2 bg-blue-500/20 rounded-lg">
                 <CreditCard className="w-5 h-5 text-blue-400" />
               </div>
-              <h3 className="text-gray-300 font-medium">Current Plan</h3>
+              <h3 className="text-gray-300 font-medium">{t('dashboard.currentPlan')}</h3>
             </div>
             {loading ? (
               <SkeletonLoader type="small" className="w-24 h-8" />
@@ -89,7 +89,7 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="text-sm text-gray-400 flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
-                  Next Billing: {formatDate(subscription?.nextBillingDate)}
+                  {t('dashboard.nextBilling')}: {formatDate(subscription?.nextBillingDate)}
                 </div>
               </>
             )}
@@ -105,7 +105,7 @@ const Dashboard: React.FC = () => {
             <div className="p-2 bg-yellow-500/20 rounded-lg">
               <Zap className="w-5 h-5 text-yellow-500" />
             </div>
-            <h3 className="text-gray-300 font-medium">Usage This Month</h3>
+            <h3 className="text-gray-300 font-medium">{t('dashboard.usageThisMonth')}</h3>
           </div>
           {loading ? (
             <SkeletonLoader type="small" className="w-24 h-8" />
@@ -134,7 +134,7 @@ const Dashboard: React.FC = () => {
               <div className="p-2 bg-purple-500/20 rounded-lg">
                 <History className="w-4 h-4 text-purple-400" />
               </div>
-              <span className="text-gray-200 font-medium">View History</span>
+              <span className="text-gray-200 font-medium">{t('dashboard.viewHistory')}</span>
             </div>
             <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />
           </Link>
@@ -143,7 +143,7 @@ const Dashboard: React.FC = () => {
               <div className="p-2 bg-green-500/20 rounded-lg">
                 <CreditCard className="w-4 h-4 text-green-400" />
               </div>
-              <span className="text-gray-200 font-medium">Upgrade Plan</span>
+              <span className="text-gray-200 font-medium">{t('dashboard.upgradePlan')}</span>
             </div>
             <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />
           </Link>

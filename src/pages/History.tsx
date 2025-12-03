@@ -90,8 +90,8 @@ const History: React.FC = () => {
         <div className="max-w-7xl mx-auto animate-fade-in space-y-6 p-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-white mb-2">Usage History</h1>
-                    <p className="text-gray-400 text-sm">Track your AI usage, costs, and generation history.</p>
+                    <h1 className="text-2xl font-bold text-white mb-2">{t('history.title')}</h1>
+                    <p className="text-gray-400 text-sm">{t('history.subtitle')}</p>
                 </div>
                 <div className="flex gap-3 w-full md:w-auto">
                     <div className="relative flex-1 md:w-64">
@@ -106,11 +106,11 @@ const History: React.FC = () => {
                     </div>
                     <Button variant="secondary" className="gap-2">
                         <Filter className="w-4 h-4" />
-                        Filter
+                        {t('common.filter')}
                     </Button>
                     <Button variant="secondary" className="gap-2" onClick={fetchHistory}>
                         <Download className="w-4 h-4" />
-                        Export
+                        {t('common.download')}
                     </Button>
                 </div>
             </div>
@@ -131,21 +131,21 @@ const History: React.FC = () => {
                         <Table>
                             <TableHeader>
                                 <TableRow className="border-gray-800 hover:bg-transparent">
-                                    <TableHead className="text-gray-400">Time</TableHead>
-                                    <TableHead className="text-gray-400">Action</TableHead>
-                                    <TableHead className="text-gray-400">Model</TableHead>
-                                    <TableHead className="text-gray-400">Input Preview</TableHead>
-                                    <TableHead className="text-gray-400 text-right">Est. Cost</TableHead>
-                                    <TableHead className="text-gray-400 text-right">Actual Cost</TableHead>
-                                    <TableHead className="text-gray-400 text-center">Status</TableHead>
-                                    <TableHead className="text-gray-400 text-center">Actions</TableHead>
+                                    <TableHead className="text-gray-400">{t('history.details.timestamp')}</TableHead>
+                                    <TableHead className="text-gray-400">{t('common.actions')}</TableHead>
+                                    <TableHead className="text-gray-400">{t('playground.model')}</TableHead>
+                                    <TableHead className="text-gray-400">{t('history.details.prompt')}</TableHead>
+                                    <TableHead className="text-gray-400 text-right">{t('playground.cost')}</TableHead>
+                                    <TableHead className="text-gray-400 text-right">{t('history.details.points')}</TableHead>
+                                    <TableHead className="text-gray-400 text-center">{t('common.status')}</TableHead>
+                                    <TableHead className="text-gray-400 text-center">{t('common.actions')}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {filteredLogs.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={8} className="h-32 text-center text-gray-500">
-                                            No usage history found.
+                                            {t('history.noHistory')}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -156,7 +156,9 @@ const History: React.FC = () => {
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="capitalize text-white font-medium text-sm">{log.actionType}</span>
+                                                    <span className="capitalize text-white font-medium text-sm">
+                                                        {t(`history.actionTypes.${log.actionType.toLowerCase()}`) || log.actionType}
+                                                    </span>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-gray-400 text-sm">

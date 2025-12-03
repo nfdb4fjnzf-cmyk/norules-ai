@@ -86,15 +86,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             analysisData = { raw: textOutput };
         }
 
-        // 6. Log History (Legacy) - Optional, can be removed if usageService handles it
-        // Keeping it for now if needed, but usageService is the source of truth.
-        // Actually, let's remove legacy logUsage to avoid double counting or confusion.
-        // But the code imported logUsage from historyLogger.js too.
-        // Let's keep historyLogger if it does something specific for "History" page.
-        // But usageService also logs to usage_operations.
-        // The History page likely reads from usage_operations now (based on my previous work).
-        // So I can remove legacy logging.
-
         // 7. Finalize Usage Operation (Success)
         await usageService.finalizeUsageOperation(
             operationId,

@@ -71,7 +71,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobile, toggleMobileMenu }) => {
             </span>
           </div>
           <p className="text-sm text-gray-300 mb-3">
-            {credits} Credits Remaining
+            {t('sidebar.widget.creditsRemaining', { count: credits })}
           </p>
           <NavLink to="/subscription/plans" className="block w-full py-2 bg-white/5 hover:bg-white/10 rounded-button text-sm font-medium transition-colors text-center border border-white/5">
             {t('sidebar.widget.upgrade')}

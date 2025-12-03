@@ -243,7 +243,7 @@ Special Instructions:
 
             {/* Creative Details */}
             <div className="border-t border-white/10 pt-4">
-                <h4 className="text-xs font-bold text-gray-300 mb-3 uppercase tracking-wider">Creative Details</h4>
+                <h4 className="text-xs font-bold text-gray-300 mb-3 uppercase tracking-wider">{t('playground.guidedMode.creativeDetails')}</h4>
                 <div className="grid grid-cols-2 gap-4 mb-3">
                     <div>
                         <label className="block text-xs text-gray-400 mb-1">{t('playground.guidedMode.creativeType')}</label>
@@ -340,7 +340,7 @@ Special Instructions:
 
             {/* Model Selection (Smart) */}
             <div className="border-t border-white/10 pt-4">
-                <label className="block text-xs text-gray-400 mb-1">Model Selection</label>
+                <label className="block text-xs text-gray-400 mb-1">{t('playground.guidedMode.modelSelection')}</label>
                 {isEnterprise && hasCustomKey ? (
                     <select
                         value={formData.selectedModel}
