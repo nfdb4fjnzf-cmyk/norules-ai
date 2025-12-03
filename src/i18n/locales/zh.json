@@ -505,5 +505,26 @@
         "footer": {
             "rights": "Norules AI. 版權所有。"
         }
+    },
+    "auth": {
+        "loginTitle": "登入 Norules AI",
+        "resetTitle": "重設密碼",
+        "emailRequired": "請輸入您的電子郵件地址。",
+        "resetSent": "密碼重設信已發送！請檢查您的收件匣。",
+        "emailLabel": "電子郵件",
+        "passwordLabel": "密碼",
+        "forgotPassword": "忘記密碼？",
+        "loginBtn": "登入",
+        "sendResetBtn": "發送重設連結",
+        "backToLogin": "返回登入",
+        "or": "或",
+        "googleLogin": "使用 Google 登入",
+        "noAccount": "還沒有帳號？",
+        "signUp": "註冊",
+        "signUpTitle": "註冊 Norules AI",
+        "signUpBtn": "註冊",
+        "googleSignUp": "使用 Google 註冊",
+        "hasAccount": "已經有帳號了？",
+        "loginLink": "登入"
     }
 }

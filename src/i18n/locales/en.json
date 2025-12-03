@@ -1,51 +1,6 @@
 {
-    "subscription": {
-        "title": "Choose Your Plan",
-        "subtitle": "Unlock more features with our flexible pricing tiers.",
-        "monthly": "Monthly",
-        "quarterly": "Quarterly",
-        "yearly": "Yearly",
-        "currentPlan": "Current Plan",
-        "subscribe": "Subscribe",
-        "confirmTitle": "Confirm Subscription",
-        "plan": "Plan",
-        "billingCycle": "Billing Cycle",
-        "price": "Price",
-        "couponCode": "Coupon Code",
-        "enterCode": "Enter code",
-        "apply": "Apply",
-        "totalToPay": "Total to Pay",
-        "cancel": "Cancel",
-        "confirmPay": "Confirm & Pay",
-        "discountApplied": "Discount applied",
-        "invalidCoupon": "Invalid coupon code",
-        "changePlan": "Change Plan",
-        "dailyLimit": "Daily Limit",
-        "pointsDeduction": "Points Deduction",
-        "internalLLM": "Internal LLM",
-        "externalAPIKey": "External API Key",
-        "unlimited": "Unlimited",
-        "yes": "Yes",
-        "no": "No",
-        "available": "Available",
-        "disabled": "Disabled",
-        "supported": "Supported",
-        "notSupported": "Not Supported",
-        "needAccess": {
-            "title": "Need API Access?",
-            "description": "Generate API keys to integrate Norules AI directly into your workflow.",
-            "freeWarning": "Free plan cannot use external API Key",
-            "manageKeys": "Manage API Keys"
-        },
-        "plans": {
-            "free": "Free",
-            "pro": "Pro",
-            "enterprise": "Enterprise",
-            "apikey": "API Key Mode"
-        }
-    },
     "seo": {
-        "defaultDescription": "NoRules AI - The Ultimate AI Platform for Everyone. Integrating multiple models for text, image, video generation and risk analysis.",
+        "defaultDescription": "NoRules AI - The ultimate AI platform for everyone. Generate text, images, videos, and analyze risks with multiple models.",
         "defaultKeywords": "AI, Artificial Intelligence, LLM, NoRules, Chatbot, Image Generation, Video Generation, Risk Analysis"
     },
     "common": {
@@ -72,15 +27,17 @@
         "dashboard": "Dashboard",
         "analyze": "Analyzer",
         "history": "History",
-        "playground": "LLM Playground",
+        "playground": "Playground",
         "landingPages": "Landing Pages",
         "subscription": "Subscription",
         "apiKeys": "API Keys",
         "externalKey": "External Key",
         "widget": {
-            "proPlan": "PRO PLAN",
-            "scansRemaining": "You have {{count}} scans remaining this month.",
-            "upgrade": "Upgrade"
+            "freePlan": "Free Plan",
+            "proPlan": "Pro Plan",
+            "scansRemaining": "{{count}} scans remaining this month.",
+            "creditsRemaining": "{{count}} credits left",
+            "upgrade": "Upgrade Plan"
         }
     },
     "dashboard": {
@@ -88,69 +45,24 @@
         "subtitle": "Overview of your compliance performance",
         "currentPlan": "Current Plan",
         "dailyQuota": "Daily Quota",
-        "avgScore": "Avg. Compliance Score",
+        "avgScore": "Avg Compliance Score",
         "issuesDetected": "Issues Detected",
         "pendingReview": "Pending Review",
         "complianceTrend": "Compliance Trend",
         "riskDistribution": "Risk Distribution",
+        "usageThisMonth": "Usage This Month",
+        "viewHistory": "View History",
+        "upgradePlan": "Upgrade Plan",
+        "nextBilling": "Next Billing",
         "riskLevels": {
             "safe": "Safe",
-            "low": "Low",
-            "med": "Med",
-            "high": "High"
+            "low": "Low Risk",
+            "med": "Medium Risk",
+            "high": "High Risk"
         },
         "weeklyTip": {
             "title": "Weekly Tip",
-            "content": "Most issues this week came from missing \"Terms Apply\" text in image banners. Double check your footnotes."
-        }
-    },
-    "analyzer": {
-        "title": "Content Analyzer",
-        "subtitle": "Upload content to detect compliance risks automatically.",
-        "sections": {
-            "material": "Material (Image/Video)",
-            "copy": "Primary Text",
-            "link": "Destination Link"
-        },
-        "placeholders": {
-            "material": "Drag & drop file here, or click to upload",
-            "copy": "Enter your ad copy here...",
-            "link": "https://example.com"
-        },
-        "tabs": {
-            "text": "Text",
-            "image": "Image",
-            "video": "Video",
-            "url": "URL"
-        },
-        "input": {
-            "textPlaceholder": "Enter your ad copy here...",
-            "urlPlaceholder": "Paste ad landing page URL...",
-            "uploadImage": "Upload Image",
-            "uploadVideo": "Upload Video",
-            "fileTypeHint": "SVG, PNG, JPG or MP4 (max. 20MB)",
-            "selectFile": "Select File"
-        },
-        "actions": {
-            "analyze": "Run Analysis",
-            "analyzing": "Analyzing..."
-        },
-        "howItWorks": {
-            "title": "How it works",
-            "description": "Norules AI checks against 50+ regulatory frameworks including FTC, GDPR, and platform-specific policies (Meta, Google Ads, TikTok).",
-            "check1": "Brand Safety Check",
-            "check2": "Claim Substantiation",
-            "check3": "Prohibited Content"
-        },
-        "errors": {
-            "fileTooLarge": "File too large. Please upload video smaller than 20MB.",
-            "enterText": "Please enter text to analyze.",
-            "selectFile": "Please select a file.",
-            "analysisFailed": "Analysis failed. Please try again.",
-            "quotaExceeded": "Daily quota exceeded. Please upgrade your plan.",
-            "accessDenied": "Access denied. Free plan cannot use External API Key.",
-            "invalidKey": "Invalid API Key.",
-            "insufficientPoints": "Insufficient points. Please top up."
+            "content": "Most issues this week came from missing 'T&C Apply' text in image banners. Double check your footers."
         }
     },
     "history": {
@@ -158,12 +70,21 @@
         "subtitle": "View your recent API usage, prompts, and results.",
         "noHistory": "No history found.",
         "viewReport": "View Report",
+        "actionTypes": {
+            "video": "Video",
+            "image": "Image",
+            "chat": "Chat",
+            "analysis": "Analysis"
+        },
+        "models": {
+            "unknown": "Unknown"
+        },
         "status": {
             "passed": "Passed",
             "flagged": "Flagged"
         },
         "details": {
-            "title": "Log Details",
+            "title": "Record Details",
             "timestamp": "Timestamp",
             "mode": "Mode",
             "apiPath": "API Path",
@@ -173,91 +94,136 @@
             "tokens": "Tokens",
             "points": "Points",
             "quotaRemaining": "Quota Remaining",
-            "noCost": "No cost"
+            "noCost": "Free"
         }
     },
-    "apiKeys": {
-        "title": "API Key Management",
-        "create": "Create API Key",
-        "noKeys": "No API keys found.",
-        "table": {
-            "name": "Name",
-            "key": "Key",
-            "created": "Created",
-            "actions": "Actions"
+    "subscription": {
+        "title": "Choose Your Plan",
+        "subtitle": "Unlock more features with our flexible pricing tiers.",
+        "monthly": "Monthly",
+        "quarterly": "Quarterly",
+        "yearly": "Yearly",
+        "currentPlan": "Current Plan",
+        "subscribe": "Subscribe",
+        "confirmTitle": "Confirm Subscription",
+        "plan": "Plan",
+        "billingCycle": "Billing Cycle",
+        "price": "Price",
+        "couponCode": "Coupon Code",
+        "enterCode": "Enter code",
+        "apply": "Apply",
+        "totalToPay": "Total to Pay",
+        "cancel": "Cancel",
+        "confirmPay": "Confirm & Pay",
+        "discountApplied": "Discount Applied",
+        "invalidCoupon": "Invalid Coupon",
+        "changePlan": "Change Plan",
+        "dailyLimit": "Daily Limit",
+        "pointsDeduction": "Points Deduction",
+        "internalLLM": "Internal LLM",
+        "externalAPIKey": "External API Key",
+        "unlimited": "Unlimited",
+        "yes": "Yes",
+        "no": "No",
+        "available": "Available",
+        "disabled": "Disabled",
+        "supported": "Supported",
+        "notSupported": "Not Supported",
+        "needAccess": {
+            "title": "Need API Access?",
+            "description": "Generate an API Key to integrate Norules AI directly into your workflow.",
+            "freeWarning": "External API Keys are not available on the Free plan",
+            "manageKeys": "Manage API Keys"
         },
-        "modals": {
-            "createTitle": "Create API Key",
-            "createDesc": "Enter a name for your new API key to identify it later.",
-            "placeholder": "e.g. Production App",
-            "creating": "Creating...",
-            "deleteTitle": "Delete API Key",
-            "deleteDesc": "Are you sure you want to delete this API key? This action cannot be undone and any applications using this key will stop working immediately.",
-            "deleting": "Deleting..."
+        "plans": {
+            "free": "Free",
+            "pro": "Pro",
+            "enterprise": "Enterprise",
+            "lite": "Lite",
+            "ultra": "Ultra",
+            "apikey": "API Key Mode",
+            "liteDesc": "For starters",
+            "proDesc": "For growing needs",
+            "ultraDesc": "For power users"
         },
-        "messages": {
-            "created": "API Key Created Successfully",
-            "deleted": "API Key Deleted",
-            "failedFetch": "Failed to fetch API keys",
-            "failedCreate": "Failed to create API key",
-            "failedDelete": "Failed to delete API key"
+        "features": {
+            "discountOnCredits": "{{percent}}% Discount on Credits",
+            "monthlyCredits": "{{count}} Monthly Credits",
+            "basicSupport": "Basic Support",
+            "prioritySupport": "Priority Support",
+            "247Support": "24/7 Support",
+            "standardSpeed": "Standard Speed",
+            "fastSpeed": "Fast Generation",
+            "maxSpeed": "Max Speed",
+            "pointDiscount": "{{percent}}% Point Discount"
         }
     },
     "playground": {
-        "title": "One-click Material Generation",
-        "subtitle": "Directly interact with the LLM API endpoints.",
+        "title": "One-Click Material",
+        "subtitle": "Interact directly with LLM API endpoints.",
         "model": "Model",
         "cost": "Estimated Cost",
         "points": "Points",
         "uploadImage": "Upload Image",
         "uploadVideo": "Upload Video",
         "riskScore": "Risk Score",
+        "targetRiskScore": "Ad Compliance Level",
         "riskAnalysis": "Risk Analysis",
         "generatedContent": "Generated Content",
-        "model.text.a": "Text Generation (Model A)",
-        "model.text.b": "Text Generation (Model B)",
-        "model.text.c": "Text Generation (Model C)",
-        "model.text.d": "Text Generation (Model D)",
-        "model.image.a": "Image Generation (Model A)",
-        "model.image.b": "Image Generation (Model B)",
-        "model.image.c": "Image Generation (Model C)",
-        "model.video.a": "Video Generation (Model A)",
+        "llm.riskAnalysis": "Risk Analysis",
+        "creativeDetails": "Creative Details",
+        "model.text.a": "Text Gen (Model A)",
+        "model.text.b": "Text Gen (Model B)",
+        "model.text.c": "Text Gen (Model C)",
+        "model.text.d": "Text Gen (Model D)",
+        "model.image.a": "Image Gen (Model A)",
+        "model.image.b": "Image Gen (Model B)",
+        "model.image.c": "Image Gen (Model C)",
+        "model.video.a": "Video Gen (Model A)",
         "tabs": {
-            "generate": "GENERATE",
-            "chat": "CHAT",
-            "image": "IMAGE",
-            "video": "VIDEO"
+            "generate": "Generate",
+            "chat": "Chat",
+            "image": "Image",
+            "video": "Video"
         },
-        "input": "Input",
+        "input": {
+            "label": "Input",
+            "freeInput": "Free Input",
+            "guidedMode": "Guided Mode"
+        },
         "output": "Output",
         "send": "Send Request",
         "processing": "Processing...",
         "mode": "Mode",
         "internal": "Internal Mode",
         "external": "External Key Mode",
-        "privateModeOn": "Private Mode On",
-        "privateModeOff": "Private Mode Off",
+        "privateModeOn": "Private Mode ON",
+        "privateModeOff": "Private Mode OFF",
         "quotaUsed": "Quota Used",
         "tokens": "Tokens",
         "responsePlaceholder": "Response will appear here",
         "placeholder": {
-            "message": "Enter message...",
-            "prompt": "Enter prompt..."
+            "message": "Type a message...",
+            "prompt": "Enter prompt...",
+            "noAI": "e.g. NoAI",
+            "aiGenerator": "e.g. AI Generator",
+            "sellingPoints": "e.g. Fast, Secure, Cheap...",
+            "audience": "e.g. Gamers 18-25"
         },
-        "requestSuccessful": "Request successful",
+        "requestSuccessful": "Request Successful",
         "errors": {
-            "externalKeyMissing": "External Key missing. Please check Settings.",
-            "sessionKeyExpired": "Session Key Expired. Please re-enter your API Key in Settings.",
-            "quotaExceeded": "Daily quota exceeded.",
-            "accessDenied": "Access denied (Free plan cannot use External Key).",
-            "replayAttack": "Security Alert: Replay Attack Detected. Please refresh.",
+            "externalKeyMissing": "External Key Missing. Check Settings.",
+            "sessionKeyExpired": "Session Key Expired. Re-enter your API Key in Settings.",
+            "quotaExceeded": "Daily Quota Exceeded.",
+            "accessDenied": "Access Denied (Free Plan cannot use External Keys).",
+            "replayAttack": "Security Warning: Replay Attack Detected. Refresh page.",
             "invalidApiKey": "Invalid API Key or Unauthorized.",
-            "insufficientPoints": "Insufficient points.",
-            "requestFailed": "Request failed"
+            "insufficientPoints": "Insufficient Points.",
+            "requestFailed": "Request Failed"
         },
         "guidedMode": {
-            "title": "Guided Mode",
-            "switchLabel": "Guided Mode",
+            "title": "Smart Guided Mode",
+            "switchLabel": "Smart Guided Mode",
             "platform": "Platform",
             "format": "Format",
             "productName": "Product Name",
@@ -269,8 +235,8 @@
             "creativeType": "Creative Type",
             "aspectRatio": "Aspect Ratio",
             "visualStyle": "Visual Style",
-            "brandColor": "Brand Color (Hex)",
-            "elements": "Visual Elements",
+            "brandColor": "Brand Color (HEX)",
+            "elements": "Elements",
             "language": "Language",
             "compliance": "Compliance Mode",
             "outputFormat": "Output Format",
@@ -331,7 +297,7 @@
                 "compliance": {
                     "Meta Safe Mode": "Meta Safe Mode",
                     "TikTok Safe Mode": "TikTok Safe Mode",
-                    "High Stimulus": "High Stimulus"
+                    "High Stimulus": "High Stimulus (At your own risk)"
                 },
                 "language": {
                     "Traditional Chinese": "Traditional Chinese",
@@ -344,17 +310,17 @@
     },
     "settings": {
         "externalKey": {
-            "title": "External API Key",
-            "subtitle": "Bring Your Own Key (BYOK) to bypass internal point deductions.",
+            "title": "External API Keys",
+            "subtitle": "Use your own keys (BYOK) to avoid internal credit deduction.",
             "encryption": {
-                "title": "End-to-End Encrypted",
-                "description": "Your API Key is encrypted with AES-256-GCM in your browser before storage. It is never stored in plain text. When used, it is re-encrypted for secure transport to our proxy."
+                "title": "End-to-End Encryption",
+                "description": "Your API Key is encrypted in the browser using AES-256-GCM before storage. It is never stored in plain text. When used, it is re-encrypted for secure transmission to our proxy."
             },
             "label": "Google Gemini API Key",
             "status": {
                 "saved": "Encrypted & Saved"
             },
-            "storageNote": "Key is stored in LocalStorage (Encrypted). Session Key is in SessionStorage.",
+            "storageNote": "Key stored in LocalStorage (Encrypted). Session key in SessionStorage.",
             "actions": {
                 "save": "Save & Encrypt",
                 "remove": "Remove Key"
@@ -362,7 +328,7 @@
             "messages": {
                 "enterKey": "Please enter a valid API Key",
                 "saved": "External API Key saved securely",
-                "encryptionFailed": "Encryption failed",
+                "encryptionFailed": "Encryption Failed",
                 "removed": "External API Key removed"
             }
         }
@@ -381,14 +347,14 @@
             "title": "Platform Overview",
             "totalUsers": "Total Users",
             "dau": "Daily Active Users",
-            "engagement": "Engagement",
-            "activeSubscriptions": "Active Subscriptions",
+            "engagement": "Engagement Rate",
+            "activeSubscriptions": "Active Subs",
             "estRevenue": "Est. Revenue",
             "creditsConsumed": "Credits Consumed (24h)",
-            "ops": "Ops",
+            "ops": "ops",
             "systemHealth": "System Health",
             "errorRate": "Error Rate (24h)",
-            "failedOps": "Failed Operations",
+            "failedOps": "failed ops",
             "failedLoad": "Failed to load stats"
         },
         "users": {
@@ -423,23 +389,23 @@
             "adjustModal": {
                 "title": "Adjust Credits",
                 "user": "User",
-                "amount": "Amount (Positive to Add, Negative to Deduct)",
+                "amount": "Amount (Positive to add, Negative to deduct)",
                 "reason": "Reason",
                 "reasonPlaceholder": "e.g. Bonus, Refund, Correction",
                 "cancel": "Cancel",
                 "confirm": "Confirm",
                 "success": "Credits adjusted successfully",
-                "failed": "Adjustment failed"
+                "failed": "Failed to adjust credits"
             }
         }
     },
     "landingPage": {
         "list": {
             "title": "Landing Page Projects",
-            "subtitle": "Manage and generate your high-conversion landing pages",
-            "create": "New Project",
-            "emptyTitle": "No Projects Yet",
-            "emptyDesc": "Start creating your first AI-generated landing page",
+            "subtitle": "Manage and generate your high-converting landing pages",
+            "create": "Create New Project",
+            "emptyTitle": "No projects yet",
+            "emptyDesc": "Start by creating your first AI-generated landing page",
             "createFirst": "Create Now",
             "deleteConfirm": "Are you sure you want to delete this project? This cannot be undone."
         },
@@ -448,46 +414,72 @@
             "editTitle": "Edit Landing Page",
             "projectSettings": "Project Settings",
             "projectName": "Project Name",
-            "projectNamePlaceholder": "e.g. 7Spin PH Promo",
+            "projectNamePlaceholder": "e.g. 7Spin Philippines Promo",
             "contentConfig": "Content Configuration",
             "productName": "Product/Brand Name",
             "industry": "Industry",
             "marketingGoal": "Marketing Goal",
-            "marketingGoalPlaceholder": "e.g. Drive user registration and app download",
+            "marketingGoalPlaceholder": "e.g. Get users to sign up and download app",
             "targetAudience": "Target Audience",
-            "targetAudiencePlaceholder": "e.g. Males 25-40, interested in sports and betting",
+            "targetAudiencePlaceholder": "e.g. Males 25-40 who like gambling and sports",
             "tone": "Tone",
             "language": "Language",
             "createBtn": "Create Project",
             "preview": "Live Preview",
             "generate": "AI Generate",
             "generating": "Generating...",
-            "noPreview": "No content yet. Click 'AI Generate' to start.",
-            "saveFirst": "Please save the project before generating.",
+            "noPreview": "No content generated yet. Click 'AI Generate' to start.",
+            "saveFirst": "Please save the project first before generating.",
             "generatedSuccess": "Landing page generated successfully!",
-            "deploy": "Deploy Live",
+            "deploy": "Deploy",
             "deploying": "Deploying...",
             "deploySuccess": "Deployed successfully! Your site is live.",
-            "visitLive": "Visit Site"
+            "visitLive": "Visit Site",
+            "options": {
+                "industry": {
+                    "select": "Select Industry",
+                    "gaming": "Gambling / Casino",
+                    "ecommerce": "E-Commerce",
+                    "finance": "Finance / Crypto",
+                    "app": "Mobile App",
+                    "service": "Local Service"
+                },
+                "tone": {
+                    "Professional": "Professional",
+                    "Exciting": "Exciting / Hype",
+                    "Friendly": "Friendly",
+                    "Urgent": "Urgent / FOMO",
+                    "Luxury": "Luxury"
+                },
+                "language": {
+                    "zh-TW": "Traditional Chinese",
+                    "zh-CN": "Simplified Chinese",
+                    "en": "English",
+                    "ja": "Japanese",
+                    "ko": "Korean",
+                    "vi": "Vietnamese",
+                    "th": "Thai"
+                }
+            }
         }
     },
     "landing": {
         "nav": {
-            "login": "Log In",
+            "login": "Login",
             "getStarted": "Get Started"
         },
         "hero": {
-            "newIntegration": "NEW: Gemini 1.5 Pro Integration",
-            "title": "Ad Compliance & <br /> Generation with AI",
-            "description": "Analyze your ads for policy violations on Meta, Google, and TikTok. Generate high-converting, safe ad copy in seconds.",
+            "newIntegration": "New: Gemini 1.5 Pro Integration",
+            "title": "AI-Powered Ad Compliance<br />& Generation",
+            "description": "Analyze your ads for policy violations on Meta, Google, and TikTok. Generate high-converting, compliant copy in seconds.",
             "startFree": "Start Analyzing Free",
             "learnMore": "Learn More"
         },
         "features": {
-            "title": "Why Choose Norules AI?",
+            "title": "Why Norules AI?",
             "risk": {
                 "title": "Risk Analysis",
-                "desc": "Instant policy checks for Facebook, Instagram, TikTok, and Google Ads. Avoid bans before they happen."
+                "desc": "Instant policy checks for Facebook, Instagram, TikTok, and Google Ads. Prevent bans before they happen."
             },
             "gen": {
                 "title": "AI Generation",
@@ -499,19 +491,40 @@
             }
         },
         "faq": {
-            "title": "Frequently Asked Questions",
+            "title": "FAQ",
             "subtitle": "Everything you need to know about Norules AI.",
             "q1": "What is Norules AI?",
-            "a1": "Norules AI is an advanced ad compliance and generation platform. It helps marketers analyze their ad creatives (text, image, video) for policy violations on major platforms like Meta and TikTok, and generates safe, high-performing ad copy.",
-            "q2": "How does the ad compliance checker work?",
-            "a2": "We use state-of-the-art AI models (Gemini 1.5 Pro, GPT-4) to scan your content against a database of known ad policies. It identifies risky keywords, prohibited imagery, and compliance flags, giving you a risk score and actionable fix suggestions.",
+            "a1": "Norules AI is an advanced ad compliance and generation platform. It helps marketers analyze ad creatives (text, image, video) for policy violations on major platforms like Meta and TikTok, and generates safe, high-performing ad copy.",
+            "q2": "How does the Ad Compliance Checker work?",
+            "a2": "We use state-of-the-art AI models (Gemini 1.5 Pro, GPT-4) to scan your content against a database of known ad policies. It identifies risky keywords, prohibited imagery, and compliance flags, providing a risk score and actionable fixes.",
             "q3": "Is there a free plan?",
-            "a3": "Yes! Our Lite plan starts at just $5/month, but we offer a free trial period for new users to test the analysis features. You can upgrade to Standard or Enterprise for higher daily limits.",
+            "a3": "Yes! Our Lite plan starts at just $5/month, but we offer a free trial for new users to test the analysis features. You can upgrade to Standard or Enterprise for higher daily limits.",
             "q4": "Can I generate images and videos?",
             "a4": "Absolutely. Norules AI integrates with tools like Imagen 3, DALL-E 3, and Sora (coming soon) to generate high-quality, compliant visual assets for your campaigns."
         },
         "footer": {
             "rights": "Norules AI. All rights reserved."
         }
+    },
+    "auth": {
+        "loginTitle": "Login to Norules AI",
+        "resetTitle": "Reset Password",
+        "emailRequired": "Please enter your email address.",
+        "resetSent": "Password reset email sent! Check your inbox.",
+        "emailLabel": "Email",
+        "passwordLabel": "Password",
+        "forgotPassword": "Forgot Password?",
+        "loginBtn": "Login",
+        "sendResetBtn": "Send Reset Link",
+        "backToLogin": "Back to Login",
+        "or": "OR",
+        "googleLogin": "Login with Google",
+        "noAccount": "Don't have an account?",
+        "signUp": "Sign Up",
+        "signUpTitle": "Sign Up for Norules AI",
+        "signUpBtn": "Sign Up",
+        "googleSignUp": "Sign Up with Google",
+        "hasAccount": "Already have an account?",
+        "loginLink": "Login"
     }
 }
