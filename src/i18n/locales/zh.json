@@ -462,5 +462,48 @@
                 }
             }
         }
+    },
+    "landing": {
+        "nav": {
+            "login": "登入",
+            "getStarted": "立即開始"
+        },
+        "hero": {
+            "newIntegration": "新功能：整合 Gemini 1.5 Pro",
+            "title": "AI 驅動的<br />廣告合規與生成",
+            "description": "分析您的廣告是否違反 Meta、Google 和 TikTok 的政策。幾秒鐘內生成高轉換率且合規的廣告文案。",
+            "startFree": "免費開始分析",
+            "learnMore": "了解更多"
+        },
+        "features": {
+            "title": "為什麼選擇 Norules AI？",
+            "risk": {
+                "title": "風險分析",
+                "desc": "即時檢查 Facebook、Instagram、TikTok 和 Google Ads 的政策。在被封鎖前預防違規。"
+            },
+            "gen": {
+                "title": "AI 生成",
+                "desc": "使用 Gemini 1.5 和 GPT-4 等先進 LLM，建立合規且高點擊率的廣告文案與視覺素材。"
+            },
+            "safe": {
+                "title": "安全可靠",
+                "desc": "企業級安全性。您的數據和廣告策略受到嚴格的隱私協議保護。"
+            }
+        },
+        "faq": {
+            "title": "常見問題",
+            "subtitle": "關於 Norules AI 的一切。",
+            "q1": "什麼是 Norules AI？",
+            "a1": "Norules AI 是一個先進的廣告合規與生成平台。它幫助行銷人員分析廣告素材（文字、圖片、影片）是否違反 Meta 和 TikTok 等主要平台的政策，並生成安全、高效的廣告文案。",
+            "q2": "廣告合規檢查器如何運作？",
+            "a2": "我們使用最先進的 AI 模型（Gemini 1.5 Pro, GPT-4）根據已知的廣告政策資料庫掃描您的內容。它能識別風險關鍵字、違禁圖像和合規標誌，並提供風險評分和可行的修正建議。",
+            "q3": "有免費方案嗎？",
+            "a3": "有的！我們的 Lite 方案每月僅需 $5，但我們為新用戶提供免費試用期以測試分析功能。您可以升級到標準版或企業版以獲得更高的每日額度。",
+            "q4": "我可以生成圖片和影片嗎？",
+            "a4": "當然可以。Norules AI 整合了 Imagen 3、DALL-E 3 和 Sora（即將推出）等工具，為您的廣告活動生成高品質、合規的視覺資產。"
+        },
+        "footer": {
+            "rights": "Norules AI. 版權所有。"
+        }
     }
 }

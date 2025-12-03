@@ -470,5 +470,48 @@
             "deploySuccess": "Deployed successfully! Your site is live.",
             "visitLive": "Visit Site"
         }
+    },
+    "landing": {
+        "nav": {
+            "login": "Log In",
+            "getStarted": "Get Started"
+        },
+        "hero": {
+            "newIntegration": "NEW: Gemini 1.5 Pro Integration",
+            "title": "Ad Compliance & <br /> Generation with AI",
+            "description": "Analyze your ads for policy violations on Meta, Google, and TikTok. Generate high-converting, safe ad copy in seconds.",
+            "startFree": "Start Analyzing Free",
+            "learnMore": "Learn More"
+        },
+        "features": {
+            "title": "Why Choose Norules AI?",
+            "risk": {
+                "title": "Risk Analysis",
+                "desc": "Instant policy checks for Facebook, Instagram, TikTok, and Google Ads. Avoid bans before they happen."
+            },
+            "gen": {
+                "title": "AI Generation",
+                "desc": "Create compliant, high-CTR ad copy and visuals using advanced LLMs like Gemini 1.5 and GPT-4."
+            },
+            "safe": {
+                "title": "Safe & Secure",
+                "desc": "Enterprise-grade security. Your data and ad strategies are protected with strict privacy protocols."
+            }
+        },
+        "faq": {
+            "title": "Frequently Asked Questions",
+            "subtitle": "Everything you need to know about Norules AI.",
+            "q1": "What is Norules AI?",
+            "a1": "Norules AI is an advanced ad compliance and generation platform. It helps marketers analyze their ad creatives (text, image, video) for policy violations on major platforms like Meta and TikTok, and generates safe, high-performing ad copy.",
+            "q2": "How does the ad compliance checker work?",
+            "a2": "We use state-of-the-art AI models (Gemini 1.5 Pro, GPT-4) to scan your content against a database of known ad policies. It identifies risky keywords, prohibited imagery, and compliance flags, giving you a risk score and actionable fix suggestions.",
+            "q3": "Is there a free plan?",
+            "a3": "Yes! Our Lite plan starts at just $5/month, but we offer a free trial period for new users to test the analysis features. You can upgrade to Standard or Enterprise for higher daily limits.",
+            "q4": "Can I generate images and videos?",
+            "a4": "Absolutely. Norules AI integrates with tools like Imagen 3, DALL-E 3, and Sora (coming soon) to generate high-quality, compliant visual assets for your campaigns."
+        },
+        "footer": {
+            "rights": "Norules AI. All rights reserved."
+        }
     }
 }
