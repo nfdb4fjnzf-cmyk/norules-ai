@@ -9,7 +9,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        const user = await validateRequest(req);
+        const user = await validateRequest(req.headers);
         const pages = await landingPageService.listByUser(user.uid);
 
         return res.status(200).json(successResponse({ pages }));
