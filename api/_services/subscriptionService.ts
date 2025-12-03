@@ -15,7 +15,7 @@ export interface Subscription {
     createdAt: admin.firestore.Timestamp;
     updatedAt: admin.firestore.Timestamp;
     // Coupon fields
-    couponCode?: string;
+    couponCode?: string | null;
     originalPrice?: number;
     discountAmount?: number;
     finalPrice?: number;
