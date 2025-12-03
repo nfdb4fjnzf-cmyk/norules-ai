@@ -23,7 +23,8 @@
         "dashboard": "Dashboard",
         "analyze": "Analyzer",
         "history": "History",
-        "playground": "Playground",
+        "playground": "LLM Playground",
+        "landingPages": "Landing Pages",
         "subscription": "Subscription",
         "apiKeys": "API Keys",
         "externalKey": "External Key",
@@ -409,6 +410,34 @@
                 "success": "Credits adjusted successfully",
                 "failed": "Adjustment failed"
             }
+        }
+    },
+    "landingPage": {
+        "list": {
+            "title": "Landing Page Projects",
+            "subtitle": "Manage and generate your high-conversion landing pages",
+            "create": "New Project",
+            "emptyTitle": "No Projects Yet",
+            "emptyDesc": "Start creating your first AI-generated landing page",
+            "createFirst": "Create Now",
+            "deleteConfirm": "Are you sure you want to delete this project? This cannot be undone."
+        },
+        "editor": {
+            "createTitle": "Create New Landing Page",
+            "editTitle": "Edit Landing Page",
+            "projectSettings": "Project Settings",
+            "projectName": "Project Name",
+            "projectNamePlaceholder": "e.g. 7Spin PH Promo",
+            "contentConfig": "Content Configuration",
+            "productName": "Product/Brand Name",
+            "industry": "Industry",
+            "marketingGoal": "Marketing Goal",
+            "marketingGoalPlaceholder": "e.g. Drive user registration and app download",
+            "targetAudience": "Target Audience",
+            "targetAudiencePlaceholder": "e.g. Males 25-40, interested in sports and betting",
+            "tone": "Tone",
+            "language": "Language",
+            "createBtn": "Create Project"
         }
     }
 }

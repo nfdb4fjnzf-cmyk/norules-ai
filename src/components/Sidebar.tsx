@@ -19,6 +19,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobile, toggleMobileMenu }) => {
     { path: '/analyze', label: t('sidebar.analyze'), icon: 'gavel' },
     { path: '/history', label: t('sidebar.history'), icon: 'history' },
     { path: '/llm', label: t('sidebar.playground'), icon: 'science' },
+    { path: '/landing-pages', label: t('sidebar.landingPages'), icon: 'web' },
     { path: '/subscription', label: t('sidebar.subscription'), icon: 'credit_card' },
     { path: '/settings/apikeys', label: t('sidebar.apiKeys'), icon: 'key' },
     { path: '/settings/external-key', label: t('sidebar.externalKey'), icon: 'vpn_key' },

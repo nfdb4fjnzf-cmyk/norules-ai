@@ -24,6 +24,7 @@
         "analyze": "分析器",
         "history": "歷史紀錄",
         "playground": "一鍵生素材",
+        "landingPages": "落地頁生成",
         "subscription": "訂閱方案",
         "apiKeys": "API 金鑰",
         "externalKey": "外部金鑰",
@@ -411,6 +412,34 @@
                 "success": "點數調整成功",
                 "failed": "調整失敗"
             }
+        }
+    },
+    "landingPage": {
+        "list": {
+            "title": "落地頁專案",
+            "subtitle": "管理與生成您的高轉化落地頁",
+            "create": "建立新專案",
+            "emptyTitle": "尚無專案",
+            "emptyDesc": "開始建立您的第一個 AI 生成落地頁",
+            "createFirst": "立即建立",
+            "deleteConfirm": "確定要刪除此專案嗎？此動作無法復原。"
+        },
+        "editor": {
+            "createTitle": "建立新落地頁",
+            "editTitle": "編輯落地頁",
+            "projectSettings": "專案設定",
+            "projectName": "專案名稱",
+            "projectNamePlaceholder": "例如：7Spin 菲律賓推廣頁",
+            "contentConfig": "內容設定",
+            "productName": "產品/品牌名稱",
+            "industry": "產業類別",
+            "marketingGoal": "行銷目標",
+            "marketingGoalPlaceholder": "例如：吸引用戶註冊並下載 App",
+            "targetAudience": "目標受眾",
+            "targetAudiencePlaceholder": "例如：25-40 歲男性，喜歡博弈與體育賽事",
+            "tone": "語氣風格",
+            "language": "語言",
+            "createBtn": "建立專案"
         }
     }
 }

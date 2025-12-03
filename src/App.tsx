@@ -19,6 +19,8 @@ import Landing from './pages/Landing';
 import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/Admin/Dashboard';
 import AdminUsers from './pages/Admin/Users';
+import LandingPageList from './pages/LandingPage/List';
+import LandingPageEditor from './pages/LandingPage/Editor';
 
 import { ToastProvider } from './components/Toast';
 import { ModalProvider } from './contexts/ModalContext';
@@ -53,6 +55,11 @@ function App() {
 
               <Route path="/settings/apikeys" element={<ApiKeys />} />
               <Route path="/settings/external-key" element={<ExternalKey />} />
+
+              {/* Landing Page Generator Routes */}
+              <Route path="/landing-pages" element={<LandingPageList />} />
+              <Route path="/landing-pages/new" element={<LandingPageEditor />} />
+              <Route path="/landing-pages/:id" element={<LandingPageEditor />} />
             </Route>
 
             {/* Admin Routes */}
