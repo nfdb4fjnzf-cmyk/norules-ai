@@ -437,7 +437,13 @@
             "targetAudiencePlaceholder": "e.g. Males 25-40, interested in sports and betting",
             "tone": "Tone",
             "language": "Language",
-            "createBtn": "Create Project"
+            "createBtn": "Create Project",
+            "preview": "Live Preview",
+            "generate": "AI Generate",
+            "generating": "Generating...",
+            "noPreview": "No content yet. Click 'AI Generate' to start.",
+            "saveFirst": "Please save the project before generating.",
+            "generatedSuccess": "Landing page generated successfully!"
         }
     }
 }

@@ -439,7 +439,13 @@
             "targetAudiencePlaceholder": "例如：25-40 歲男性，喜歡博弈與體育賽事",
             "tone": "語氣風格",
             "language": "語言",
-            "createBtn": "建立專案"
+            "createBtn": "建立專案",
+            "preview": "即時預覽",
+            "generate": "AI 生成",
+            "generating": "生成中...",
+            "noPreview": "尚未生成內容，請點擊右上角「AI 生成」",
+            "saveFirst": "請先儲存專案才能進行生成",
+            "generatedSuccess": "落地頁生成成功！"
         }
     }
 }
