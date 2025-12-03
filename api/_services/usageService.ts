@@ -125,6 +125,7 @@ export const usageService = {
             case 'video': return 10;
             case 'lp': return 3;
             case 'analyze': return 1; // or free for lite?
+            case 'text': return 1;
             case 'ads.publish': return 5;
             default: return 1;
         }

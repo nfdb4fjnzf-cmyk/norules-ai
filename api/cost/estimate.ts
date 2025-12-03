@@ -32,7 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json(errorResponse(ErrorCodes.BAD_REQUEST, 'actionType is required'));
         }
 
-        const estimatedCost = usageService.estimateCost(actionType, inputLength, model);
+        const estimatedCost = usageService.estimateCost(actionType);
 
         return res.status(200).json(successResponse({ estimatedCost }));
 

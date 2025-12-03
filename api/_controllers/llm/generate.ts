@@ -56,14 +56,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // 1. Estimate Cost & Start Operation
-        estimatedCost = usageService.estimateCost('LLM_CHAT', prompt.length, modelId);
+        estimatedCost = usageService.calculateCost('text');
 
         const userProfile = await userService.getUserProfile(user.uid);
         await checkRateLimit(user.uid, userProfile.subscription?.plan || 'free');
 
-        const usageOp = await usageService.startUsageOperation(
+        const usageOp = await usageService.start(
             user.uid,
-            'LLM_CHAT',
+            'text',
             estimatedCost,
             { prompt, model: modelId, targetRiskScore }
         );
@@ -111,10 +111,10 @@ Constraint: No markdown in JSON values. Clean text only.`;
             const usage = completion.usage;
             const tokensIn = usage?.prompt_tokens || Math.ceil(prompt.length / 4);
             const tokensOut = usage?.completion_tokens || Math.ceil(content.length / 4);
-            const actualCost = usageService.calculateCost('LLM_CHAT', modelId, tokensIn, tokensOut);
+            const actualCost = usageService.calculateCost('text');
 
             // Finalize Operation
-            await usageService.finalizeUsageOperation(operationId, 'SUCCEEDED', actualCost, null);
+            await usageService.finalize(operationId, actualCost, false, null);
 
             return res.status(200).json(successResponse({
                 data: data,
@@ -168,7 +168,7 @@ Constraint: No markdown in JSON values. Clean text only.`;
                     const usage = response.usageMetadata;
                     finalTokensIn = usage?.promptTokenCount || Math.ceil(prompt.length / 4);
                     finalTokensOut = usage?.candidatesTokenCount || Math.ceil(text.length / 4);
-                    finalActualCost = usageService.calculateCost('LLM_CHAT', geminiModelName, finalTokensIn, finalTokensOut);
+                    finalActualCost = usageService.calculateCost('text');
                     actualModelUsed = geminiModelName;
                     success = true;
 
@@ -206,7 +206,7 @@ Constraint: No markdown in JSON values. Clean text only.`;
                     finalTokensIn = usage?.prompt_tokens || Math.ceil(prompt.length / 4);
                     finalTokensOut = usage?.completion_tokens || Math.ceil(content.length / 4);
 
-                    finalActualCost = usageService.calculateCost('LLM_CHAT', 'gpt-4o-mini', finalTokensIn, finalTokensOut);
+                    finalActualCost = usageService.calculateCost('text');
                     actualModelUsed = `${providerName}:${fallbackModel}`;
                     success = true;
 
@@ -229,7 +229,7 @@ Constraint: No markdown in JSON values. Clean text only.`;
             }
 
             // Finalize Operation
-            await usageService.finalizeUsageOperation(operationId, 'SUCCEEDED', finalActualCost, null);
+            await usageService.finalize(operationId, finalActualCost, false, null);
 
             // Save Generation
             const genRef = db.collection('generations').doc();
@@ -262,7 +262,7 @@ Constraint: No markdown in JSON values. Clean text only.`;
         console.error('LLM Generate Error:', error);
 
         if (operationId) {
-            await usageService.finalizeUsageOperation(operationId, 'FAILED', 0, null, error.message);
+            await usageService.finalize(operationId, 0, true, null, error.message);
         }
 
         const code = error.code || ErrorCodes.INTERNAL_SERVER_ERROR;

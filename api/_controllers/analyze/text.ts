@@ -46,12 +46,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         await checkRateLimit(user.uid, plan);
 
         // 4. Estimate Cost
-        estimatedCost = usageService.estimateCost('analysis', text.length, 'gemini-1.5-flash');
+        estimatedCost = usageService.calculateCost('analyze');
 
         // 5. Start Usage Operation (Reserve Credits)
-        const op = await usageService.startUsageOperation(
+        const op = await usageService.start(
             user.uid,
-            'ANALYZE',
+            'analyze',
             estimatedCost,
             { textSummary: text.substring(0, 50) }
         );
@@ -99,18 +99,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             analysisData = { raw: textOutput };
         }
 
-        // 7. Calculate Actual Cost
-        const usage = response.usageMetadata;
-        const tokensIn = usage?.promptTokenCount || Math.ceil(prompt.length / 4);
-        const tokensOut = usage?.candidatesTokenCount || Math.ceil(textOutput.length / 4);
-        const actualCost = usageService.calculateCost('analysis', modelName, tokensIn, tokensOut);
+        // 7. Calculate Actual Cost (V3 Fixed Pricing)
+        const actualCost = usageService.calculateCost('analyze');
 
         // 8. Finalize Usage Operation (Success)
-        await usageService.finalizeUsageOperation(
+        await usageService.finalize(
             operationId,
-            'SUCCEEDED',
             actualCost,
-            null // Result Ref
+            false, // isRefund
+            null // Result
         );
 
         // 9. Return Response
@@ -123,10 +120,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.error('Text Analysis Error:', error);
 
         if (operationId) {
-            await usageService.finalizeUsageOperation(
+            await usageService.finalize(
                 operationId,
-                'FAILED',
                 0,
+                true, // isRefund
                 null,
                 error.message
             );
