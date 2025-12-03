@@ -1,4 +1,49 @@
 {
+    "subscription": {
+        "title": "Choose Your Plan",
+        "subtitle": "Unlock more features with our flexible pricing tiers.",
+        "monthly": "Monthly",
+        "quarterly": "Quarterly",
+        "yearly": "Yearly",
+        "currentPlan": "Current Plan",
+        "subscribe": "Subscribe",
+        "confirmTitle": "Confirm Subscription",
+        "plan": "Plan",
+        "billingCycle": "Billing Cycle",
+        "price": "Price",
+        "couponCode": "Coupon Code",
+        "enterCode": "Enter code",
+        "apply": "Apply",
+        "totalToPay": "Total to Pay",
+        "cancel": "Cancel",
+        "confirmPay": "Confirm & Pay",
+        "discountApplied": "Discount applied",
+        "invalidCoupon": "Invalid coupon code",
+        "changePlan": "Change Plan",
+        "dailyLimit": "Daily Limit",
+        "pointsDeduction": "Points Deduction",
+        "internalLLM": "Internal LLM",
+        "externalAPIKey": "External API Key",
+        "unlimited": "Unlimited",
+        "yes": "Yes",
+        "no": "No",
+        "available": "Available",
+        "disabled": "Disabled",
+        "supported": "Supported",
+        "notSupported": "Not Supported",
+        "needAccess": {
+            "title": "Need API Access?",
+            "description": "Generate API keys to integrate Norules AI directly into your workflow.",
+            "freeWarning": "Free plan cannot use external API Key",
+            "manageKeys": "Manage API Keys"
+        },
+        "plans": {
+            "free": "Free",
+            "pro": "Pro",
+            "enterprise": "Enterprise",
+            "apikey": "API Key Mode"
+        }
+    },
     "seo": {
         "defaultDescription": "NoRules AI - The Ultimate AI Platform for Everyone. Integrating multiple models for text, image, video generation and risk analysis.",
         "defaultKeywords": "AI, Artificial Intelligence, LLM, NoRules, Chatbot, Image Generation, Video Generation, Risk Analysis"
@@ -129,34 +174,6 @@
             "points": "Points",
             "quotaRemaining": "Quota Remaining",
             "noCost": "No cost"
-        }
-    },
-    "subscription": {
-        "title": "Subscription Overview",
-        "currentPlan": "Current Plan",
-        "changePlan": "Change Plan",
-        "dailyLimit": "Daily Limit",
-        "pointsDeduction": "Points Deduction",
-        "internalLLM": "Internal LLM",
-        "externalAPIKey": "External API Key",
-        "unlimited": "Unlimited",
-        "yes": "Yes",
-        "no": "No",
-        "available": "Available",
-        "disabled": "Disabled",
-        "supported": "Supported",
-        "notSupported": "Not Supported",
-        "needAccess": {
-            "title": "Need API Access?",
-            "description": "Generate API keys to integrate Norules AI directly into your workflow.",
-            "freeWarning": "Free plan cannot use external API Key",
-            "manageKeys": "Manage API Keys"
-        },
-        "plans": {
-            "free": "Free",
-            "pro": "Pro",
-            "enterprise": "Enterprise",
-            "apikey": "API Key Mode"
         }
     },
     "apiKeys": {

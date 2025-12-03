@@ -1,4 +1,4 @@
-export type PlanType = 'free' | 'light' | 'medium' | 'enterprise';
+export type PlanType = 'free' | 'lite' | 'pro' | 'ultra';
 export type BillingCycle = 'monthly' | 'quarterly' | 'yearly';
 
 export interface Plan {
@@ -15,37 +15,37 @@ export interface Plan {
 
 export const PLANS: Plan[] = [
     {
-        id: 'light',
-        name: '輕量版 Light',
-        description: '適合初學者',
+        id: 'lite',
+        name: 'Lite',
+        description: 'Perfect for starters',
         monthlyPrice: 5,
         quarterlyPrice: 13.5, // 5 * 3 * 0.9
         yearlyPrice: 51,      // 5 * 12 * 0.85
-        dailyLimit: 5,
-        monthlyCredits: 500, // ~16.5 USD value
-        features: ['每月 500 點數', '基礎客服', '標準速度']
+        dailyLimit: 20,       // Increased from 5 based on "20% off points" logic? No, let's stick to reasonable limits.
+        monthlyCredits: 500,
+        features: ['500 Monthly Credits', 'Basic Support', 'Standard Speed', '20% Point Discount']
     },
     {
-        id: 'medium',
-        name: '中量版 Medium',
-        description: '適合成長中的使用者',
-        monthlyPrice: 15,
-        quarterlyPrice: 40.5, // 15 * 3 * 0.9
-        yearlyPrice: 153,     // 15 * 12 * 0.85
-        dailyLimit: 30,
-        monthlyCredits: 2000, // ~66 USD value
-        features: ['每月 2000 點數', '優先客服', '快速速度', '可使用所有模型']
+        id: 'pro',
+        name: 'Pro',
+        description: 'For growing needs',
+        monthlyPrice: 10,
+        quarterlyPrice: 27,   // 10 * 3 * 0.9
+        yearlyPrice: 102,     // 10 * 12 * 0.85
+        dailyLimit: 100,
+        monthlyCredits: 2000,
+        features: ['2000 Monthly Credits', 'Priority Support', 'Fast Speed', '40% Point Discount']
     },
     {
-        id: 'enterprise',
-        name: '企業版 Enterprise',
-        description: '適合大型需求',
+        id: 'ultra',
+        name: 'Ultra',
+        description: 'For power users',
         monthlyPrice: 30,
         quarterlyPrice: 81,   // 30 * 3 * 0.9
         yearlyPrice: 306,     // 30 * 12 * 0.85
         dailyLimit: -1,       // Unlimited
-        monthlyCredits: 10000, // Effectively unlimited for normal use
-        features: ['每月 10,000 點數', '24/7 客服', '最高速度', '客製化方案']
+        monthlyCredits: 10000,
+        features: ['10,000 Monthly Credits', '24/7 Support', 'Max Speed', '60% Point Discount']
     }
 ];
 

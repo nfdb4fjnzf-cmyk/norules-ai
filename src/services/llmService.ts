@@ -25,7 +25,11 @@ export const llmService = {
         const response = await api.post('/llm/video', { prompt, model, targetRiskScore, aspectRatio, privateMode });
         const initialData = response.data.data;
 
-        if (initialData.status === 'processing' && initialData.id) {
+        // Check for nested data structure from Luma controller
+        const generationId = initialData.data?.id || initialData.id;
+        const status = initialData.data?.status || initialData.status;
+
+        if (status === 'processing' && generationId) {
             // Poll for completion
             const pollInterval = 5000; // 5 seconds
             const maxAttempts = 60; // 5 minutes timeout
@@ -36,7 +40,7 @@ export const llmService = {
                 attempts++;
 
                 try {
-                    const statusRes = await api.get(`/llm/video/status?id=${initialData.id}`);
+                    const statusRes = await api.get(`/llm/video/status?id=${generationId}`);
                     const statusData = statusRes.data.data;
 
                     if (statusData.status === 'completed') {

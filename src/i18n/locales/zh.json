@@ -1,4 +1,49 @@
 {
+    "subscription": {
+        "title": "選擇你的方案",
+        "subtitle": "透過我們彈性的方案階層，解鎖更多功能。",
+        "monthly": "月付",
+        "quarterly": "季付",
+        "yearly": "年付",
+        "currentPlan": "目前方案",
+        "subscribe": "訂閱",
+        "confirmTitle": "確認訂閱",
+        "plan": "方案",
+        "billingCycle": "計費週期",
+        "price": "價格",
+        "couponCode": "優惠碼",
+        "enterCode": "輸入優惠碼",
+        "apply": "套用",
+        "totalToPay": "總金額",
+        "cancel": "取消",
+        "confirmPay": "確認並付款",
+        "discountApplied": "已套用優惠",
+        "invalidCoupon": "無效的優惠碼",
+        "changePlan": "變更方案",
+        "dailyLimit": "每日限制",
+        "pointsDeduction": "點數扣除",
+        "internalLLM": "內部 LLM",
+        "externalAPIKey": "外部 API 金鑰",
+        "unlimited": "無限制",
+        "yes": "是",
+        "no": "否",
+        "available": "可用",
+        "disabled": "已停用",
+        "supported": "支援",
+        "notSupported": "不支援",
+        "needAccess": {
+            "title": "需要 API 存取權？",
+            "description": "產生 API 金鑰以將 Norules AI 直接整合到您的工作流程中。",
+            "freeWarning": "免費方案不可使用外部 API 金鑰",
+            "manageKeys": "管理 API 金鑰"
+        },
+        "plans": {
+            "free": "免費版",
+            "pro": "專業版",
+            "enterprise": "企業版",
+            "apikey": "API 金鑰模式"
+        }
+    },
     "seo": {
         "defaultDescription": "NoRules AI - 專為所有人打造的終極 AI 平台。整合多種模型，提供文字、圖片、影片生成與風險分析服務。",
         "defaultKeywords": "AI, 人工智慧, LLM, NoRules, 聊天機器人, 圖片生成, 影片生成, 風險分析"
@@ -129,34 +174,6 @@
             "points": "點數",
             "quotaRemaining": "剩餘配額",
             "noCost": "免費"
-        }
-    },
-    "subscription": {
-        "title": "訂閱總覽",
-        "currentPlan": "目前方案",
-        "changePlan": "變更方案",
-        "dailyLimit": "每日限制",
-        "pointsDeduction": "點數扣除",
-        "internalLLM": "內部 LLM",
-        "externalAPIKey": "外部 API 金鑰",
-        "unlimited": "無限制",
-        "yes": "是",
-        "no": "否",
-        "available": "可用",
-        "disabled": "已停用",
-        "supported": "支援",
-        "notSupported": "不支援",
-        "needAccess": {
-            "title": "需要 API 存取權？",
-            "description": "產生 API 金鑰以將 Norules AI 直接整合到您的工作流程中。",
-            "freeWarning": "免費方案不可使用外部 API 金鑰",
-            "manageKeys": "管理 API 金鑰"
-        },
-        "plans": {
-            "free": "免費版",
-            "pro": "專業版",
-            "enterprise": "企業版",
-            "apikey": "API 金鑰模式"
         }
     },
     "apiKeys": {

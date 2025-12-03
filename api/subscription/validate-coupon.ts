@@ -1,7 +1,7 @@
 import { validateRequest } from '../_middleware/auth.js';
 import { successResponse, errorResponse } from '../_utils/responseFormatter.js';
 import { AppError, ErrorCodes } from '../_utils/errorHandler.js';
-import { subscriptionService } from '../_services/subscriptionService.js';
+import { couponService } from '../_services/couponService.js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -24,32 +24,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        const user = await validateRequest(req.headers);
-        const { planId, billingCycle, couponCode } = req.body;
+        // Optional: Require auth to validate coupon? Maybe not strictly necessary but good practice.
+        // Let's allow public validation for now, or require auth if we want to check user-specific rules later.
+        // For now, let's require auth to prevent brute force.
+        await validateRequest(req.headers);
 
-        if (!planId || !billingCycle) {
-            return res.status(400).json(errorResponse(ErrorCodes.BAD_REQUEST, 'Missing planId or billingCycle'));
+        const { code, planId } = req.body;
+
+        if (!code || !planId) {
+            return res.status(400).json(errorResponse(ErrorCodes.BAD_REQUEST, 'Missing code or planId'));
         }
 
-        if (!['lite', 'pro', 'ultra'].includes(planId)) {
-            return res.status(400).json(errorResponse(ErrorCodes.BAD_REQUEST, 'Invalid planId'));
-        }
-
-        if (!['monthly', 'quarterly', 'yearly'].includes(billingCycle)) {
-            return res.status(400).json(errorResponse(ErrorCodes.BAD_REQUEST, 'Invalid billingCycle'));
-        }
-
-        await subscriptionService.createSubscription(user.uid, planId, billingCycle, couponCode);
+        const coupon = await couponService.validateCoupon(code, planId);
 
         return res.status(200).json(successResponse({
-            message: 'Subscription created successfully',
-            planId,
-            billingCycle,
-            couponApplied: !!couponCode
+            valid: true,
+            discountType: coupon.discountType,
+            discountValue: coupon.discountValue,
+            code: coupon.code
         }));
 
     } catch (error: any) {
-        console.error('Subscription Create Error:', error);
         const code = error.code || ErrorCodes.INTERNAL_SERVER_ERROR;
         const status = error.statusCode || 500;
         const message = error.message || 'Internal Server Error';

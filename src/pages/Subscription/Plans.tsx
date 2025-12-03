@@ -4,6 +4,7 @@ import SkeletonLoader from '../../components/SkeletonLoader';
 import api from '../../services/api';
 import { useNavigate } from 'react-router-dom';
 import { Check, Loader2 } from 'lucide-react';
+import SubscriptionModal from './SubscriptionModal';
 
 interface Plan {
     id: string;
@@ -22,20 +23,20 @@ const PLANS: Plan[] = [
         name: 'Lite',
         description: 'Perfect for starters',
         monthlyPrice: 5,
-        quarterlyPrice: 13.5, // 10% off
-        yearlyPrice: 51, // 15% off (5 * 12 * 0.85)
+        quarterlyPrice: 13.5,
+        yearlyPrice: 51,
         discount: '20%',
-        features: ['20% Off Credits', 'Basic Support', 'Standard Access']
+        features: ['500 Monthly Credits', 'Basic Support', 'Standard Speed', '20% Point Discount']
     },
     {
         id: 'pro',
         name: 'Pro',
-        description: 'Best for professionals',
+        description: 'For growing needs',
         monthlyPrice: 10,
         quarterlyPrice: 27,
-        yearlyPrice: 102, // 15% off (10 * 12 * 0.85)
+        yearlyPrice: 102,
         discount: '40%',
-        features: ['40% Off Credits', 'Priority Support', 'Faster Generation', 'Access to New Models']
+        features: ['2000 Monthly Credits', 'Priority Support', 'Fast Speed', '40% Point Discount']
     },
     {
         id: 'ultra',
@@ -43,9 +44,9 @@ const PLANS: Plan[] = [
         description: 'For power users',
         monthlyPrice: 30,
         quarterlyPrice: 81,
-        yearlyPrice: 306, // 15% off (30 * 12 * 0.85)
+        yearlyPrice: 306,
         discount: '60%',
-        features: ['60% Off Credits', '24/7 Support', 'Highest Priority', 'Early Access Features']
+        features: ['10,000 Monthly Credits', '24/7 Support', 'Max Speed', '60% Point Discount']
     }
 ];
 
@@ -54,10 +55,13 @@ type BillingCycle = 'monthly' | 'quarterly' | 'yearly';
 const Plans: React.FC = () => {
     const [currentPlanId, setCurrentPlanId] = useState<string>('free');
     const [loading, setLoading] = useState(true);
-    const [processing, setProcessing] = useState(false);
     const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
     const { showToast } = useToast();
     const navigate = useNavigate();
+
+    // Modal State
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
 
     useEffect(() => {
         fetchStatus();
@@ -80,30 +84,33 @@ const Plans: React.FC = () => {
         }
     };
 
-    const handleSubscribe = async (planId: string) => {
-        if (planId === currentPlanId) return;
+    const handleSubscribeClick = (plan: Plan) => {
+        if (plan.id === currentPlanId) return;
+        setSelectedPlan(plan);
+        setIsModalOpen(true);
+    };
 
-        if (!confirm(`Confirm subscription to ${planId.toUpperCase()} plan (${billingCycle})?`)) return;
+    const handleConfirmSubscription = async (couponCode?: string) => {
+        if (!selectedPlan) return;
 
         try {
-            setProcessing(true);
             const response = await api.post('/subscription/create', {
-                planId,
-                billingCycle
+                planId: selectedPlan.id,
+                billingCycle,
+                couponCode
             });
 
             if (response.data.success) {
                 showToast('success', 'Subscription updated successfully!');
                 await fetchStatus();
-                navigate('/subscription'); // Redirect to overview
+                setIsModalOpen(false);
+                navigate('/subscription');
             } else {
                 showToast('error', 'Failed to update subscription');
             }
         } catch (error: any) {
             console.error('Subscribe error:', error);
-            showToast('error', error.message || 'Failed to subscribe');
-        } finally {
-            setProcessing(false);
+            showToast('error', error.response?.data?.message || error.message || 'Failed to subscribe');
         }
     };
 
@@ -163,9 +170,11 @@ const Plans: React.FC = () => {
                         const isCurrent = plan.id === currentPlanId;
                         const displayPrice = getPrice(plan);
 
-                        // Lite plan cannot be monthly
-                        const isLiteMonthly = plan.id === 'lite' && billingCycle === 'monthly';
-                        const isDisabled = isCurrent || processing || isLiteMonthly;
+                        // Lite plan cannot be monthly? Removed that restriction based on new plans.ts
+                        // But if we want to keep it, we can.
+                        // Let's assume all plans support all cycles for now as per plans.ts
+                        const isLiteMonthly = false;
+                        const isDisabled = isCurrent;
 
                         return (
                             <div
@@ -173,7 +182,7 @@ const Plans: React.FC = () => {
                                 className={`relative rounded-2xl bg-[#151927] p-6 border flex flex-col transition-all duration-200 ease-out ${isCurrent
                                     ? 'border-blue-500 transform scale-105 z-10 shadow-xl'
                                     : 'border-white/10 hover:scale-105 hover:bg-[#1a1f2e]'
-                                    } ${isLiteMonthly ? 'opacity-50 grayscale' : ''}`}
+                                    }`}
                             >
                                 {isCurrent && (
                                     <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">
@@ -198,21 +207,31 @@ const Plans: React.FC = () => {
                                 </ul>
 
                                 <button
-                                    onClick={() => handleSubscribe(plan.id)}
+                                    onClick={() => handleSubscribeClick(plan)}
                                     disabled={isDisabled}
                                     className={`w-full rounded-xl px-4 py-2 font-semibold transition-all duration-150 ease-out active:scale-95 flex justify-center items-center ${isCurrent
                                         ? 'bg-white/10 text-gray-400 cursor-default'
-                                        : isLiteMonthly
-                                            ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                                            : 'bg-blue-500 hover:bg-blue-600 text-white hover:opacity-80'
+                                        : 'bg-blue-500 hover:bg-blue-600 text-white hover:opacity-80'
                                         }`}
                                 >
-                                    {processing && !isCurrent ? <Loader2 className="w-4 h-4 animate-spin" /> : isCurrent ? '目前方案' : isLiteMonthly ? '僅限季/年付' : '訂閱'}
+                                    {isCurrent ? '目前方案' : '訂閱'}
                                 </button>
                             </div>
                         );
                     })}
                 </div>
+            )}
+
+            {selectedPlan && (
+                <SubscriptionModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    onConfirm={handleConfirmSubscription}
+                    planName={selectedPlan.name}
+                    billingCycle={billingCycle}
+                    price={getPrice(selectedPlan)}
+                    planId={selectedPlan.id}
+                />
             )}
         </div>
     );
