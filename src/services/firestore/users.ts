@@ -34,26 +34,39 @@ export async function createUser(user: Partial<UserProfile> & { uid: string; ema
     const trialEndsAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days later
     const nowISO = now.toISOString();
 
-    // Default values for new users (Schema v3 + Ch.73 Sign Up Bonus + Ch.4 Free Trial)
-    const newUser: UserProfile = {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName || '',
-        photoURL: user.photoURL || '',
-        createdAt: user.createdAt || nowISO,
-        lastLogin: user.lastLogin || nowISO,
-        credits: 100, // Sign up bonus (Ch.73.2)
-        mode: 'internal', // Default mode
-        updatedAt: nowISO,
-        subscription: {
-            plan: 'free',
-            status: 'trial',
-            trialEndsAt: trialEndsAt
-        }
-    };
-
     const userRef = doc(db, 'users', user.uid);
-    await setDoc(userRef, newUser, { merge: true });
+    const userDoc = await getDoc(userRef);
+
+    if (userDoc.exists()) {
+        // User exists, only update allowed fields
+        // Avoid updating protected fields like credits, plan, etc.
+        await updateDoc(userRef, {
+            lastLogin: nowISO,
+            displayName: user.displayName || userDoc.data().displayName,
+            photoURL: user.photoURL || userDoc.data().photoURL,
+            updatedAt: nowISO
+        });
+    } else {
+        // Default values for new users (Schema v3 + Ch.73 Sign Up Bonus + Ch.4 Free Trial)
+        const newUser: UserProfile = {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName || '',
+            photoURL: user.photoURL || '',
+            createdAt: user.createdAt || nowISO,
+            lastLogin: user.lastLogin || nowISO,
+            credits: 100, // Sign up bonus (Ch.73.2)
+            mode: 'internal', // Default mode
+            updatedAt: nowISO,
+            subscription: {
+                plan: 'free',
+                status: 'trial',
+                trialEndsAt: trialEndsAt
+            }
+        };
+        // New user, create with defaults
+        await setDoc(userRef, newUser);
+    }
 }
 
 export async function updateUser(uid: string, data: Partial<UserProfile>): Promise<void> {
