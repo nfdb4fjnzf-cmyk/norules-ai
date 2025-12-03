@@ -443,7 +443,11 @@
             "generating": "Generating...",
             "noPreview": "No content yet. Click 'AI Generate' to start.",
             "saveFirst": "Please save the project before generating.",
-            "generatedSuccess": "Landing page generated successfully!"
+            "generatedSuccess": "Landing page generated successfully!",
+            "deploy": "Deploy Live",
+            "deploying": "Deploying...",
+            "deploySuccess": "Deployed successfully! Your site is live.",
+            "visitLive": "Visit Site"
         }
     }
 }

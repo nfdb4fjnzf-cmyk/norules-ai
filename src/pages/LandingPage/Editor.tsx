@@ -32,6 +32,9 @@ const LandingPageEditor: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
 
+    const [deploying, setDeploying] = useState(false);
+    const [liveUrl, setLiveUrl] = useState('');
+
     const [html, setHtml] = useState('');
     const [generating, setGenerating] = useState(false);
 
@@ -51,6 +54,9 @@ const LandingPageEditor: React.FC = () => {
                 setConfig(page.config);
                 if (page.content?.html) {
                     setHtml(page.content.html);
+                }
+                if (page.deployment?.url) {
+                    setLiveUrl(page.deployment.url);
                 }
             }
         } catch (error) {
@@ -104,6 +110,22 @@ const LandingPageEditor: React.FC = () => {
             showToast('error', t('common.error'));
         } finally {
             setGenerating(false);
+        }
+    };
+
+    const handleDeploy = async () => {
+        if (!html) return;
+        setDeploying(true);
+        try {
+            const res = await api.post('/landing-page/deploy', { id });
+            if (res.data.success) {
+                setLiveUrl(res.data.data.url);
+                showToast('success', t('landingPage.editor.deploySuccess'));
+            }
+        } catch (error) {
+            showToast('error', t('common.error'));
+        } finally {
+            setDeploying(false);
         }
     };
 
@@ -258,25 +280,59 @@ const LandingPageEditor: React.FC = () => {
                     <div className="bg-[#151927] p-6 rounded-2xl border border-white/5 h-full flex flex-col">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-bold text-white">{t('landingPage.editor.preview')}</h3>
-                            {isEdit && (
-                                <button
-                                    onClick={handleGenerate}
-                                    disabled={generating}
-                                    className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-lg font-bold shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50 flex items-center gap-2"
-                                >
-                                    {generating ? (
-                                        <>
-                                            <span className="material-symbols-outlined animate-spin">refresh</span>
-                                            {t('landingPage.editor.generating')}
-                                        </>
-                                    ) : (
-                                        <>
-                                            <span className="material-symbols-outlined">auto_awesome</span>
-                                            {t('landingPage.editor.generate')}
-                                        </>
-                                    )}
-                                </button>
-                            )}
+                            <div className="flex gap-2">
+                                {liveUrl && (
+                                    <a
+                                        href={liveUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-4 py-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-lg font-bold transition-all flex items-center gap-2"
+                                    >
+                                        <span className="material-symbols-outlined text-sm">rocket_launch</span>
+                                        {t('landingPage.editor.visitLive')}
+                                    </a>
+                                )}
+                                {isEdit && (
+                                    <>
+                                        {html && (
+                                            <button
+                                                onClick={handleDeploy}
+                                                disabled={deploying}
+                                                className="px-4 py-2 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 rounded-lg font-bold transition-all disabled:opacity-50 flex items-center gap-2"
+                                            >
+                                                {deploying ? (
+                                                    <>
+                                                        <span className="material-symbols-outlined animate-spin text-sm">refresh</span>
+                                                        {t('landingPage.editor.deploying')}
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <span className="material-symbols-outlined text-sm">cloud_upload</span>
+                                                        {t('landingPage.editor.deploy')}
+                                                    </>
+                                                )}
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={handleGenerate}
+                                            disabled={generating}
+                                            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-lg font-bold shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50 flex items-center gap-2"
+                                        >
+                                            {generating ? (
+                                                <>
+                                                    <span className="material-symbols-outlined animate-spin text-sm">refresh</span>
+                                                    {t('landingPage.editor.generating')}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span className="material-symbols-outlined text-sm">auto_awesome</span>
+                                                    {t('landingPage.editor.generate')}
+                                                </>
+                                            )}
+                                        </button>
+                                    </>
+                                )}
+                            </div>
                         </div>
 
                         <div className="flex-1 bg-white rounded-xl overflow-hidden relative">

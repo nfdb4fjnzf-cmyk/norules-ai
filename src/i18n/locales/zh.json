@@ -445,7 +445,11 @@
             "generating": "生成中...",
             "noPreview": "尚未生成內容，請點擊右上角「AI 生成」",
             "saveFirst": "請先儲存專案才能進行生成",
-            "generatedSuccess": "落地頁生成成功！"
+            "generatedSuccess": "落地頁生成成功！",
+            "deploy": "發布上線",
+            "deploying": "發布中...",
+            "deploySuccess": "發布成功！您的網站已上線",
+            "visitLive": "查看網站"
         }
     }
 }
