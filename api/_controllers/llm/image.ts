@@ -18,7 +18,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     let operationId = '';
-    const COST = 30; // V3: Fixed Cost for Image
+    const COST = usageService.estimateCost('IMAGE_GEN');
 
     try {
         const user = await validateRequest(req.headers);

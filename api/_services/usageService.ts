@@ -128,14 +128,14 @@ export const usageService = {
      * Calculate Cost Helper
      */
     calculateCost: (actionType: string, model: string, tokensIn = 0, tokensOut = 0): number => {
-        if (actionType === 'image') return 30;
-        if (actionType === 'video') return 60;
-        if (actionType === 'chat' || actionType === 'analysis') {
-            const totalTokens = tokensIn + tokensOut;
-            let multiplier = 1;
-            if (model.includes('flash') || model.includes('gpt-3.5')) multiplier = 0.5;
-            else if (model.includes('gpt-4') || model.includes('o1')) multiplier = 2;
-            return Math.ceil(totalTokens * multiplier); // This is in "Credits"
+        if (actionType === 'image' || actionType === 'IMAGE_GEN') return 3;
+        if (actionType === 'video' || actionType === 'VIDEO_GEN') return 10;
+        if (actionType === 'analysis' || actionType === 'ANALYZE') return 1;
+
+        if (actionType === 'chat' || actionType === 'LLM_CHAT') {
+            if (model.includes('flash') || model.includes('gpt-3.5')) return 0.5;
+            if (model.includes('gpt-4') || model.includes('o1')) return 2;
+            return 1; // Standard
         }
         return 0;
     },
@@ -144,24 +144,14 @@ export const usageService = {
      * Estimate Cost (for Frontend)
      */
     estimateCost: (actionType: string, inputLength: number = 0, model: string = 'default'): number => {
-        if (actionType === 'image') return 30;
-        if (actionType === 'video') return 60;
+        if (actionType === 'image' || actionType === 'IMAGE_GEN') return 3;
+        if (actionType === 'video' || actionType === 'VIDEO_GEN') return 10;
+        if (actionType === 'analysis' || actionType === 'ANALYZE') return 1;
 
-        if (actionType === 'chat' || actionType === 'analysis') {
-            // Estimate: 1 token ~= 4 chars. 
-            // Input + Expected Output (assume 500 chars output for estimate?)
-            const estimatedTokensIn = Math.ceil(inputLength / 4);
-            const estimatedTokensOut = 200; // Buffer
-
-            let multiplier = 1; // Default Standard
-
-            if (model.includes('flash') || model.includes('gpt-3.5')) {
-                multiplier = 0.5;
-            } else if (model.includes('gpt-4') || model.includes('o1')) {
-                multiplier = 2;
-            }
-
-            return Math.ceil((estimatedTokensIn + estimatedTokensOut) * multiplier);
+        if (actionType === 'chat' || actionType === 'LLM_CHAT') {
+            if (model.includes('flash') || model.includes('gpt-3.5')) return 0.5;
+            if (model.includes('gpt-4') || model.includes('o1')) return 2;
+            return 1;
         }
         return 0;
     },

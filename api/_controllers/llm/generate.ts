@@ -56,7 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // 1. Estimate Cost & Start Operation
-        estimatedCost = usageService.estimateCost('chat', prompt.length, modelId);
+        estimatedCost = usageService.estimateCost('LLM_CHAT', prompt.length, modelId);
 
         const userProfile = await userService.getUserProfile(user.uid);
         await checkRateLimit(user.uid, userProfile.subscription?.plan || 'free');
@@ -111,7 +111,7 @@ Constraint: No markdown in JSON values. Clean text only.`;
             const usage = completion.usage;
             const tokensIn = usage?.prompt_tokens || Math.ceil(prompt.length / 4);
             const tokensOut = usage?.completion_tokens || Math.ceil(content.length / 4);
-            const actualCost = usageService.calculateCost('chat', modelId, tokensIn, tokensOut);
+            const actualCost = usageService.calculateCost('LLM_CHAT', modelId, tokensIn, tokensOut);
 
             // Finalize Operation
             await usageService.finalizeUsageOperation(operationId, 'SUCCEEDED', actualCost, null);
@@ -168,7 +168,7 @@ Constraint: No markdown in JSON values. Clean text only.`;
                     const usage = response.usageMetadata;
                     finalTokensIn = usage?.promptTokenCount || Math.ceil(prompt.length / 4);
                     finalTokensOut = usage?.candidatesTokenCount || Math.ceil(text.length / 4);
-                    finalActualCost = usageService.calculateCost('chat', geminiModelName, finalTokensIn, finalTokensOut);
+                    finalActualCost = usageService.calculateCost('LLM_CHAT', geminiModelName, finalTokensIn, finalTokensOut);
                     actualModelUsed = geminiModelName;
                     success = true;
 
@@ -206,7 +206,7 @@ Constraint: No markdown in JSON values. Clean text only.`;
                     finalTokensIn = usage?.prompt_tokens || Math.ceil(prompt.length / 4);
                     finalTokensOut = usage?.completion_tokens || Math.ceil(content.length / 4);
 
-                    finalActualCost = usageService.calculateCost('chat', 'gpt-4o-mini', finalTokensIn, finalTokensOut);
+                    finalActualCost = usageService.calculateCost('LLM_CHAT', 'gpt-4o-mini', finalTokensIn, finalTokensOut);
                     actualModelUsed = `${providerName}:${fallbackModel}`;
                     success = true;
 

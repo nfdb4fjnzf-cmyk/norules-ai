@@ -16,7 +16,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     let operationId = '';
-    const COST = 60; // V3: Fixed Cost for Video
+    const COST = usageService.estimateCost('VIDEO_GEN');
 
     try {
         const user = await validateRequest(req.headers);

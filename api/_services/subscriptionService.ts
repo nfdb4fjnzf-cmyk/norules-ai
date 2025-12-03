@@ -83,7 +83,7 @@ export const subscriptionService = {
             currentPeriodEnd,
             cancelAtPeriodEnd: false,
             updatedAt: now,
-            couponCode: couponCode || undefined,
+            couponCode: couponCode || null,
             originalPrice,
             discountAmount,
             finalPrice
@@ -124,7 +124,7 @@ export const subscriptionService = {
             type: existingSub ? 'UPDATE' : 'CREATE',
             planId,
             billingCycle,
-            couponCode,
+            couponCode: couponCode || null,
             originalPrice,
             discountAmount,
             finalPrice,
