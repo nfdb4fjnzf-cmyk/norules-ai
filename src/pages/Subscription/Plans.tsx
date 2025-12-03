@@ -189,20 +189,32 @@ const Plans: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {PLANS.map((plan) => {
                         const isCurrent = plan.id === currentPlanId;
-
-                        // Lite Plan is Mandatory Quarterly
                         const isLite = plan.id === 'lite';
-                        const effectiveBillingCycle = isLite ? 'quarterly' : billingCycle;
 
                         let displayPrice = getPrice(plan);
                         let periodLabel = getPeriodLabel();
+                        let isDisabled = isCurrent;
+                        let buttonText = isCurrent ? t('subscription.currentPlan') : t('subscription.subscribe');
 
-                        if (isLite) {
+                        // Special handling for Lite plan in Monthly view
+                        if (isLite && billingCycle === 'monthly') {
+                            // Show monthly price
+                            displayPrice = plan.monthlyPrice;
+                            periodLabel = i18n.language === 'zh' || i18n.language === 'zh-TW' ? '/月' : '/mo';
+
+                            // Disable button and change text
+                            isDisabled = true;
+                            buttonText = i18n.language === 'zh' || i18n.language === 'zh-TW' ? '僅限季付' : 'Quarterly Only';
+                        } else if (isLite && billingCycle === 'quarterly') {
+                            // Ensure quarterly price is shown correctly (already handled by getPrice but explicit here for safety)
                             displayPrice = plan.quarterlyPrice;
                             periodLabel = i18n.language === 'zh' || i18n.language === 'zh-TW' ? '/季' : '/qtr';
                         }
 
-                        const isDisabled = isCurrent;
+                        // Determine effective billing cycle for the click handler
+                        // If it's Lite, we technically only allow Quarterly, but if we are in Monthly view, the button is disabled anyway.
+                        // If we are in Quarterly view, it's 'quarterly'.
+                        const effectiveBillingCycle = isLite ? 'quarterly' : billingCycle;
 
                         return (
                             <div
@@ -210,7 +222,7 @@ const Plans: React.FC = () => {
                                 className={`relative rounded-2xl bg-[#151927] p-6 border flex flex-col transition-all duration-200 ease-out ${isCurrent
                                     ? 'border-blue-500 transform scale-105 z-10 shadow-xl'
                                     : 'border-white/10 hover:scale-105 hover:bg-[#1a1f2e]'
-                                    }`}
+                                    } ${isDisabled && !isCurrent ? 'opacity-75' : ''}`}
                             >
                                 {isCurrent && (
                                     <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">
@@ -241,10 +253,12 @@ const Plans: React.FC = () => {
                                     disabled={isDisabled}
                                     className={`w-full rounded-xl px-4 py-2 font-semibold transition-all duration-150 ease-out active:scale-95 flex justify-center items-center ${isCurrent
                                         ? 'bg-white/10 text-gray-400 cursor-default'
-                                        : 'bg-blue-500 hover:bg-blue-600 text-white hover:opacity-80'
+                                        : isDisabled
+                                            ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                                            : 'bg-blue-500 hover:bg-blue-600 text-white hover:opacity-80'
                                         }`}
                                 >
-                                    {isCurrent ? t('subscription.currentPlan') : t('subscription.subscribe')}
+                                    {buttonText}
                                 </button>
                             </div>
                         );

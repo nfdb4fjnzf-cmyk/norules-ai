@@ -1,6 +1,6 @@
 import { db } from '../_config/firebaseAdmin.js';
 import { AppError, ErrorCodes } from '../_utils/errorHandler.js';
-import admin from 'firebase-admin';
+import { Transaction } from 'firebase-admin/firestore';
 
 export interface UserProfile {
     uid: string;
@@ -41,7 +41,7 @@ export const userService = {
     },
 
     deductCredits: async (uid: string, amount: number): Promise<boolean> => {
-        return await db.runTransaction(async (transaction: admin.firestore.Transaction) => {
+        return await db.runTransaction(async (transaction: Transaction) => {
             const userRef = db.collection('users').doc(uid);
             const userDoc = await transaction.get(userRef);
 
@@ -86,7 +86,7 @@ export const userService = {
     },
 
     addCredits: async (uid: string, amount: number): Promise<void> => {
-        await db.runTransaction(async (transaction: admin.firestore.Transaction) => {
+        await db.runTransaction(async (transaction: Transaction) => {
             const userRef = db.collection('users').doc(uid);
             const userDoc = await transaction.get(userRef);
 
