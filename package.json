@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "concurrently \"vite\" \"npm run dev:api\"",
     "dev:api": "tsx dev-server.ts",
-    "build": "vite build",
+    "dev:local": "firebase emulators:start --only auth,firestore",
+    "build": "next build",
     "preview": "vite preview"
   },
   "dependencies": {

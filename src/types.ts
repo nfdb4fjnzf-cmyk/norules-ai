@@ -25,6 +25,7 @@ export interface QuotaInfo {
   limit: number;
   used: number;
   remaining: number;
+  resetDate?: Date;
 }
 
 export interface AnalysisResult {
@@ -46,4 +47,48 @@ export interface DashboardMetric {
   value: string | number;
   trend: number; // percentage
   trendUp: boolean;
+}
+
+// --- V3 Interfaces ---
+
+export interface Org {
+  orgId: string;
+  name: string;
+  ownerId: string;
+  members: { userId: string, role: 'admin' | 'editor' | 'viewer' }[];
+  billing: { plan: string, status: 'active' | 'past_due' };
+  createdAt: Date;
+}
+
+export interface Project {
+  projectId: string;
+  orgId: string;
+  name: string;
+  settings: {
+    byok?: { gemini?: string, openai?: string };
+    webhookUrl?: string;
+  };
+  createdAt: Date;
+}
+
+export interface CreativeJob {
+  jobId: string;
+  userId: string;
+  type: 'image' | 'video' | 'lp';
+  status: 'pending' | 'processing' | 'success' | 'failed' | 'error';
+  input: any;
+  output?: any;
+  errorMessage?: string;
+  createdAt: Date;
+}
+
+export interface UsageOperation {
+  operationId: string;
+  userId: string;
+  feature: string;
+  status: 'pending' | 'success' | 'failed';
+  estimate: number;
+  cost: number | null;
+  refund: boolean;
+  createdAt: Date;
 }

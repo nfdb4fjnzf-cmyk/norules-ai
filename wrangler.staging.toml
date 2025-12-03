@@ -1,0 +1,20 @@
+name = "noai-worker-staging"
+main = "api/worker-staging.ts"
+compatibility_date = "2024-11-12"
+account_id = "1fca11e4e95333be06ac8a0c2c889749"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "staging"
+ALLOWED_ORIGINS = "https://staging.norules.ai,http://localhost:5173"
+FIREBASE_PROJECT_ID = "noai-staging"
+
+[triggers]
+crons = ["0 0 * * 1"] # Every Monday at 00:00 UTC
+
+# Staging Routes (Disabled for no-domain setup)
+# [[routes]]
+# pattern = "staging-api.norules.ai/*"
+# custom_domain = true
+
+workers_dev = true

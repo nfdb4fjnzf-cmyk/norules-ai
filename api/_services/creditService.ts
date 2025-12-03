@@ -76,6 +76,48 @@ export const creditService = {
     },
 
     /**
+     * Alias for reserveCredits (V3 Terminology)
+     */
+    deductCredits: async (userId: string, amount: number, operationId: string, reason: string): Promise<number> => {
+        return creditService.reserveCredits(userId, amount, operationId, reason);
+    },
+
+    /**
+     * Add Credits (Refund or Bonus)
+     */
+    addCredits: async (userId: string, amount: number, reason: string, operationId: string | null = null): Promise<void> => {
+        return await db.runTransaction(async (transaction) => {
+            const userRef = db.collection('users').doc(userId);
+            const userDoc = await transaction.get(userRef);
+
+            if (!userDoc.exists) {
+                throw new AppError(ErrorCodes.NOT_FOUND, 'User not found', 404);
+            }
+
+            const userData = userDoc.data();
+            const currentCredits = userData?.credits || 0;
+            const newBalance = currentCredits + amount;
+
+            transaction.update(userRef, {
+                credits: newBalance,
+                updatedAt: admin.firestore.Timestamp.now()
+            });
+
+            const ledgerRef = db.collection('credit_ledger').doc();
+            transaction.set(ledgerRef, {
+                userId,
+                type: 'CREDIT', // Or REFUND if we want to be specific, but CREDIT is generic
+                reason,
+                related_operation_id: operationId,
+                amount: amount,
+                balance_after: newBalance,
+                metadata: {},
+                createdAt: admin.firestore.Timestamp.now()
+            });
+        });
+    },
+
+    /**
      * Finalize credits (Refund excess or full refund on failure)
      */
     finalizeCredits: async (userId: string, reservedAmount: number, actualAmount: number, operationId: string, success: boolean): Promise<void> => {
@@ -99,10 +141,6 @@ export const creditService = {
                 reason = 'Refund: Operation Failed';
             } else {
                 // Partial Refund if actual < reserved
-                // Note: actualAmount passed here should be the *discounted* actual cost.
-                // But usually the caller knows the base cost.
-                // To be safe, we assume actualAmount is the FINAL amount that SHOULD have been charged.
-                // If reserved > actual, refund difference.
                 if (reservedAmount > actualAmount) {
                     refundAmount = reservedAmount - actualAmount;
                     reason = 'Refund: Usage Adjustment';
@@ -159,8 +197,6 @@ export const creditService = {
                 newBalance += amount;
                 transaction.update(userRef, {
                     credits: newBalance,
-                    // Optional: Track admin added points separately? Or as purchased?
-                    // Let's just update credits for now.
                     updatedAt: admin.firestore.Timestamp.now()
                 });
             } else {
@@ -180,8 +216,7 @@ export const creditService = {
                 type: ledgerType,
                 reason: `${reason} (by Admin ${adminId})`,
                 related_operation_id: null,
-                amount: amount, // Always positive in ledger, type determines sign? Or context?
-                // Usually ledger amount is the magnitude.
+                amount: amount,
                 balance_after: newBalance,
                 metadata: { adminId, adjustmentType: type },
                 createdAt: admin.firestore.Timestamp.now()
