@@ -1,5 +1,5 @@
 import { db } from '../_config/firebaseAdmin.js';
-import admin from 'firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 import { userService } from './userService.js';
 import { couponService } from './couponService.js';
 import { calculatePrice } from '../_types/plans.js';
@@ -9,11 +9,11 @@ export interface Subscription {
     planId: 'free' | 'lite' | 'pro' | 'ultra';
     billingCycle: 'monthly' | 'quarterly' | 'yearly';
     status: 'active' | 'canceled' | 'expired';
-    startDate: admin.firestore.Timestamp;
-    currentPeriodEnd: admin.firestore.Timestamp;
+    startDate: Timestamp;
+    currentPeriodEnd: Timestamp;
     cancelAtPeriodEnd: boolean;
-    createdAt: admin.firestore.Timestamp;
-    updatedAt: admin.firestore.Timestamp;
+    createdAt: Timestamp;
+    updatedAt: Timestamp;
     // Coupon fields
     couponCode?: string | null;
     originalPrice?: number;
@@ -47,7 +47,7 @@ export const subscriptionService = {
         couponCode?: string
     ): Promise<void> => {
         // 1. Calculate Period End
-        const now = admin.firestore.Timestamp.now();
+        const now = Timestamp.now();
         const startDate = now;
         let endDate = new Date();
 
@@ -55,7 +55,7 @@ export const subscriptionService = {
         else if (billingCycle === 'quarterly') endDate.setMonth(endDate.getMonth() + 3);
         else if (billingCycle === 'yearly') endDate.setFullYear(endDate.getFullYear() + 1);
 
-        const currentPeriodEnd = admin.firestore.Timestamp.fromDate(endDate);
+        const currentPeriodEnd = Timestamp.fromDate(endDate);
 
         // 2. Calculate Price & Apply Coupon
         let originalPrice = calculatePrice(planId, billingCycle);
@@ -152,7 +152,7 @@ export const subscriptionService = {
         await subRef.update({
             status: 'canceled',
             cancelAtPeriodEnd: true,
-            updatedAt: admin.firestore.Timestamp.now()
+            updatedAt: Timestamp.now()
         });
     }
 };
