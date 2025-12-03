@@ -131,7 +131,9 @@ const Plans: React.FC = () => {
             }
         } catch (error: any) {
             console.error('Subscribe error:', error);
-            showToast('error', error.response?.data?.message || error.message || 'Failed to subscribe');
+            // Show detailed error if available
+            const errorMsg = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to subscribe';
+            showToast('error', errorMsg);
         }
     };
 
@@ -150,7 +152,7 @@ const Plans: React.FC = () => {
     return (
         <div className="max-w-7xl mx-auto px-4 animate-fade-in">
             <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold text-gray-100 mb-4">{t('subscription.title')}</h1>
+                <h1 className="text-3xl font-bold text-gray-100 mb-4">{t('subscription.title')} (v3.1)</h1>
                 <p className="text-gray-400 mb-8">{t('subscription.subtitle')}</p>
 
                 {/* Billing Cycle Toggle */}

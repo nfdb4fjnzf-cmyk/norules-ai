@@ -53,6 +53,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const code = error.code || ErrorCodes.INTERNAL_SERVER_ERROR;
         const status = error.statusCode || 500;
         const message = error.message || 'Internal Server Error';
-        return res.status(status).json(errorResponse(code, message));
+
+        // DEBUG: Return full error details
+        return res.status(status).json({
+            success: false,
+            error: {
+                code,
+                message,
+                stack: error.stack,
+                details: JSON.stringify(error)
+            }
+        });
     }
 }
