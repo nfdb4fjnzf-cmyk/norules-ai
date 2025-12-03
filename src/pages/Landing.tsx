@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import SEO from '../components/SEO';
 
 const Landing: React.FC = () => {
     const { user, loading } = useAuth();
@@ -16,6 +17,10 @@ const Landing: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-[#0B0E14] text-white font-sans selection:bg-blue-500/30">
+            <SEO
+                title="Ad Compliance & Generation Platform"
+                description="Analyze ads for policy violations on Meta, Google, and TikTok. Generate high-converting, safe ad copy in seconds with AI."
+            />
             {/* Navbar */}
             <nav className="fixed top-0 w-full z-50 bg-[#0B0E14]/80 backdrop-blur-md border-b border-white/5">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">

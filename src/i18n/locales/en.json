@@ -1,4 +1,8 @@
 {
+    "seo": {
+        "defaultDescription": "NoRules AI - The Ultimate AI Platform for Everyone. Integrating multiple models for text, image, video generation and risk analysis.",
+        "defaultKeywords": "AI, Artificial Intelligence, LLM, NoRules, Chatbot, Image Generation, Video Generation, Risk Analysis"
+    },
     "common": {
         "loading": "Loading...",
         "error": "Error",

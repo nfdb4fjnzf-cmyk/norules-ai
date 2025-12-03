@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '../../config/firebaseClient';
 import { createUser } from '../../services/firestore/users';
+import SEO from '../../components/SEO';
 
 const SignUp: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -51,6 +52,7 @@ const SignUp: React.FC = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-background text-white">
+            <SEO title="Sign Up" description="Create your NoRules AI account today." />
             <div className="bg-background-card p-8 rounded-card border border-border w-full max-w-md shadow-2xl">
                 <h2 className="text-2xl font-bold mb-6 text-center">Sign Up for Norules AI</h2>
 

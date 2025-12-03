@@ -1,3 +1,8 @@
 User-agent: *
 Allow: /
-Sitemap: https://norules-ai.vercel.app/sitemap.xml
+Disallow: /api/
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /settings/
+
+Sitemap: https://norules.ai/api/sitemap

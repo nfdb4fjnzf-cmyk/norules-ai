@@ -1,4 +1,8 @@
 {
+    "seo": {
+        "defaultDescription": "NoRules AI - 專為所有人打造的終極 AI 平台。整合多種模型，提供文字、圖片、影片生成與風險分析服務。",
+        "defaultKeywords": "AI, 人工智慧, LLM, NoRules, 聊天機器人, 圖片生成, 影片生成, 風險分析"
+    },
     "common": {
         "loading": "載入中...",
         "error": "錯誤",

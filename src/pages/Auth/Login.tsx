@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../../config/firebaseClient';
 import { createUser } from '../../services/firestore/users';
+import SEO from '../../components/SEO';
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -60,6 +61,7 @@ const Login: React.FC = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-background text-white">
+            <SEO title="Login" description="Login to your NoRules AI account." />
             <div className="bg-background-card p-8 rounded-card border border-border w-full max-w-md shadow-2xl">
                 <h2 className="text-2xl font-bold mb-6 text-center">
                     {isResetMode ? 'Reset Password' : 'Login to Norules AI'}
