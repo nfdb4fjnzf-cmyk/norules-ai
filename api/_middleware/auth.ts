@@ -45,7 +45,9 @@ export const validateRequest = async (headers: Headers | Record<string, string> 
         }
     } catch (error: any) {
         if (error instanceof AppError) throw error;
-        throw new AppError(ErrorCodes.INVALID_JWT, 'Invalid or expired JWT', 401);
+        // Log the actual verification error for debugging
+        console.error('JWT Verification Error:', error);
+        throw new AppError(ErrorCodes.INVALID_JWT, `Invalid or expired JWT: ${error.message}`, 401);
     }
 
     // 3. Check Replay Attack (Timestamp)
