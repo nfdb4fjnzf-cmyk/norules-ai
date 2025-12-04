@@ -280,17 +280,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 result_ref: `analysis_reports/${reportRef.id}`
             });
 
-            // Log Transaction (Legacy - optional)
-            await usageService.logTransaction({
-                userId: user.uid,
-                actionType: 'analysis',
-                estimatedCost: COST,
-                actualCost: COST,
-                timestamp: new Date().toISOString(),
-                status: 'success',
-                modelUsed: successProvider
-            });
-
             return res.status(200).json(successResponse({
                 ...analysisData, // Use analysisData here
                 reportId: reportRef.id // Return ID to frontend
