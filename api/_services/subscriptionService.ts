@@ -53,8 +53,19 @@ export const subscriptionService = {
     }> => {
         const currentSub = await subscriptionService.getSubscription(userId);
         const newPrice = calculatePrice(newPlanId, newCycle);
+        const now = new Date();
 
-        if (!currentSub || currentSub.status !== 'active') {
+        // Check if subscription is effectively active (active status OR canceled but not expired)
+        // If it's null, or expired, we treat it as a new subscription (allowed).
+        let isEffectivelyActive = false;
+        if (currentSub) {
+            const periodEnd = currentSub.currentPeriodEnd.toDate();
+            if (periodEnd > now) {
+                isEffectivelyActive = true;
+            }
+        }
+
+        if (!currentSub || !isEffectivelyActive) {
             return {
                 allowed: true,
                 finalPrice: newPrice,
@@ -82,7 +93,7 @@ export const subscriptionService = {
         }
 
         // Calculate Proration for Upgrade or Same Level (Cycle Change)
-        const now = new Date();
+        // 'now' is already defined above
         const periodEnd = currentSub.currentPeriodEnd.toDate();
 
         if (now >= periodEnd) {

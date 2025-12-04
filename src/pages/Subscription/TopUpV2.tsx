@@ -71,7 +71,10 @@ const TopUpV2: React.FC = () => {
             />
 
             <div className="text-center mb-12">
-                <h1 className="text-3xl font-bold text-gray-100 mb-4">Purchase Points (V2)</h1>
+                <h1 className="text-3xl font-bold text-gray-100 mb-4">
+                    Purchase Points
+                    <span className="ml-2 text-xs bg-blue-500 text-white px-2 py-1 rounded-full">v2.1</span>
+                </h1>
                 <p className="text-gray-400">Need more credits? Top up instantly.</p>
             </div>
 

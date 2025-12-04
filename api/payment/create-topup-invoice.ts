@@ -13,6 +13,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         'Access-Control-Allow-Headers',
         'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
     );
+    res.setHeader('X-Api-Version', '2.1');
 
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
