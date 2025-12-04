@@ -2,17 +2,29 @@ import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/Toast';
 
+import TopUpConfirmModal from './TopUpConfirmModal';
+
 const TopUp: React.FC = () => {
     const { user } = useAuth();
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
     const [customPoints, setCustomPoints] = useState<number>(10001);
 
-    const handleTopUp = async (points: number) => {
+    // Modal State
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedPackage, setSelectedPackage] = useState<{ points: number; price: number; name: string } | null>(null);
+
+    const handleTopUpClick = (points: number, price: number, name: string) => {
         if (!user) {
             showToast('error', 'Please log in first');
             return;
         }
+        setSelectedPackage({ points, price, name });
+        setIsModalOpen(true);
+    };
+
+    const executeTopUp = async () => {
+        if (!selectedPackage || !user) return;
 
         setLoading(true);
         try {
@@ -23,7 +35,7 @@ const TopUp: React.FC = () => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ points })
+                body: JSON.stringify({ points: selectedPackage.points })
             });
 
             const data = await res.json();
@@ -39,15 +51,25 @@ const TopUp: React.FC = () => {
             showToast('error', error.message || 'Payment initialization failed');
         } finally {
             setLoading(false);
+            setIsModalOpen(false);
         }
     };
 
     const calculateCustomPrice = (points: number) => {
-        return (points * 0.003).toFixed(2);
+        return parseFloat((points * 0.003).toFixed(2));
     };
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-12">
+            <TopUpConfirmModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onConfirm={executeTopUp}
+                points={selectedPackage?.points || 0}
+                price={selectedPackage?.price || 0}
+                packageName={selectedPackage?.name || ''}
+            />
+
             <div className="text-center mb-12">
                 <h1 className="text-3xl font-bold text-gray-100 mb-4">Purchase Points</h1>
                 <p className="text-gray-400">Need more credits? Top up instantly.</p>
@@ -63,11 +85,11 @@ const TopUp: React.FC = () => {
                     <div className="text-4xl font-bold text-white mb-4">2,000 <span className="text-lg text-gray-400 font-normal">Points</span></div>
                     <div className="text-2xl text-blue-400 font-bold mb-8">$15 USD</div>
                     <button
-                        onClick={() => handleTopUp(2000)}
+                        onClick={() => handleTopUpClick(2000, 15, 'Starter Pack')}
                         disabled={loading}
                         className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-colors disabled:opacity-50"
                     >
-                        {loading ? 'Processing...' : 'Buy Now'}
+                        Buy Now
                     </button>
                 </div>
 
@@ -83,11 +105,11 @@ const TopUp: React.FC = () => {
                     <div className="text-4xl font-bold text-white mb-4">10,000 <span className="text-lg text-gray-400 font-normal">Points</span></div>
                     <div className="text-2xl text-purple-400 font-bold mb-8">$30 USD</div>
                     <button
-                        onClick={() => handleTopUp(10000)}
+                        onClick={() => handleTopUpClick(10000, 30, 'Pro Pack')}
                         disabled={loading}
                         className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-bold transition-all disabled:opacity-50 shadow-lg"
                     >
-                        {loading ? 'Processing...' : 'Buy Now'}
+                        Buy Now
                     </button>
                 </div>
 
@@ -108,15 +130,15 @@ const TopUp: React.FC = () => {
                         />
                     </div>
                     <div className="text-2xl text-green-400 font-bold mb-8">
-                        ${calculateCustomPrice(customPoints)} USD
+                        ${calculateCustomPrice(customPoints).toFixed(2)} USD
                         <span className="block text-xs text-gray-500 font-normal mt-1">($0.003 / point)</span>
                     </div>
                     <button
-                        onClick={() => handleTopUp(customPoints)}
+                        onClick={() => handleTopUpClick(customPoints, calculateCustomPrice(customPoints), 'Enterprise Custom')}
                         disabled={loading || customPoints < 10000}
                         className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {loading ? 'Processing...' : 'Buy Now'}
+                        Buy Now
                     </button>
                 </div>
             </div>

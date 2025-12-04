@@ -47,15 +47,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         priceAmount = Math.round(priceAmount * 100) / 100;
 
         // Force Integer USDT Amount to avoid decimals
-        // Add 1 USDT buffer/fee to ensure we don't lose on exchange rate
-        // e.g. $15 -> 16 USDT
-        const finalAmount = Math.ceil(priceAmount) + 1;
+        // Add 4 USDT Network Fee to ensure we don't lose on exchange rate and gas
+        // e.g. $15 -> 19 USDT
+        const finalAmount = Math.ceil(priceAmount) + 4;
 
         // Create Invoice via PaymentService (supports mock fallback)
         const { paymentService } = await import('../_services/paymentService.js');
 
         const orderId = `TOPUP-${user.uid}-${points}-${Date.now()}`;
-        const description = `Top-up ${points} Points (incl. 1 USDT Processing Fee)`;
+        const description = `Top-up ${points} Points (incl. 4 USDT Network Fee)`;
 
         const invoiceUrl = await paymentService.createInvoice(
             finalAmount,
