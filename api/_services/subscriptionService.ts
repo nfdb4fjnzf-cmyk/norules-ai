@@ -1,8 +1,8 @@
 import { db } from '../_config/firebaseAdmin.js';
-import { Timestamp } from 'firebase-admin/firestore';
+import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import { userService } from './userService.js';
 import { couponService } from './couponService.js';
-import { calculatePrice } from '../_types/plans.js';
+import { calculatePrice, PLANS } from '../_types/plans.js';
 
 export interface Subscription {
     userId: string;
@@ -110,11 +110,15 @@ export const subscriptionService = {
 
         batch.set(subRef, subData, { merge: true });
 
-        // 5. Update User Profile (Sync Plan)
+        // 5. Update User Profile (Sync Plan & Credits)
+        const selectedPlan = PLANS.find(p => p.id === planId);
+        const creditsToAdd = selectedPlan?.monthlyCredits || 0;
+
         const userRef = db.collection('users').doc(userId);
         batch.update(userRef, {
             plan: planId,
-            subscriptionStatus: 'active'
+            subscriptionStatus: 'active',
+            credits: FieldValue.increment(creditsToAdd)
         });
 
         // 6. Log Event
@@ -128,7 +132,8 @@ export const subscriptionService = {
             originalPrice,
             discountAmount,
             finalPrice,
-            createdAt: now
+            createdAt: now,
+            creditsAdded: creditsToAdd
         });
 
         await batch.commit();
