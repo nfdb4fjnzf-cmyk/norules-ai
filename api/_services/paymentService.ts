@@ -2,10 +2,11 @@ import axios from 'axios';
 
 const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY;
 const NOWPAYMENTS_API_URL = 'https://api.nowpayments.io/v1';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://noai-staging.vercel.app';
 
 export const paymentService = {
     /**
-     * Create Invoice (Mock or Real)
+     * Create Invoice (Real)
      */
     createInvoice: async (
         price: number,
@@ -20,30 +21,26 @@ export const paymentService = {
         }
 
         try {
-            // Real NOWPayments API Call (Commented out until fully tested/configured)
-            /*
+            // Real NOWPayments API Call
             const response = await axios.post(`${NOWPAYMENTS_API_URL}/invoice`, {
                 price_amount: price,
                 price_currency: currency,
                 order_id: orderId,
                 order_description: orderDescription,
-                ipn_callback_url: process.env.NOWPAYMENTS_IPN_URL,
-                success_url: `${process.env.NEXT_PUBLIC_API_URL}/subscription/success`,
-                cancel_url: `${process.env.NEXT_PUBLIC_API_URL}/subscription/cancel`
+                ipn_callback_url: `${BASE_URL}/api/payment/webhook`,
+                success_url: `${BASE_URL}/subscription/success`,
+                cancel_url: `${BASE_URL}/subscription/cancel`
             }, {
                 headers: {
-                    'x-api-key': NOWPAYMENTS_API_KEY
+                    'x-api-key': NOWPAYMENTS_API_KEY,
+                    'Content-Type': 'application/json'
                 }
             });
+
             return response.data.invoice_url;
-            */
 
-            // For now, return a simulated URL that the user can see
-            // In a real implementation, uncomment the above block
-            return `https://nowpayments.io/payment/?iid=mock_${orderId}`;
-
-        } catch (error) {
-            console.error('Payment creation failed:', error);
+        } catch (error: any) {
+            console.error('Payment creation failed:', error.response?.data || error.message);
             throw new Error('Failed to create payment invoice');
         }
     }
