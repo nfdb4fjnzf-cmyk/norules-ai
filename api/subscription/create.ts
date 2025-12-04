@@ -62,14 +62,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const { paymentService } = await import('../_services/paymentService.js');
 
         const price = calculatePrice(planId, billingCycle);
-        // TODO: Apply coupon logic here to get final price if needed
+        // Force Integer USDT Amount
+        const finalAmount = Math.ceil(price) + 1;
+        const currency = 'usdttrc20';
 
-        const orderId = `${user.uid}_${planId}_${Date.now()}`;
+        const orderId = `SUB-${user.uid}-${planId}-${billingCycle}-${Date.now()}`;
         const paymentUrl = await paymentService.createInvoice(
-            price,
-            'usd',
+            finalAmount,
+            currency,
             orderId,
-            `Subscription: ${planId} (${billingCycle})`
+            `Subscription: ${planId} (${billingCycle}) (incl. 1 USDT Processing Fee)`
         );
 
         return res.status(200).json(successResponse({
