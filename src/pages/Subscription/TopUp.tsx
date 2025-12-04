@@ -29,8 +29,8 @@ const TopUp: React.FC = () => {
             const data = await res.json();
 
             if (data.code === 0 && data.data.invoice_url) {
-                window.open(data.data.invoice_url, '_blank');
                 showToast('success', 'Redirecting to payment...');
+                window.location.href = data.data.invoice_url;
             } else {
                 throw new Error(data.message || 'Failed to create invoice');
             }

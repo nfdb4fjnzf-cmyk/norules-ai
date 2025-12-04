@@ -1,10 +1,10 @@
-import { validateRequest } from '../../_middleware/auth';
-import { errorResponse } from '../../_utils/responseFormatter';
-import textHandler from './analyze/text';
-import imageHandler from './analyze/image';
-import videoHandler from './analyze/video';
-import urlHandler from './analyze/url';
-import riskHandler from './analyze/risk';
+import { validateRequest } from '../../_middleware/auth.js';
+import { errorResponse } from '../../_utils/responseFormatter.js';
+import textHandler from './text.js';
+import imageHandler from './image.js';
+import videoHandler from './video.js';
+import urlHandler from './url.js';
+import riskHandler from './risk.js';
 
 export const config = {
     runtime: 'edge', // Or nodejs, depending on dependencies. Video/Risk use nodejs usually? 
@@ -51,11 +51,11 @@ export default async function handler(req: Request) {
     }
 
     switch (type) {
-        case 'text': return textHandler(req);
-        case 'image': return imageHandler(req);
-        case 'video': return videoHandler(req);
-        case 'url': return urlHandler(req);
-        case 'risk': return riskHandler(req);
+        case 'text': return (textHandler as any)(req);
+        case 'image': return (imageHandler as any)(req);
+        case 'video': return (videoHandler as any)(req);
+        case 'url': return (urlHandler as any)(req);
+        case 'risk': return (riskHandler as any)(req);
         default:
             return new Response(JSON.stringify(errorResponse(400, 'Invalid analysis type')), {
                 status: 400,

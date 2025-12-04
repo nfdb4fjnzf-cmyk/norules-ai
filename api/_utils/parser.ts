@@ -1,4 +1,25 @@
-import { AnalysisResponse, IssueItem } from './responseFormatter';
+// import { AnalysisResponse, IssueItem } from './responseFormatter';
+
+export interface IssueItem {
+    id: string;
+    category: string;
+    description: string;
+    severity: 'Low' | 'Medium' | 'High';
+    suggestion: string;
+    location?: string;
+}
+
+export interface AnalysisResponse {
+    riskScore: number;
+    issues: IssueItem[];
+    suggestions: string[];
+    rewrittenCopies: {
+        score10: string[];
+        score30: string[];
+        score50: string[];
+        score80: string[];
+    };
+}
 
 export function parseLLMResponse(jsonString: string): Partial<AnalysisResponse> {
     try {

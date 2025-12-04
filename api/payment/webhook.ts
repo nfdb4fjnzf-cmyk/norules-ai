@@ -68,6 +68,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 // Note: createSubscription now awards credits too
                 await subscriptionService.createSubscription(uid, planId, cycle);
             }
+        } else if (payment_status === 'expired' || payment_status === 'failed') {
+            console.warn(`[Webhook] Payment failed/expired for Order: ${order_id}`);
+            // Future: Trigger email notification or release reserved resources
         }
 
         return res.status(200).json(successResponse({ message: 'Webhook received' }));

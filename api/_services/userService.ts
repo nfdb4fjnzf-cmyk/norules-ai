@@ -59,18 +59,17 @@ export const userService = {
                 return true;
             }
 
-            // Enterprise plan has unlimited credits (bypass deduction)
-            if (plan === 'enterprise') {
+            // Ultra plan has unlimited credits (bypass deduction)
+            if (plan === 'ultra') {
                 return true;
             }
 
             // Calculate Discount (Ch.3 Mode A)
             let multiplier = 1;
-            if (plan === 'light') multiplier = 0.8; // 20% off
-            else if (plan === 'medium') multiplier = 0.6; // 40% off
-            else if (plan === 'enterprise') multiplier = 0; // Should be handled above, but 0 just in case
+            if (plan === 'lite') multiplier = 0.8; // 20% off
+            else if (plan === 'pro') multiplier = 0.6; // 40% off
 
-            const finalAmount = amount * multiplier;
+            const finalAmount = Math.ceil(amount * multiplier);
 
             if (currentCredits < finalAmount) {
                 return false;
@@ -97,20 +96,8 @@ export const userService = {
             const userData = userDoc.data();
             const currentCredits = userData?.credits || 0;
 
-            // We don't apply discount multiplier on refund because we want to refund exactly what was deducted?
-            // Wait, deductCredits applies multiplier. So if we deduct 10 * 0.8 = 8, we should refund 8.
-            // But the caller passes 'amount' (e.g. 10).
-            // So we need to re-calculate the exact amount that was deducted.
-            // This is tricky. Ideally deductCredits returns the *actual* deducted amount.
-            // For now, I will assume the caller passes the base amount and I apply the same multiplier logic to be consistent.
-
-            const plan = userData?.subscription?.plan || 'free';
-            let multiplier = 1;
-            if (plan === 'light') multiplier = 0.8;
-            else if (plan === 'medium') multiplier = 0.6;
-            else if (plan === 'enterprise') multiplier = 0;
-
-            const finalAmount = amount * multiplier;
+            // Add exact amount (no multiplier for top-ups/refunds unless calculated by caller)
+            const finalAmount = amount;
 
             transaction.update(userRef, {
                 credits: currentCredits + finalAmount,

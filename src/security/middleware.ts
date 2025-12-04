@@ -55,7 +55,7 @@ export async function runSecurityPipeline(request: Request, apiPath: string): Pr
     // For now, assume API Key mode bypasses our internal daily limit or has a very high one?
     // Requirement says: "每一次 query... 都需... todayCount >= dailyLimit -> 429"
     // So we enforce it based on subscription.dailyLimit
-    if (todayUsage >= subscription.dailyLimit) {
+    if (todayUsage >= subscription.daily_limit) {
         throw new Error('已達每日查詢上限');
     }
 
@@ -78,7 +78,7 @@ export async function runSecurityPipeline(request: Request, apiPath: string): Pr
     // Attach usage info for response
     (request as any).quotaUsage = {
         today: todayUsage + 1,
-        limit: subscription.dailyLimit,
+        limit: subscription.daily_limit,
         cost: actualCost,
         mode: mode
     };

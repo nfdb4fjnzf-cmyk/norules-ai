@@ -64,12 +64,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const price = calculatePrice(planId, billingCycle);
         // Force Integer USDT Amount
         const finalAmount = Math.ceil(price) + 1;
-        const currency = 'usdttrc20';
 
         const orderId = `SUB-${user.uid}-${planId}-${billingCycle}-${Date.now()}`;
         const paymentUrl = await paymentService.createInvoice(
             finalAmount,
-            currency,
             orderId,
             `Subscription: ${planId} (${billingCycle}) (incl. 1 USDT Processing Fee)`
         );

@@ -116,8 +116,8 @@ export const subscriptionService = {
 
         const userRef = db.collection('users').doc(userId);
         batch.update(userRef, {
-            plan: planId,
-            subscriptionStatus: 'active',
+            'subscription.plan': planId,
+            'subscription.status': 'active',
             credits: FieldValue.increment(creditsToAdd)
         });
 

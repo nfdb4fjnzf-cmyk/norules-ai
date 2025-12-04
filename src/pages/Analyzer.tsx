@@ -182,7 +182,7 @@ const Analyzer: React.FC = () => {
     const downloadPDF = () => {
         if (!reportRef.current) return;
         const element = reportRef.current;
-        const opt = {
+        const opt: any = {
             margin: 10,
             filename: 'ad-analysis-report.pdf',
             image: { type: 'jpeg', quality: 0.98 },

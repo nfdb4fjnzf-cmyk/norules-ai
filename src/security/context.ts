@@ -1,10 +1,11 @@
 export interface RequestContext {
     userId: string;
-    plan: "free" | "lite" | "pro" | "unlimited";
+    plan: "free" | "lite" | "pro" | "ultra" | "unlimited";
     points: number;
     ip: string;
     requestId: string;
     llmMode?: "INTERNAL" | "EXTERNAL";
+    mode?: string;
     email?: string;
 }
 

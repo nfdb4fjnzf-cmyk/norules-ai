@@ -50,7 +50,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Add 1 USDT buffer/fee to ensure we don't lose on exchange rate
         // e.g. $15 -> 16 USDT
         const finalAmount = Math.ceil(priceAmount) + 1;
-        const currency = 'usdttrc20'; // Force USDT
 
         // Create Invoice via PaymentService (supports mock fallback)
         const { paymentService } = await import('../_services/paymentService.js');
@@ -60,7 +59,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const invoiceUrl = await paymentService.createInvoice(
             finalAmount,
-            currency,
             orderId,
             description
         );

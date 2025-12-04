@@ -10,7 +10,6 @@ export const paymentService = {
      */
     createInvoice: async (
         price: number,
-        currency: string,
         orderId: string,
         orderDescription: string
     ): Promise<string> => {
@@ -21,15 +20,18 @@ export const paymentService = {
         }
 
         try {
-            // Real NOWPayments API Call
+            // Real NOWPayments API Call (Fixed USDTTRC20 Invoice)
             const response = await axios.post(`${NOWPAYMENTS_API_URL}/invoice`, {
                 price_amount: price,
-                price_currency: currency,
+                price_currency: 'usd',
+                pay_currency: 'usdttrc20',
                 order_id: orderId,
                 order_description: orderDescription,
                 ipn_callback_url: `${BASE_URL}/api/payment/webhook`,
                 success_url: `${BASE_URL}/subscription/success`,
-                cancel_url: `${BASE_URL}/subscription/cancel`
+                cancel_url: `${BASE_URL}/subscription/cancel`,
+                fixed_rate: true,
+                is_fee_paid_by_user: false
             }, {
                 headers: {
                     'x-api-key': NOWPAYMENTS_API_KEY,
