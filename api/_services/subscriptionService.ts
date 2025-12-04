@@ -37,6 +37,90 @@ export const subscriptionService = {
     },
 
     /**
+     * Calculate Upgrade Price & Check Downgrade
+     */
+    calculateUpgrade: async (
+        userId: string,
+        newPlanId: 'lite' | 'pro' | 'ultra',
+        newCycle: 'monthly' | 'quarterly' | 'yearly'
+    ): Promise<{
+        allowed: boolean;
+        reason?: string;
+        finalPrice: number;
+        originalPrice: number;
+        remainingValue: number;
+        isUpgrade: boolean;
+    }> => {
+        const currentSub = await subscriptionService.getSubscription(userId);
+        const newPrice = calculatePrice(newPlanId, newCycle);
+
+        if (!currentSub || currentSub.status !== 'active') {
+            return {
+                allowed: true,
+                finalPrice: newPrice,
+                originalPrice: newPrice,
+                remainingValue: 0,
+                isUpgrade: false
+            };
+        }
+
+        // Check Plan Levels
+        const levels = { 'free': 0, 'lite': 1, 'pro': 2, 'ultra': 3 };
+        const oldLevel = levels[currentSub.planId] || 0;
+        const newLevel = levels[newPlanId];
+
+        // Block Downgrade if active
+        if (newLevel < oldLevel) {
+            return {
+                allowed: false,
+                reason: `Cannot downgrade from ${currentSub.planId} to ${newPlanId} while subscription is active. Please wait until the current period ends.`,
+                finalPrice: newPrice,
+                originalPrice: newPrice,
+                remainingValue: 0,
+                isUpgrade: false
+            };
+        }
+
+        // Calculate Proration for Upgrade or Same Level (Cycle Change)
+        const now = new Date();
+        const periodEnd = currentSub.currentPeriodEnd.toDate();
+
+        if (now >= periodEnd) {
+            return {
+                allowed: true,
+                finalPrice: newPrice,
+                originalPrice: newPrice,
+                remainingValue: 0,
+                isUpgrade: false // Treated as new sub
+            };
+        }
+
+        const remainingTime = periodEnd.getTime() - now.getTime();
+        const remainingDays = remainingTime / (1000 * 60 * 60 * 24);
+
+        // Calculate Daily Rate of OLD plan
+        // We need to know the old price to calculate rate. 
+        // Best effort: use current catalog price for old plan/cycle.
+        const oldPlanPrice = calculatePrice(currentSub.planId, currentSub.billingCycle);
+        let cycleDays = 30;
+        if (currentSub.billingCycle === 'quarterly') cycleDays = 90;
+        if (currentSub.billingCycle === 'yearly') cycleDays = 365;
+
+        const dailyRate = oldPlanPrice / cycleDays;
+        const remainingValue = Math.max(0, remainingDays * dailyRate);
+
+        const finalPrice = Math.max(0, newPrice - remainingValue);
+
+        return {
+            allowed: true,
+            finalPrice,
+            originalPrice: newPrice,
+            remainingValue,
+            isUpgrade: true
+        };
+    },
+
+    /**
      * Create or Update Subscription
      * (Simulates successful payment)
      */
@@ -48,6 +132,7 @@ export const subscriptionService = {
     ): Promise<void> => {
         // 1. Calculate Period End
         const now = Timestamp.now();
+        // For upgrades/new subs, start date is NOW.
         const startDate = now;
         let endDate = new Date();
 
@@ -58,14 +143,27 @@ export const subscriptionService = {
         const currentPeriodEnd = Timestamp.fromDate(endDate);
 
         // 2. Calculate Price & Apply Coupon
-        let originalPrice = calculatePrice(planId, billingCycle);
-        let discountAmount = 0;
-        let finalPrice = originalPrice;
+        // Note: This logic here is for the RECORDING of the subscription. 
+        // The actual charge amount was calculated in the API endpoint.
+        // We re-calculate here to store consistent data, but we should respect the upgrade logic.
+
+        // However, since this function is called by webhook (after payment), 
+        // we should ideally use the logic that matches what was paid.
+        // For simplicity, we will re-run calculateUpgrade here to get the 'discountAmount' correct for record keeping.
+
+        const upgradeCheck = await subscriptionService.calculateUpgrade(userId, planId, billingCycle);
+
+        let originalPrice = upgradeCheck.originalPrice;
+        let discountAmount = upgradeCheck.remainingValue; // Proration is a discount
+        let finalPrice = upgradeCheck.finalPrice;
 
         if (couponCode) {
             const coupon = await couponService.validateCoupon(couponCode, planId);
-            finalPrice = couponService.calculateDiscount(originalPrice, coupon);
-            discountAmount = originalPrice - finalPrice;
+            const couponDiscount = couponService.calculateDiscount(finalPrice, coupon); // Apply coupon on top of prorated price? Or original? Usually on final.
+            // Let's assume coupon applies to the amount TO BE PAID.
+            const priceAfterCoupon = couponService.calculateDiscount(finalPrice, coupon);
+            discountAmount += (finalPrice - priceAfterCoupon);
+            finalPrice = priceAfterCoupon;
 
             // Redeem coupon
             await couponService.redeemCoupon(couponCode);
@@ -79,7 +177,7 @@ export const subscriptionService = {
             planId,
             billingCycle,
             status: 'active',
-            startDate: existingSub ? existingSub.startDate : startDate,
+            startDate: startDate, // Always reset start date for new period/upgrade
             currentPeriodEnd,
             cancelAtPeriodEnd: false,
             updatedAt: now,
@@ -133,7 +231,8 @@ export const subscriptionService = {
             discountAmount,
             finalPrice,
             createdAt: now,
-            creditsAdded: creditsToAdd
+            creditsAdded: creditsToAdd,
+            proration: upgradeCheck.isUpgrade ? upgradeCheck.remainingValue : 0
         });
 
         await batch.commit();

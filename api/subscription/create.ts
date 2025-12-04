@@ -58,18 +58,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // External Users: Payment Required
-        const { calculatePrice } = await import('../_types/plans.js');
         const { paymentService } = await import('../_services/paymentService.js');
 
-        const price = calculatePrice(planId, billingCycle);
+        // Calculate Upgrade / Proration
+        const upgradeCheck = await subscriptionService.calculateUpgrade(user.uid, planId, billingCycle);
+
+        if (!upgradeCheck.allowed) {
+            return res.status(400).json(errorResponse(ErrorCodes.BAD_REQUEST, upgradeCheck.reason || 'Downgrade not allowed'));
+        }
+
+        const price = upgradeCheck.finalPrice;
+
         // Force Integer USDT Amount
-        const finalAmount = Math.ceil(price) + 1;
+        // Add 4 USDT Network Fee (consistent with TopUp)
+        const finalAmount = Math.ceil(price) + 4;
 
         const orderId = `SUB-${user.uid}-${planId}-${billingCycle}-${Date.now()}`;
+
+        let description = `Subscription: ${planId} (${billingCycle})`;
+        if (upgradeCheck.isUpgrade) {
+            description += ` (Upgrade - Prorated)`;
+        }
+        description += ` (incl. 4 USDT Network Fee)`;
+
         const paymentUrl = await paymentService.createInvoice(
             finalAmount,
             orderId,
-            `Subscription: ${planId} (${billingCycle}) (incl. 1 USDT Processing Fee)`
+            description
         );
 
         return res.status(200).json(successResponse({
