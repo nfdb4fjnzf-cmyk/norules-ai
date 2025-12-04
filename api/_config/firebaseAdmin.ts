@@ -75,7 +75,11 @@ export function initializeFirebase(env?: any) {
 
 // Auto-init for Vercel (where process.env is available immediately)
 if (process.env.FIREBASE_SERVICE_ACCOUNT || process.env.FIREBASE_PROJECT_ID) {
-    initializeFirebase();
+    try {
+        initializeFirebase();
+    } catch (e) {
+        console.error('Auto-init failed (suppressed to allow module load):', e);
+    }
 }
 
 // Use Proxy to allow lazy initialization (required for Cloudflare Workers)
