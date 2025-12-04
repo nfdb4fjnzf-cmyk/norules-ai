@@ -138,7 +138,7 @@ export const subscriptionService = {
      * Cancel Subscription
      * (Sets cancelAtPeriodEnd = true)
      */
-    cancelSubscription: async (userId: string): Promise<void> => {
+    cancelSubscription: async (userId: string): Promise<Date> => {
         const snapshot = await db.collection('subscriptions')
             .where('userId', '==', userId)
             .where('status', '==', 'active')
@@ -147,12 +147,16 @@ export const subscriptionService = {
 
         if (snapshot.empty) throw new Error('No active subscription found');
 
-        const subRef = snapshot.docs[0].ref;
+        const subDoc = snapshot.docs[0];
+        const subData = subDoc.data() as Subscription;
+        const currentPeriodEnd = subData.currentPeriodEnd.toDate();
 
-        await subRef.update({
+        await subDoc.ref.update({
             status: 'canceled',
             cancelAtPeriodEnd: true,
             updatedAt: Timestamp.now()
         });
+
+        return currentPeriodEnd;
     }
 };

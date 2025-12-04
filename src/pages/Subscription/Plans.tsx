@@ -122,6 +122,13 @@ const Plans: React.FC = () => {
             });
 
             if (response.data.success) {
+                // Check if payment redirection is required
+                if (response.data.data?.paymentUrl) {
+                    showToast('success', 'Redirecting to payment...');
+                    window.location.href = response.data.data.paymentUrl;
+                    return;
+                }
+
                 showToast('success', 'Subscription updated successfully!');
                 await fetchStatus();
                 setIsModalOpen(false);

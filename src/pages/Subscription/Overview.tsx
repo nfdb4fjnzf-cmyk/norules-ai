@@ -55,7 +55,8 @@ const SubscriptionOverview: React.FC = () => {
             setProcessing(true);
             const response = await api.post('/subscription/cancel');
             if (response.data.success) {
-                showToast('success', 'Subscription canceled. It will remain active until the end of the period.');
+                const cancelDate = new Date(response.data.data.cancelAt).toLocaleDateString();
+                showToast('success', `Subscription canceled. Access continues until ${cancelDate}.`);
                 await fetchSubscription();
             } else {
                 showToast('error', 'Failed to cancel subscription');
@@ -200,7 +201,7 @@ const SubscriptionOverview: React.FC = () => {
                                     <span className="text-sm">方案狀態</span>
                                 </div>
                                 <p className="text-lg font-semibold text-white capitalize">
-                                    {subscription?.status || 'Active'}
+                                    {subscription?.status === 'canceled' ? 'Canceled (Active)' : (subscription?.status || 'Active')}
                                 </p>
                             </div>
                         </div>

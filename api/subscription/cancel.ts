@@ -26,10 +26,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         const user = await validateRequest(req.headers);
 
-        await subscriptionService.cancelSubscription(user.uid);
+        const cancelAt = await subscriptionService.cancelSubscription(user.uid);
 
         return res.status(200).json(successResponse({
-            message: 'Subscription canceled successfully'
+            message: 'Subscription canceled successfully',
+            cancelAt: cancelAt.toISOString()
         }));
 
     } catch (error: any) {

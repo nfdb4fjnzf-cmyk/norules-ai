@@ -39,13 +39,43 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json(errorResponse(ErrorCodes.BAD_REQUEST, 'Invalid billingCycle'));
         }
 
-        await subscriptionService.createSubscription(user.uid, planId, billingCycle, couponCode);
+        // Fetch full user profile to check mode
+        const { userService } = await import('../_services/userService.js');
+        const userProfile = await userService.getUser(user.uid);
+        const isInternal = userProfile?.mode === 'internal';
+
+        // Internal Users: Direct Activation (Free)
+        if (isInternal) {
+            await subscriptionService.createSubscription(user.uid, planId, billingCycle, couponCode);
+
+            return res.status(200).json(successResponse({
+                message: 'Subscription created successfully (Internal Mode)',
+                planId,
+                billingCycle,
+                couponApplied: !!couponCode,
+                mode: 'internal'
+            }));
+        }
+
+        // External Users: Payment Required
+        const { calculatePrice } = await import('../_types/plans.js');
+        const { paymentService } = await import('../_services/paymentService.js');
+
+        const price = calculatePrice(planId, billingCycle);
+        // TODO: Apply coupon logic here to get final price if needed
+
+        const orderId = `${user.uid}_${planId}_${Date.now()}`;
+        const paymentUrl = await paymentService.createInvoice(
+            price,
+            'usd',
+            orderId,
+            `Subscription: ${planId} (${billingCycle})`
+        );
 
         return res.status(200).json(successResponse({
-            message: 'Subscription created successfully',
-            planId,
-            billingCycle,
-            couponApplied: !!couponCode
+            message: 'Payment required',
+            paymentUrl,
+            mode: 'external'
         }));
 
     } catch (error: any) {
