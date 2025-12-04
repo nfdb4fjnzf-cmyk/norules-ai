@@ -9,7 +9,7 @@ import Billing from './pages/Billing';
 import ResultView from './pages/ResultView';
 import SubscriptionOverview from './pages/Subscription/Overview';
 import Plans from './pages/Subscription/Plans';
-import TopUp from './pages/Subscription/TopUp';
+import TopUp from './pages/Subscription/TopUpV2';
 import Success from './pages/Subscription/Success';
 import ApiKeys from './pages/Settings/ApiKeys';
 import ExternalKey from './pages/Settings/ExternalKey';

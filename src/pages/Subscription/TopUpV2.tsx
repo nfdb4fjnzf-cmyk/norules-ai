@@ -4,8 +4,7 @@ import { useToast } from '../../components/Toast';
 
 import TopUpConfirmModal from './TopUpConfirmModal';
 
-// Force redeploy check
-const TopUp: React.FC = () => {
+const TopUpV2: React.FC = () => {
     const { user } = useAuth();
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
@@ -72,7 +71,7 @@ const TopUp: React.FC = () => {
             />
 
             <div className="text-center mb-12">
-                <h1 className="text-3xl font-bold text-gray-100 mb-4">Purchase Points</h1>
+                <h1 className="text-3xl font-bold text-gray-100 mb-4">Purchase Points (V2)</h1>
                 <p className="text-gray-400">Need more credits? Top up instantly.</p>
             </div>
 
@@ -147,4 +146,4 @@ const TopUp: React.FC = () => {
     );
 };
 
-export default TopUp;
+export default TopUpV2;
