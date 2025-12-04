@@ -142,7 +142,30 @@ export const usageService = {
     },
 
     estimateCost: (actionType: string) => usageService.calculateCost(actionType as any),
-    logTransaction: async (log: any) => { console.log('Legacy log:', log); }
+
+    /**
+     * Log Transaction (TopUp / Subscription)
+     * Writes directly to usage_operations for history tracking.
+     */
+    logTransaction: async (
+        userId: string,
+        feature: string,
+        amount: number, // Positive for TopUp (Credits added)
+        metadata: any = {}
+    ) => {
+        const opRef = db.collection('usage_operations').doc();
+        await opRef.set({
+            userId,
+            feature, // 'topup' or 'subscription'
+            status: 'success',
+            estimate: 0,
+            cost: -amount, // Negative cost means credit gain
+            refund: false,
+            metadata,
+            createdAt: admin.firestore.Timestamp.now(),
+            updatedAt: admin.firestore.Timestamp.now()
+        });
+    }
 };
 
 export const logUsage = usageService.logTransaction;

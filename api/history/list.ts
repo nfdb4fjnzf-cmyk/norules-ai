@@ -29,24 +29,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const cursor = req.query.cursor as string | undefined;
         const limit = parseInt((req.query.limit as string) || '20');
 
-        // V3: Query global 'usage_logs' collection by userId
-        let query = db.collection('usage_logs')
+        // V3: Query global 'usage_operations' collection by userId
+        let query = db.collection('usage_operations')
             .where('userId', '==', uid)
-            .orderBy('timestamp', 'desc')
+            .orderBy('createdAt', 'desc')
             .limit(limit);
 
         if (cursor) {
-            const cursorDoc = await db.collection('usage_logs').doc(cursor).get();
+            const cursorDoc = await db.collection('usage_operations').doc(cursor).get();
             if (cursorDoc.exists) {
                 query = query.startAfter(cursorDoc);
             }
         }
 
         const snapshot = await query.get();
-        const logs = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
+        const logs = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                actionType: data.feature,
+                status: data.status,
+                estimated_cost: data.estimate,
+                actual_cost: data.cost,
+                reserved_points: 0,
+                request_payload: data.metadata,
+                result_ref: data.result ? JSON.stringify(data.result) : undefined,
+                error_message: data.errorMessage,
+                createdAt: data.createdAt
+            };
+        });
 
         const nextCursor = logs.length === limit ? logs[logs.length - 1].id : null;
 

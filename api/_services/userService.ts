@@ -104,5 +104,9 @@ export const userService = {
                 updatedAt: new Date().toISOString()
             });
         });
+
+        // Log Transaction
+        const { usageService } = await import('./usageService.js');
+        await usageService.logTransaction(uid, 'TOPUP', amount, { description: 'Points Top-up' });
     }
 };

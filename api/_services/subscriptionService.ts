@@ -137,6 +137,14 @@ export const subscriptionService = {
         });
 
         await batch.commit();
+
+        // 7. Log Transaction for History
+        const { usageService } = await import('./usageService.js');
+        await usageService.logTransaction(userId, 'SUBSCRIPTION', creditsToAdd, {
+            description: `Subscription: ${planId} (${billingCycle})`,
+            price: finalPrice,
+            currency: 'USD'
+        });
     },
 
     /**
