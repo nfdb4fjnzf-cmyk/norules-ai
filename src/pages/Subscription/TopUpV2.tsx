@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/Toast';
 
@@ -9,6 +9,10 @@ const TopUpV2: React.FC = () => {
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
     const [customPoints, setCustomPoints] = useState<number>(10001);
+
+    useEffect(() => {
+        console.log('TopUpV2 Component Mounted - Version 2.1');
+    }, []);
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
