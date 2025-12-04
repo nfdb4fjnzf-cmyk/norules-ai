@@ -41,7 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // Fetch full user profile to check mode
         const { userService } = await import('../_services/userService.js');
-        const userProfile = await userService.getUser(user.uid);
+        const userProfile = await userService.getUserProfile(user.uid);
         const isInternal = userProfile?.mode === 'internal';
 
         // Internal Users: Direct Activation (Free)
