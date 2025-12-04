@@ -133,7 +133,14 @@ const Plans: React.FC = () => {
             console.error('Subscribe error:', error);
             // Show detailed error if available
             const errorMsg = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to subscribe';
-            showToast('error', errorMsg);
+
+            // If there is debug info, show it
+            if (error.response?.data?.debug) {
+                console.error('Debug Info:', error.response.data.debug);
+                alert(`Error: ${errorMsg}\n\nDebug: ${JSON.stringify(error.response.data.debug, null, 2)}`);
+            } else {
+                showToast('error', typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg));
+            }
         }
     };
 

@@ -54,12 +54,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const status = error.statusCode || 500;
         const message = error.message || 'Internal Server Error';
 
-        // DEBUG: Return full error details
+        // DEBUG: Return full error details safely
         return res.status(status).json({
             success: false,
-            error: {
+            message: message, // Top level message for easy access
+            error: message,   // Backward compatibility
+            debug: {
                 code,
-                message,
                 stack: error.stack,
                 details: JSON.stringify(error)
             }
