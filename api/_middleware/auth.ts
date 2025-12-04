@@ -37,6 +37,16 @@ export const validateRequest = async (headers: Headers | Record<string, string> 
     // 2. Verify JWT
     let decodedToken;
     try {
+        // Ensure Firebase is initialized before verification
+        // This handles cases where auto-init failed or env vars were lazy-loaded
+        try {
+            const { initializeFirebase } = await import('../_config/firebaseAdmin.js');
+            initializeFirebase();
+        } catch (initError: any) {
+            console.error('Lazy Init Error:', initError);
+            throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, `Firebase Init Failed: ${initError.message}`, 500);
+        }
+
         decodedToken = await auth.verifyIdToken(token);
 
         // Check for Banned Status (Custom Claim)
