@@ -35,7 +35,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobile, toggleMobileMenu }) => {
           <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-glow overflow-hidden">
             <img src="/norules-logo.png" alt="Norules AI" className="w-full h-full object-cover" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-white">Norules AI</span>
+          <div className="flex flex-col">
+            <span className="text-xl font-bold tracking-tight text-white">Norules AI</span>
+            <span className="text-xs text-blue-400 font-mono">v2.2 (Staging)</span>
+          </div>
         </div>
 
         <nav className="px-3 space-y-1">
