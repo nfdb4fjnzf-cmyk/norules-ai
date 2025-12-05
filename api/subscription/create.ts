@@ -69,8 +69,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const price = upgradeCheck.finalPrice;
 
-        // Add 4 USDT Network Fee (consistent with TopUp)
-        const finalAmount = Math.ceil(price) + 1;
+        // Network fee is UI hint only, not added to payment
+        const finalAmount = Math.ceil(price);
 
         // Create payment order using new self-hosted system
         const order = await paymentService.createOrder(

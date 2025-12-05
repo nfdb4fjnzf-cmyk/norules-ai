@@ -56,7 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
 
             // Add network fee
-            baseAmount = Math.ceil(baseAmount) + 1;
+            // Network fee is UI hint only, not added to payment
             description = `Top-up ${points} Points`;
 
         } else if (type === 'SUB') {
@@ -91,7 +91,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
 
             // Add network fee and ensure minimum
-            baseAmount = Math.ceil(baseAmount) + 1;
+            // Network fee is UI hint only, not added to payment
             if (baseAmount < 5) baseAmount = 5; // Minimum $5
 
             description = `${selectedPlan.name} (${billingCycle})`;

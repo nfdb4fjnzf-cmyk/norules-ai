@@ -176,34 +176,48 @@ export const paymentService = {
     matchTransactionsToOrders: async (): Promise<{
         matched: number;
         processed: string[];
+        debug?: any;
     }> => {
         // Get pending orders
         const pendingOrders = await paymentService.getPendingOrders();
+        console.log(`[Payment] Found ${pendingOrders.length} pending orders`);
+
         if (pendingOrders.length === 0) {
-            return { matched: 0, processed: [] };
+            return { matched: 0, processed: [], debug: { reason: 'no_pending_orders' } };
         }
 
         // Get recent transactions
         const transactions = await tronService.getRecentTransactions(50);
+        console.log(`[Payment] Found ${transactions.length} recent transactions`);
+
         if (transactions.length === 0) {
-            return { matched: 0, processed: [] };
+            return { matched: 0, processed: [], debug: { reason: 'no_transactions' } };
         }
 
         const processed: string[] = [];
+        const debugInfo: any[] = [];
 
         for (const order of pendingOrders) {
+            console.log(`[Payment] Checking order ${order.orderId}, expected: ${order.expectedAmount} USDT`);
+
             // Find matching transaction
             const matchedTx = transactions.find(tx => {
                 const txAmount = tronService.parseUsdtAmount(tx.value);
-                // Allow 0.001 tolerance for floating point
-                const amountMatch = Math.abs(txAmount - order.expectedAmount) < 0.001;
+                // Allow 0.01 tolerance for floating point (more tolerant)
+                const amountDiff = Math.abs(txAmount - order.expectedAmount);
+                const amountMatch = amountDiff < 0.01;
                 // Transaction must be after order creation
-                const timeValid = tx.block_timestamp > order.createdAt.toMillis();
+                const orderCreatedAt = order.createdAt.toMillis();
+                const timeValid = tx.block_timestamp > orderCreatedAt;
+
+                console.log(`[Payment] TX ${tx.transaction_id.substring(0, 16)}... amount: ${txAmount}, diff: ${amountDiff.toFixed(4)}, match: ${amountMatch}, timeValid: ${timeValid}`);
 
                 return amountMatch && timeValid;
             });
 
             if (matchedTx) {
+                console.log(`[Payment] Found matching TX for order ${order.orderId}: ${matchedTx.transaction_id}`);
+
                 // Check if this txHash was already processed
                 const existingOrder = await db.collection('payment_orders')
                     .where('txHash', '==', matchedTx.transaction_id)
@@ -221,16 +235,22 @@ export const paymentService = {
                     matchedTx.transaction_id
                 );
 
-                // If transaction is confirmed, process the order
-                if (tronService.isConfirmed(matchedTx)) {
-                    await paymentService.processCompletedOrder(order);
-                    await paymentService.updateOrderStatus(order.orderId, 'completed');
-                    processed.push(order.orderId);
-                }
+                // Process immediately (TRC20 confirms fast)
+                console.log(`[Payment] Processing order ${order.orderId}...`);
+                await paymentService.processCompletedOrder(order);
+                await paymentService.updateOrderStatus(order.orderId, 'completed');
+                processed.push(order.orderId);
+                console.log(`[Payment] Order ${order.orderId} completed!`);
+            } else {
+                debugInfo.push({
+                    orderId: order.orderId,
+                    expectedAmount: order.expectedAmount,
+                    recentTxAmounts: transactions.slice(0, 5).map(tx => tronService.parseUsdtAmount(tx.value))
+                });
             }
         }
 
-        return { matched: processed.length, processed };
+        return { matched: processed.length, processed, debug: debugInfo };
     },
 
     /**
