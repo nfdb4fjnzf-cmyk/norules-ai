@@ -71,7 +71,7 @@ const Analyzer: React.FC = () => {
 
     const handleAnalyzeClick = () => {
         if (!materialFile && !copyText && !linkUrl) {
-            showToast('error', "Please provide at least one input (Image/Video, Copy, or URL).");
+            showToast('error', t('analyzer.inputRequired'));
             return;
         }
 
@@ -225,7 +225,7 @@ const Analyzer: React.FC = () => {
                             className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
                         >
                             <span className="material-symbols-outlined">download</span>
-                            Download PDF
+                            {t('analyzer.downloadPDF')}
                         </button>
                     </div>
                 )}
@@ -239,7 +239,7 @@ const Analyzer: React.FC = () => {
                         <CardHeader>
                             <CardTitle className="text-base text-gray-200 flex items-center gap-2">
                                 <span className="material-symbols-outlined text-yellow-400">translate</span>
-                                Report Language
+                                {t('analyzer.reportLanguage')}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -264,7 +264,7 @@ const Analyzer: React.FC = () => {
                         <CardHeader>
                             <CardTitle className="text-base text-gray-200 flex items-center gap-2">
                                 <span className="material-symbols-outlined text-blue-400">image</span>
-                                Material
+                                {t('analyzer.material')}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -274,7 +274,7 @@ const Analyzer: React.FC = () => {
                                     className="border-2 border-dashed border-white/10 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:bg-white/5 transition-colors group"
                                 >
                                     <span className="material-symbols-outlined text-4xl text-gray-500 group-hover:text-blue-400 mb-2 transition-colors">cloud_upload</span>
-                                    <p className="text-gray-400 text-sm">Upload Image or Video</p>
+                                    <p className="text-gray-400 text-sm">{t('analyzer.uploadHint')}</p>
                                     <input type="file" ref={fileInputRef} className="hidden" accept="image/*,video/*" onChange={handleFileSelect} />
                                 </div>
                             ) : (
@@ -297,14 +297,14 @@ const Analyzer: React.FC = () => {
                         <CardHeader>
                             <CardTitle className="text-base text-gray-200 flex items-center gap-2">
                                 <span className="material-symbols-outlined text-green-400">description</span>
-                                Copywriting
+                                {t('analyzer.copywriting')}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <textarea
                                 value={copyText}
                                 onChange={(e) => setCopyText(e.target.value)}
-                                placeholder="Enter ad copy..."
+                                placeholder={t('analyzer.copyPlaceholder')}
                                 className="w-full h-32 bg-black/20 rounded-xl p-4 text-gray-200 outline-none border border-white/5 focus:border-green-500/50 resize-none text-sm"
                             />
                         </CardContent>
@@ -315,7 +315,7 @@ const Analyzer: React.FC = () => {
                         <CardHeader>
                             <CardTitle className="text-base text-gray-200 flex items-center gap-2">
                                 <span className="material-symbols-outlined text-purple-400">link</span>
-                                Landing Page
+                                {t('analyzer.landingPage')}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -337,12 +337,12 @@ const Analyzer: React.FC = () => {
                         {isAnalyzing ? (
                             <div className="flex items-center justify-center gap-2">
                                 <span className="material-symbols-outlined animate-spin">sync</span>
-                                <span>Analyzing...</span>
+                                <span>{t('analyzer.analyzing')}</span>
                             </div>
                         ) : (
                             <div className="flex items-center justify-center gap-2">
                                 <span className="material-symbols-outlined">analytics</span>
-                                <span>Start Analysis</span>
+                                <span>{t('analyzer.startAnalysis')}</span>
                             </div>
                         )}
                     </button>
@@ -352,7 +352,7 @@ const Analyzer: React.FC = () => {
                 <div className="lg:col-span-2 flex flex-col h-full overflow-hidden">
                     <Card className="h-full bg-white/5 border-white/10 flex flex-col">
                         <CardHeader className="border-b border-white/5 pb-4">
-                            <CardTitle className="text-lg text-gray-100">Analysis Report</CardTitle>
+                            <CardTitle className="text-lg text-gray-100">{t('analyzer.analysisReport')}</CardTitle>
                         </CardHeader>
                         <CardContent className="flex-1 overflow-y-auto p-6" ref={reportRef}>
                             {result ? (
@@ -361,25 +361,25 @@ const Analyzer: React.FC = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                         {result.image_summary && (
                                             <div className="bg-black/20 p-4 rounded-lg border border-white/5">
-                                                <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">Image Summary</h4>
+                                                <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">{t('analyzer.summaries.image')}</h4>
                                                 <p className="text-sm text-gray-300">{result.image_summary}</p>
                                             </div>
                                         )}
                                         {result.video_summary && (
                                             <div className="bg-black/20 p-4 rounded-lg border border-white/5">
-                                                <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">Video Summary</h4>
+                                                <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">{t('analyzer.summaries.video')}</h4>
                                                 <p className="text-sm text-gray-300">{result.video_summary}</p>
                                             </div>
                                         )}
                                         {result.copywriting_summary && (
                                             <div className="bg-black/20 p-4 rounded-lg border border-white/5">
-                                                <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">Copy Summary</h4>
+                                                <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">{t('analyzer.summaries.copy')}</h4>
                                                 <p className="text-sm text-gray-300">{result.copywriting_summary}</p>
                                             </div>
                                         )}
                                         {result.landing_page_summary && (
                                             <div className="bg-black/20 p-4 rounded-lg border border-white/5">
-                                                <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">Landing Page Summary</h4>
+                                                <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">{t('analyzer.summaries.landingPage')}</h4>
                                                 <p className="text-sm text-gray-300">{result.landing_page_summary}</p>
                                             </div>
                                         )}
@@ -400,7 +400,7 @@ const Analyzer: React.FC = () => {
                                                     </div>
                                                     <div className="p-4 flex-1 space-y-4">
                                                         <div>
-                                                            <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">Violations</h4>
+                                                            <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">{t('analyzer.violations')}</h4>
                                                             {report.violation_items.length > 0 ? (
                                                                 <ul className="space-y-1">
                                                                     {report.violation_items.map((item, i) => (
@@ -413,16 +413,16 @@ const Analyzer: React.FC = () => {
                                                             ) : (
                                                                 <p className="text-xs text-green-400 flex items-center gap-1">
                                                                     <span className="material-symbols-outlined text-sm">check_circle</span>
-                                                                    No violations detected
+                                                                    {t('analyzer.noViolations')}
                                                                 </p>
                                                             )}
                                                         </div>
                                                         <div>
-                                                            <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">Details</h4>
+                                                            <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">{t('analyzer.details')}</h4>
                                                             <p className="text-xs text-gray-300 leading-relaxed">{report.details}</p>
                                                         </div>
                                                         <div>
-                                                            <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">Recommendation</h4>
+                                                            <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">{t('analyzer.recommendation')}</h4>
                                                             <p className="text-xs text-blue-300 leading-relaxed bg-blue-500/10 p-2 rounded border border-blue-500/20">
                                                                 {report.recommendation}
                                                             </p>
@@ -438,9 +438,9 @@ const Analyzer: React.FC = () => {
                                     <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center">
                                         <span className="material-symbols-outlined text-4xl text-gray-400">analytics</span>
                                     </div>
-                                    <p className="text-gray-300 font-medium">Ready to Analyze</p>
+                                    <p className="text-gray-300 font-medium">{t('analyzer.readyToAnalyze')}</p>
                                     <p className="text-sm text-gray-500 max-w-[200px] mx-auto">
-                                        Upload material to generate a comprehensive 3-platform risk report.
+                                        {t('analyzer.readyToAnalyzeHint')}
                                     </p>
                                 </div>
                             )}

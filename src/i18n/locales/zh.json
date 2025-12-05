@@ -23,6 +23,39 @@
         "download": "下載",
         "filter": "篩選"
     },
+    "analyzer": {
+        "title": "廣告合規分析器",
+        "subtitle": "分析您的廣告素材，檢測 Meta、TikTok、Google 三大平台的違規風險。",
+        "reportLanguage": "報告語言",
+        "languages": {
+            "traditionalChinese": "繁體中文",
+            "simplifiedChinese": "簡體中文",
+            "english": "English"
+        },
+        "material": "素材",
+        "uploadHint": "上傳圖片或影片",
+        "copywriting": "廣告文案",
+        "copyPlaceholder": "請輸入廣告文案...",
+        "landingPage": "落地頁",
+        "urlPlaceholder": "https://example.com",
+        "startAnalysis": "開始分析",
+        "analyzing": "分析中...",
+        "downloadPDF": "下載 PDF",
+        "analysisReport": "分析報告",
+        "readyToAnalyze": "準備就緒",
+        "readyToAnalyzeHint": "上傳素材以生成涵蓋三大平台的完整風險報告。",
+        "summaries": {
+            "image": "圖片摘要",
+            "video": "影片摘要",
+            "copy": "文案摘要",
+            "landingPage": "落地頁摘要"
+        },
+        "violations": "違規項目",
+        "noViolations": "未偵測到違規",
+        "details": "詳細說明",
+        "recommendation": "修改建議",
+        "inputRequired": "請至少提供一項輸入（圖片/影片、文案或網址）。"
+    },
     "sidebar": {
         "dashboard": "儀表板",
         "analyze": "分析器",

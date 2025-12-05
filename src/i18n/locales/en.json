@@ -23,6 +23,39 @@
         "download": "Download",
         "filter": "Filter"
     },
+    "analyzer": {
+        "title": "Ad Compliance Analyzer",
+        "subtitle": "Analyze your ad creatives for policy violations on Meta, TikTok, and Google.",
+        "reportLanguage": "Report Language",
+        "languages": {
+            "traditionalChinese": "Traditional Chinese",
+            "simplifiedChinese": "Simplified Chinese",
+            "english": "English"
+        },
+        "material": "Material",
+        "uploadHint": "Upload Image or Video",
+        "copywriting": "Copywriting",
+        "copyPlaceholder": "Enter ad copy...",
+        "landingPage": "Landing Page",
+        "urlPlaceholder": "https://example.com",
+        "startAnalysis": "Start Analysis",
+        "analyzing": "Analyzing...",
+        "downloadPDF": "Download PDF",
+        "analysisReport": "Analysis Report",
+        "readyToAnalyze": "Ready to Analyze",
+        "readyToAnalyzeHint": "Upload material to generate a comprehensive 3-platform risk report.",
+        "summaries": {
+            "image": "Image Summary",
+            "video": "Video Summary",
+            "copy": "Copy Summary",
+            "landingPage": "Landing Page Summary"
+        },
+        "violations": "Violations",
+        "noViolations": "No violations detected",
+        "details": "Details",
+        "recommendation": "Recommendation",
+        "inputRequired": "Please provide at least one input (Image/Video, Copy, or URL)."
+    },
     "sidebar": {
         "dashboard": "Dashboard",
         "analyze": "Analyzer",
