@@ -13,18 +13,13 @@ import { successResponse, errorResponse } from '../_utils/responseFormatter.js';
 import { ErrorCodes } from '../_utils/errorHandler.js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Cron secret for security
-const CRON_SECRET = process.env.CRON_SECRET || 'your-cron-secret';
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    // Verify cron secret (Vercel sends this header)
-    const authHeader = req.headers.authorization;
-    const cronHeader = req.headers['x-vercel-cron'];
+    // CORS for manual testing
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
 
-    // Allow if: 1) Vercel Cron header present, OR 2) Correct secret provided
-    if (!cronHeader && authHeader !== `Bearer ${CRON_SECRET}`) {
-        console.warn('[Cron] Unauthorized cron attempt');
-        return res.status(401).json(errorResponse(ErrorCodes.UNAUTHORIZED, 'Unauthorized'));
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
     }
 
     try {
@@ -50,3 +45,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(500).json(errorResponse(ErrorCodes.INTERNAL_SERVER_ERROR, error.message));
     }
 }
+
