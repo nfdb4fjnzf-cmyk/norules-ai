@@ -42,8 +42,9 @@ export const paymentService = {
             return response.data.invoice_url;
 
         } catch (error: any) {
-            console.error('Payment creation failed:', error.response?.data || error.message);
-            throw new Error('Failed to create payment invoice');
+            const errorMessage = error.response?.data?.message || error.message || 'Failed to create payment invoice';
+            console.error('Payment creation failed:', errorMessage);
+            throw new Error(errorMessage);
         }
     }
 };

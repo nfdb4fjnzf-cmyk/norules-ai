@@ -44,6 +44,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const userProfile = await userService.getUserProfile(user.uid);
         const isInternal = userProfile?.mode === 'internal';
 
+        // Calculate Upgrade / Proration (Check Downgrade FIRST)
+        const upgradeCheck = await subscriptionService.calculateUpgrade(user.uid, planId, billingCycle);
+
+        if (!upgradeCheck.allowed) {
+            return res.status(400).json(errorResponse(ErrorCodes.BAD_REQUEST, upgradeCheck.reason || 'Downgrade not allowed'));
+        }
+
         // Internal Users: Direct Activation (Free)
         if (isInternal) {
             await subscriptionService.createSubscription(user.uid, planId, billingCycle, couponCode);
@@ -60,12 +67,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // External Users: Payment Required
         const { paymentService } = await import('../_services/paymentService.js');
 
-        // Calculate Upgrade / Proration
-        const upgradeCheck = await subscriptionService.calculateUpgrade(user.uid, planId, billingCycle);
-
-        if (!upgradeCheck.allowed) {
-            return res.status(400).json(errorResponse(ErrorCodes.BAD_REQUEST, upgradeCheck.reason || 'Downgrade not allowed'));
-        }
+        // (upgradeCheck is already calculated above)
 
         const price = upgradeCheck.finalPrice;
 
