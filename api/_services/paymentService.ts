@@ -21,16 +21,17 @@ export const paymentService = {
 
         try {
             // Real NOWPayments API Call (Fixed USDTTRC20 Invoice)
+            // Use usdttrc20 for BOTH price_currency and pay_currency to avoid conversion decimals
+            const roundedPrice = Math.ceil(price); // Ensure whole number
             const response = await axios.post(`${NOWPAYMENTS_API_URL}/invoice`, {
-                price_amount: price,
-                price_currency: 'usd',
+                price_amount: roundedPrice,
+                price_currency: 'usdttrc20', // Same as pay_currency to avoid conversion
                 pay_currency: 'usdttrc20',
                 order_id: orderId,
                 order_description: orderDescription,
                 ipn_callback_url: `${BASE_URL}/api/payment/webhook`,
                 success_url: `${BASE_URL}/subscription/success`,
                 cancel_url: `${BASE_URL}/subscription/cancel`,
-                // Removed fixed_rate: true (requires NOWPayments paid plan)
                 is_fee_paid_by_user: false
             }, {
                 headers: {
