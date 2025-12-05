@@ -1,7 +1,7 @@
 {
   "name": "adguardian-llm",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.2.0",
   "type": "module",
   "scripts": {
     "dev": "concurrently \"vite\" \"npm run dev:api\"",
