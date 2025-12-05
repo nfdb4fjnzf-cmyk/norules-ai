@@ -52,7 +52,9 @@ function App() {
               <Route path="/subscription" element={<SubscriptionOverview />} />
               <Route path="/subscription/overview" element={<SubscriptionOverview />} />
               <Route path="/subscription/plans" element={<Plans />} />
-              <Route path="/subscription/topup" element={<TopUp />} />
+              <Route path="/subscription/plans" element={<Plans />} />
+              <Route path="/subscription/buy-points" element={<TopUp />} />
+              <Route path="/subscription/success" element={<Success />} />
               <Route path="/subscription/success" element={<Success />} />
 
               <Route path="/settings/apikeys" element={<ApiKeys />} />

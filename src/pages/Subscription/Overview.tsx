@@ -106,7 +106,7 @@ const SubscriptionOverview: React.FC = () => {
                 </div>
                 <div className="flex gap-3">
                     <Link
-                        to="/subscription/topup"
+                        to="/subscription/buy-points"
                         className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors border border-white/10"
                     >
                         <span className="material-symbols-outlined text-lg">bolt</span>
