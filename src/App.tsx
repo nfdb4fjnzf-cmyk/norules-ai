@@ -11,6 +11,7 @@ import SubscriptionOverview from './pages/Subscription/Overview';
 import Plans from './pages/Subscription/Plans';
 import TopUp from './pages/Subscription/TopUpV2';
 import Success from './pages/Subscription/Success';
+import PaymentPage from './pages/Payment/PaymentPage';
 import ApiKeys from './pages/Settings/ApiKeys';
 import ExternalKey from './pages/Settings/ExternalKey';
 import LLMPlayground from './pages/LLM/Playground';
@@ -52,10 +53,11 @@ function App() {
               <Route path="/subscription" element={<SubscriptionOverview />} />
               <Route path="/subscription/overview" element={<SubscriptionOverview />} />
               <Route path="/subscription/plans" element={<Plans />} />
-              <Route path="/subscription/plans" element={<Plans />} />
               <Route path="/subscription/buy-points" element={<TopUp />} />
               <Route path="/subscription/success" element={<Success />} />
-              <Route path="/subscription/success" element={<Success />} />
+
+              {/* Payment Route */}
+              <Route path="/payment" element={<PaymentPage />} />
 
               <Route path="/settings/apikeys" element={<ApiKeys />} />
               <Route path="/settings/external-key" element={<ExternalKey />} />
@@ -82,3 +84,4 @@ function App() {
 }
 
 export default App;
+

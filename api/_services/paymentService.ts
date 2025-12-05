@@ -1,51 +1,274 @@
-import axios from 'axios';
+/**
+ * Payment Service V2
+ * 
+ * Self-hosted USDT TRC20 payment system using unique amount matching.
+ * Replaces NOWPayments integration.
+ */
 
-const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY;
-const NOWPAYMENTS_API_URL = 'https://api.nowpayments.io/v1';
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://noai-staging.vercel.app';
+import { db } from '../_config/firebaseAdmin.js';
+import { tronService } from './tronService.js';
+import admin from 'firebase-admin';
+import crypto from 'crypto';
+
+const WALLET_ADDRESS = process.env.USDT_WALLET_ADDRESS || 'TMtVqkC5P7MPExWD3p1esQmsyhyzvirELw';
+const ORDER_EXPIRY_MINUTES = 30;
+
+export interface PaymentOrder {
+    orderId: string;
+    userId: string;
+    type: 'TOPUP' | 'SUB';
+
+    // Order details
+    points?: number;
+    planId?: string;
+    billingCycle?: string;
+
+    // Payment info
+    baseAmount: number;         // Base price without unique suffix
+    expectedAmount: number;     // Unique amount (base + decimal suffix)
+    walletAddress: string;
+    currency: 'USDT-TRC20';
+
+    // Status
+    status: 'pending' | 'confirming' | 'completed' | 'expired' | 'failed';
+    txHash?: string;
+
+    // Timestamps
+    createdAt: admin.firestore.Timestamp;
+    expiresAt: admin.firestore.Timestamp;
+    confirmedAt?: admin.firestore.Timestamp;
+    completedAt?: admin.firestore.Timestamp;
+}
 
 export const paymentService = {
     /**
-     * Create Invoice (Real)
+     * Generate unique amount for order matching
+     * Uses orderId hash to create a deterministic 3-digit decimal suffix
      */
-    createInvoice: async (
-        price: number,
+    generateUniqueAmount: (baseAmount: number, orderId: string): number => {
+        // Create a hash of the orderId
+        const hash = crypto.createHash('md5').update(orderId).digest('hex');
+        // Take first 3 hex chars and convert to decimal (0.001 - 0.999)
+        const decimalSuffix = (parseInt(hash.substring(0, 3), 16) % 999 + 1) / 1000;
+
+        // Round to 3 decimal places
+        const uniqueAmount = Math.round((baseAmount + decimalSuffix) * 1000) / 1000;
+
+        return uniqueAmount;
+    },
+
+    /**
+     * Create a new payment order
+     */
+    createOrder: async (
+        userId: string,
+        type: 'TOPUP' | 'SUB',
+        baseAmount: number,
+        details: {
+            points?: number;
+            planId?: string;
+            billingCycle?: string;
+            description?: string;
+        }
+    ): Promise<PaymentOrder> => {
+        // Generate order ID
+        const orderId = `ORD-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+
+        // Generate unique amount
+        const expectedAmount = paymentService.generateUniqueAmount(baseAmount, orderId);
+
+        // Calculate expiry time
+        const now = admin.firestore.Timestamp.now();
+        const expiresAt = admin.firestore.Timestamp.fromDate(
+            new Date(Date.now() + ORDER_EXPIRY_MINUTES * 60 * 1000)
+        );
+
+        const order: PaymentOrder = {
+            orderId,
+            userId,
+            type,
+            points: details.points,
+            planId: details.planId,
+            billingCycle: details.billingCycle,
+            baseAmount,
+            expectedAmount,
+            walletAddress: WALLET_ADDRESS,
+            currency: 'USDT-TRC20',
+            status: 'pending',
+            createdAt: now,
+            expiresAt
+        };
+
+        // Save to Firestore
+        await db.collection('payment_orders').doc(orderId).set(order);
+
+        console.log(`[Payment] Created order ${orderId}: ${expectedAmount} USDT for user ${userId}`);
+
+        return order;
+    },
+
+    /**
+     * Get order by ID
+     */
+    getOrder: async (orderId: string): Promise<PaymentOrder | null> => {
+        const doc = await db.collection('payment_orders').doc(orderId).get();
+        if (!doc.exists) return null;
+        return doc.data() as PaymentOrder;
+    },
+
+    /**
+     * Get all pending orders (for cron job)
+     */
+    getPendingOrders: async (): Promise<PaymentOrder[]> => {
+        const now = admin.firestore.Timestamp.now();
+
+        const snapshot = await db.collection('payment_orders')
+            .where('status', '==', 'pending')
+            .where('expiresAt', '>', now)
+            .get();
+
+        return snapshot.docs.map(doc => doc.data() as PaymentOrder);
+    },
+
+    /**
+     * Update order status
+     */
+    updateOrderStatus: async (
         orderId: string,
-        orderDescription: string
-    ): Promise<string> => {
-        // If API Key is missing, return a mock URL for testing
-        if (!NOWPAYMENTS_API_KEY) {
-            console.warn('NOWPAYMENTS_API_KEY missing. Returning mock payment URL.');
-            return `https://mock-payment.norules.ai/pay?orderId=${orderId}&amount=${price}`;
+        status: PaymentOrder['status'],
+        txHash?: string
+    ): Promise<void> => {
+        const updateData: any = { status };
+
+        if (txHash) updateData.txHash = txHash;
+        if (status === 'confirming') updateData.confirmedAt = admin.firestore.Timestamp.now();
+        if (status === 'completed') updateData.completedAt = admin.firestore.Timestamp.now();
+
+        await db.collection('payment_orders').doc(orderId).update(updateData);
+    },
+
+    /**
+     * Mark expired orders
+     */
+    expireOldOrders: async (): Promise<number> => {
+        const now = admin.firestore.Timestamp.now();
+
+        const snapshot = await db.collection('payment_orders')
+            .where('status', '==', 'pending')
+            .where('expiresAt', '<=', now)
+            .get();
+
+        const batch = db.batch();
+        snapshot.docs.forEach(doc => {
+            batch.update(doc.ref, { status: 'expired' });
+        });
+
+        await batch.commit();
+        return snapshot.size;
+    },
+
+    /**
+     * Match transactions to pending orders
+     */
+    matchTransactionsToOrders: async (): Promise<{
+        matched: number;
+        processed: string[];
+    }> => {
+        // Get pending orders
+        const pendingOrders = await paymentService.getPendingOrders();
+        if (pendingOrders.length === 0) {
+            return { matched: 0, processed: [] };
         }
 
-        try {
-            // Real NOWPayments API Call (Fixed USDTTRC20 Invoice)
-            // Use usdttrc20 for BOTH price_currency and pay_currency to avoid conversion decimals
-            const roundedPrice = Math.ceil(price); // Ensure whole number
-            const response = await axios.post(`${NOWPAYMENTS_API_URL}/invoice`, {
-                price_amount: roundedPrice,
-                price_currency: 'usdttrc20', // Same as pay_currency to avoid conversion
-                pay_currency: 'usdttrc20',
-                order_id: orderId,
-                order_description: orderDescription,
-                ipn_callback_url: `${BASE_URL}/api/payment/webhook`,
-                success_url: `${BASE_URL}/subscription/success`,
-                cancel_url: `${BASE_URL}/subscription/cancel`,
-                is_fee_paid_by_user: false
-            }, {
-                headers: {
-                    'x-api-key': NOWPAYMENTS_API_KEY,
-                    'Content-Type': 'application/json'
-                }
+        // Get recent transactions
+        const transactions = await tronService.getRecentTransactions(50);
+        if (transactions.length === 0) {
+            return { matched: 0, processed: [] };
+        }
+
+        const processed: string[] = [];
+
+        for (const order of pendingOrders) {
+            // Find matching transaction
+            const matchedTx = transactions.find(tx => {
+                const txAmount = tronService.parseUsdtAmount(tx.value);
+                // Allow 0.001 tolerance for floating point
+                const amountMatch = Math.abs(txAmount - order.expectedAmount) < 0.001;
+                // Transaction must be after order creation
+                const timeValid = tx.block_timestamp > order.createdAt.toMillis();
+
+                return amountMatch && timeValid;
             });
 
-            return response.data.invoice_url;
+            if (matchedTx) {
+                // Check if this txHash was already processed
+                const existingOrder = await db.collection('payment_orders')
+                    .where('txHash', '==', matchedTx.transaction_id)
+                    .get();
 
-        } catch (error: any) {
-            const errorMessage = error.response?.data?.message || error.message || 'Failed to create payment invoice';
-            console.error('Payment creation failed:', errorMessage);
-            throw new Error(errorMessage);
+                if (!existingOrder.empty) {
+                    console.log(`[Payment] Transaction ${matchedTx.transaction_id} already used`);
+                    continue;
+                }
+
+                // Update order with transaction
+                await paymentService.updateOrderStatus(
+                    order.orderId,
+                    'confirming',
+                    matchedTx.transaction_id
+                );
+
+                // If transaction is confirmed, process the order
+                if (tronService.isConfirmed(matchedTx)) {
+                    await paymentService.processCompletedOrder(order);
+                    await paymentService.updateOrderStatus(order.orderId, 'completed');
+                    processed.push(order.orderId);
+                }
+            }
         }
+
+        return { matched: processed.length, processed };
+    },
+
+    /**
+     * Process a completed payment order
+     */
+    processCompletedOrder: async (order: PaymentOrder): Promise<void> => {
+        const { userService } = await import('./userService.js');
+        const { subscriptionService } = await import('./subscriptionService.js');
+
+        console.log(`[Payment] Processing completed order ${order.orderId}`);
+
+        if (order.type === 'TOPUP' && order.points) {
+            // Add credits for TopUp
+            await userService.addCredits(order.userId, order.points);
+            console.log(`[Payment] Added ${order.points} credits to user ${order.userId}`);
+
+        } else if (order.type === 'SUB' && order.planId && order.billingCycle) {
+            // Create subscription
+            await subscriptionService.createSubscription(
+                order.userId,
+                order.planId as 'lite' | 'pro' | 'ultra',
+                order.billingCycle as 'monthly' | 'quarterly' | 'yearly'
+            );
+            console.log(`[Payment] Created ${order.planId} subscription for user ${order.userId}`);
+        }
+    },
+
+    /**
+     * Generate QR code data for payment
+     * Format: TronLink/imToken deep link
+     */
+    generateQRCodeData: (walletAddress: string, amount: number): string => {
+        // TronLink compatible format
+        // Note: Some wallets may not support amount parameter
+        return `tron:${walletAddress}?amount=${amount}&token=USDT`;
+    },
+
+    /**
+     * Get wallet address
+     */
+    getWalletAddress: (): string => {
+        return WALLET_ADDRESS;
     }
 };

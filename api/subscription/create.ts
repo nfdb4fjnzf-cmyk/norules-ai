@@ -64,36 +64,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }));
         }
 
-        // External Users: Payment Required
+        // External Users: Payment Required (Self-Hosted USDT)
         const { paymentService } = await import('../_services/paymentService.js');
-
-        // (upgradeCheck is already calculated above)
 
         const price = upgradeCheck.finalPrice;
 
-        // Force Integer USDT Amount
         // Add 4 USDT Network Fee (consistent with TopUp)
         const finalAmount = Math.ceil(price) + 4;
 
-        const orderId = `SUB-${user.uid}-${planId}-${billingCycle}-${Date.now()}`;
-
-        let description = `Subscription: ${planId} (${billingCycle})`;
-        if (upgradeCheck.isUpgrade) {
-            description += ` (Upgrade - Prorated)`;
-        }
-        description += ` (incl. 4 USDT Network Fee)`;
-
-        const paymentUrl = await paymentService.createInvoice(
+        // Create payment order using new self-hosted system
+        const order = await paymentService.createOrder(
+            user.uid,
+            'SUB',
             finalAmount,
-            orderId,
-            description
+            {
+                planId,
+                billingCycle,
+                description: `Subscription: ${planId} (${billingCycle})${upgradeCheck.isUpgrade ? ' (Upgrade)' : ''}`
+            }
         );
 
+        // Return order details for frontend to redirect to payment page
         return res.status(200).json(successResponse({
             message: 'Payment required',
-            paymentUrl,
+            orderId: order.orderId,
+            amount: order.expectedAmount,
+            walletAddress: order.walletAddress,
+            expiresAt: order.expiresAt.toDate().toISOString(),
+            paymentUrl: `/payment?orderId=${order.orderId}`,
             mode: 'external'
         }));
+
 
     } catch (error: any) {
         console.error('Subscription Create Error:', error);

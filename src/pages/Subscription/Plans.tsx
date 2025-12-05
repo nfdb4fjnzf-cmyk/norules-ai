@@ -124,25 +124,26 @@ const Plans: React.FC = () => {
             });
 
             if (response.data.success) {
-                // Check if payment redirection is required
-                if (response.data.data?.paymentUrl) {
-                    showToast('success', 'Redirecting to payment...');
-                    window.location.href = response.data.data.paymentUrl;
+                // Check if payment is required (external mode)
+                if (response.data.data?.orderId) {
+                    showToast('success', '訂單已建立，正在跳轉付款頁面...');
+                    window.location.href = `/payment?orderId=${response.data.data.orderId}`;
                     return;
                 }
 
-                showToast('success', 'Subscription updated successfully!');
+                // Internal mode - direct activation
+                showToast('success', '訂閱更新成功！');
                 await fetchStatus();
                 setIsModalOpen(false);
                 navigate('/subscription');
             } else {
-                showToast('error', 'Failed to update subscription');
+                showToast('error', '訂閱更新失敗');
             }
         } catch (error: any) {
             console.error('Subscribe error:', error);
 
             // Extract error message from API response
-            let errorMsg = 'Failed to subscribe';
+            let errorMsg = '訂閱失敗';
             if (error.response?.data?.message) {
                 errorMsg = error.response.data.message;
             } else if (error.message) {
@@ -158,6 +159,7 @@ const Plans: React.FC = () => {
                 showToast('error', errorMsg);
             }
         }
+
     };
 
     const getPrice = (plan: Plan) => {

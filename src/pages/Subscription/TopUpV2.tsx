@@ -33,31 +33,36 @@ const TopUpV2: React.FC = () => {
         setLoading(true);
         try {
             const token = await user.getIdToken();
-            const res = await fetch('/api/payment/create-topup-invoice', {
+            const res = await fetch('/api/payment/create-order', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ points: selectedPackage.points })
+                body: JSON.stringify({
+                    type: 'TOPUP',
+                    points: selectedPackage.points
+                })
             });
 
             const data = await res.json();
 
-            if (data.code === 0 && data.data.invoice_url) {
-                showToast('success', 'Redirecting to payment...');
-                window.location.href = data.data.invoice_url;
+            if (data.code === 0 && data.data.orderId) {
+                showToast('success', '訂單已建立，正在跳轉付款頁面...');
+                // Redirect to internal payment page
+                window.location.href = `/payment?orderId=${data.data.orderId}`;
             } else {
-                throw new Error(data.message || 'Failed to create invoice');
+                throw new Error(data.message || '無法建立訂單');
             }
         } catch (error: any) {
             console.error('TopUp Error:', error);
-            showToast('error', error.message || 'Payment initialization failed');
+            showToast('error', error.message || '付款初始化失敗');
         } finally {
             setLoading(false);
             setIsModalOpen(false);
         }
     };
+
 
     const calculateCustomPrice = (points: number) => {
         return parseFloat((points * 0.003).toFixed(2));
