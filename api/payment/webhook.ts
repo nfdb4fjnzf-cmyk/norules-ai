@@ -3,6 +3,8 @@ import { userService } from '../_services/userService.js';
 import { subscriptionService } from '../_services/subscriptionService.js';
 import { successResponse, errorResponse } from '../_utils/responseFormatter.js';
 import { ErrorCodes } from '../_utils/errorHandler.js';
+import { db } from '../_config/firebaseAdmin.js';
+import admin from 'firebase-admin';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const NOWPAYMENTS_IPN_SECRET = process.env.NOWPAYMENTS_IPN_SECRET || 'your_ipn_secret'; // Should be in env
@@ -45,29 +47,77 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.log(`[Webhook] Received IPN for Order: ${order_id}, Status: ${payment_status}`);
 
         if (payment_status === 'finished' || payment_status === 'confirmed') {
-            // Parse Order ID
-            // Format: TOPUP-uid-points-timestamp or SUB-uid-planId-cycle-timestamp
-            const parts = order_id.split('-');
-            const type = parts[0];
-            const uid = parts[1];
+            // ========== IDEMPOTENCY CHECK ==========
+            // Check if this order_id has already been processed
+            const processedOrderRef = db.collection('processed_orders').doc(order_id);
 
-            if (type === 'TOPUP') {
-                const points = parseInt(parts[2]);
-                if (!uid || !points) throw new Error('Invalid TopUp Order ID');
+            const result = await db.runTransaction(async (transaction) => {
+                const orderDoc = await transaction.get(processedOrderRef);
 
-                console.log(`[Webhook] Processing TopUp: ${points} points for user ${uid}`);
-                await userService.addCredits(uid, points);
+                if (orderDoc.exists) {
+                    console.log(`[Webhook] Order ${order_id} already processed. Skipping.`);
+                    return { alreadyProcessed: true };
+                }
 
-            } else if (type === 'SUB') {
-                const planId = parts[2] as 'lite' | 'pro' | 'ultra';
-                const cycle = parts[3] as 'monthly' | 'quarterly' | 'yearly';
+                // Mark as processing (will be set to completed after success)
+                transaction.set(processedOrderRef, {
+                    order_id,
+                    payment_status,
+                    pay_amount,
+                    pay_currency,
+                    processed_at: admin.firestore.Timestamp.now(),
+                    status: 'processing'
+                });
 
-                if (!uid || !planId || !cycle) throw new Error('Invalid Subscription Order ID');
+                return { alreadyProcessed: false };
+            });
 
-                console.log(`[Webhook] Processing Subscription: ${planId} (${cycle}) for user ${uid}`);
-                // Note: createSubscription now awards credits too
-                await subscriptionService.createSubscription(uid, planId, cycle);
+            if (result.alreadyProcessed) {
+                return res.status(200).json(successResponse({ message: 'Already processed' }));
             }
+            // ========== END IDEMPOTENCY CHECK ==========
+
+            try {
+                // Parse Order ID
+                // Format: TOPUP-uid-points-timestamp or SUB-uid-planId-cycle-timestamp
+                const parts = order_id.split('-');
+                const type = parts[0];
+                const uid = parts[1];
+
+                if (type === 'TOPUP') {
+                    const points = parseInt(parts[2]);
+                    if (!uid || !points) throw new Error('Invalid TopUp Order ID');
+
+                    console.log(`[Webhook] Processing TopUp: ${points} points for user ${uid}`);
+                    await userService.addCredits(uid, points);
+
+                } else if (type === 'SUB') {
+                    const planId = parts[2] as 'lite' | 'pro' | 'ultra';
+                    const cycle = parts[3] as 'monthly' | 'quarterly' | 'yearly';
+
+                    if (!uid || !planId || !cycle) throw new Error('Invalid Subscription Order ID');
+
+                    console.log(`[Webhook] Processing Subscription: ${planId} (${cycle}) for user ${uid}`);
+                    // Note: createSubscription now awards credits too
+                    await subscriptionService.createSubscription(uid, planId, cycle);
+                }
+
+                // Mark order as completed
+                await processedOrderRef.update({
+                    status: 'completed',
+                    completed_at: admin.firestore.Timestamp.now()
+                });
+
+            } catch (processError: any) {
+                // Mark order as failed (but don't delete - for debugging)
+                await processedOrderRef.update({
+                    status: 'failed',
+                    error: processError.message,
+                    failed_at: admin.firestore.Timestamp.now()
+                });
+                throw processError;
+            }
+
         } else if (payment_status === 'expired' || payment_status === 'failed') {
             console.warn(`[Webhook] Payment failed/expired for Order: ${order_id}`);
             // Future: Trigger email notification or release reserved resources
@@ -80,3 +130,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(500).json(errorResponse(ErrorCodes.INTERNAL_SERVER_ERROR, error.message));
     }
 }
+

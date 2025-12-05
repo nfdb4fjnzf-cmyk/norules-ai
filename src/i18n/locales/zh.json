@@ -54,7 +54,9 @@
         "noViolations": "未偵測到違規",
         "details": "詳細說明",
         "recommendation": "修改建議",
-        "inputRequired": "請至少提供一項輸入（圖片/影片、文案或網址）。"
+        "inputRequired": "請至少提供一項輸入（圖片/影片、文案或網址）。",
+        "analysisComplete": "分析完成！",
+        "estimating": "預估費用中..."
     },
     "sidebar": {
         "dashboard": "儀表板",

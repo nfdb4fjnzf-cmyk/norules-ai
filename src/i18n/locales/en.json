@@ -54,7 +54,9 @@
         "noViolations": "No violations detected",
         "details": "Details",
         "recommendation": "Recommendation",
-        "inputRequired": "Please provide at least one input (Image/Video, Copy, or URL)."
+        "inputRequired": "Please provide at least one input (Image/Video, Copy, or URL).",
+        "analysisComplete": "Analysis Complete!",
+        "estimating": "Estimating cost..."
     },
     "sidebar": {
         "dashboard": "Dashboard",

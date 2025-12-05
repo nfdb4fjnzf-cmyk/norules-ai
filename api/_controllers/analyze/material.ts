@@ -16,25 +16,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     let operationId = '';
-    const COST = 5;
 
     try {
         const user = await validateRequest(req.headers);
-        const { image_base64, video_base64, video_url, copywriting, landing_page_url, platforms = ['meta', 'tiktok', 'google'], language = 'Traditional Chinese' } = req.body;
+        const {
+            image_base64,
+            video_base64,
+            video_url,
+            copywriting,
+            landing_page_url,
+            platforms = ['meta', 'tiktok', 'google'],
+            language = 'Traditional Chinese',
+            confirmed_cost  // User-confirmed cost from estimate API
+        } = req.body;
 
         if (!image_base64 && !video_base64 && !video_url && !copywriting && !landing_page_url) {
             throw new AppError(ErrorCodes.BAD_REQUEST, 'At least one input (image, video, copy, or url) is required', 400);
         }
 
+        // Use confirmed cost if provided, otherwise fallback to minimum
+        const COST = confirmed_cost && typeof confirmed_cost === 'number' && confirmed_cost > 0
+            ? confirmed_cost
+            : 1; // Minimum 1 credit fallback
+
         // 1. Start Usage Operation (Check & Deduct Credits)
-        const userProfile = await userService.getUserProfile(user.uid); // Still need userProfile for rate limiting
+        const userProfile = await userService.getUserProfile(user.uid);
         await checkRateLimit(user.uid, userProfile.subscription?.plan || 'free');
 
         const usageOp = await usageService.startUsageOperation(
             user.uid,
             'ANALYZE',
             COST,
-            { platforms, language, hasImage: !!image_base64, hasVideo: !!video_base64 || !!video_url }
+            { platforms, language, hasImage: !!image_base64, hasVideo: !!video_base64 || !!video_url, confirmed_cost: COST }
         );
         operationId = usageOp.operationId;
 

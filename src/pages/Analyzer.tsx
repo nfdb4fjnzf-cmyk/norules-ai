@@ -69,23 +69,68 @@ const Analyzer: React.FC = () => {
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    const handleAnalyzeClick = () => {
+    const handleAnalyzeClick = async () => {
         if (!materialFile && !copyText && !linkUrl) {
             showToast('error', t('analyzer.inputRequired'));
             return;
         }
 
-        // Fixed Cost: 5 Credits
-        const COST = 5;
-        const currentCredits = userProfile?.credits || 0;
+        // Step 1: Prepare content for estimation
+        setIsAnalyzing(true); // Show loading state during estimation
 
-        if (userProfile?.mode === 'internal' && currentCredits < COST) {
-            openModal('INSUFFICIENT_CREDITS', { requiredCredits: COST, currentCredits });
-            return;
+        try {
+            let image_base64 = undefined;
+
+            // Prepare image for estimation (lightweight - just check if it exists)
+            if (materialFile && materialFile.type.startsWith('image')) {
+                const reader = new FileReader();
+                const base64Promise = new Promise<string>((resolve) => {
+                    reader.onload = () => resolve(reader.result as string);
+                    reader.readAsDataURL(materialFile);
+                });
+                image_base64 = await base64Promise;
+            }
+
+            // Step 2: Call estimate API
+            const estimate = await analyzerService.estimateCost({
+                image_base64: image_base64 ? 'has_image' : undefined, // Just indicate presence, don't send full image
+                video_url: (materialFile && materialFile.type.startsWith('video')) ? 'has_video' : undefined,
+                copywriting: copyText || undefined,
+                landing_page_url: linkUrl || undefined,
+                language: reportLanguage
+            });
+
+            setIsAnalyzing(false);
+
+            // Step 3: Check credits
+            if (!estimate.has_enough_credits) {
+                openModal('INSUFFICIENT_CREDITS', {
+                    requiredCredits: estimate.final_cost,
+                    currentCredits: estimate.current_credits
+                });
+                return;
+            }
+
+            // Step 4: Show cost modal with estimated cost
+            setEstimatedCostValue(estimate.final_cost);
+            setShowCostModal(true);
+
+        } catch (error: any) {
+            setIsAnalyzing(false);
+            console.error('Estimation failed:', error);
+
+            // Fallback to fixed cost if estimation fails
+            const FALLBACK_COST = 5;
+            const currentCredits = userProfile?.credits || 0;
+
+            if (userProfile?.mode === 'internal' && currentCredits < FALLBACK_COST) {
+                openModal('INSUFFICIENT_CREDITS', { requiredCredits: FALLBACK_COST, currentCredits });
+                return;
+            }
+
+            setEstimatedCostValue(FALLBACK_COST);
+            setShowCostModal(true);
         }
-
-        setEstimatedCostValue(COST);
-        setShowCostModal(true);
     };
 
     const executeAnalysis = async () => {
@@ -157,17 +202,19 @@ const Analyzer: React.FC = () => {
                 }
             }
 
+            // Pass confirmed_cost to backend
             const data = await analyzerService.analyzeMaterial({
                 image_base64,
                 video_base64,
                 video_url,
                 copywriting: copyText,
                 landing_page_url: linkUrl,
-                language: reportLanguage
+                language: reportLanguage,
+                confirmed_cost: estimatedCostValue  // Send the confirmed cost
             });
 
             setResult(data);
-            showToast('success', "Analysis Complete!");
+            showToast('success', t('analyzer.analysisComplete') || "Analysis Complete!");
             await refreshProfile();
 
         } catch (error: any) {
@@ -178,6 +225,7 @@ const Analyzer: React.FC = () => {
             setIsAnalyzing(false);
         }
     };
+
 
     const downloadPDF = () => {
         if (!reportRef.current) return;

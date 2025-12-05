@@ -9,6 +9,24 @@ export interface AnalysisResult {
     raw?: string;
 }
 
+export interface CostEstimate {
+    estimated_tokens: number;
+    estimation_method: string;
+    base_cost: number;
+    discount_multiplier: number;
+    final_cost: number;
+    current_credits: number;
+    has_enough_credits: boolean;
+    plan: string;
+    mode: string;
+    breakdown: {
+        text_tokens: number;
+        image_tokens: number;
+        video_tokens: number;
+        response_tokens: number;
+    };
+}
+
 export const analyzerService = {
     analyzeText: async (text: string): Promise<AnalysisResult> => {
         const response = await api.post('/analyze/text', { text });
@@ -52,6 +70,26 @@ export const analyzerService = {
         return response.data.data;
     },
 
+    /**
+     * Estimate cost before analysis (NEW)
+     * Returns token estimate and cost without deducting credits
+     */
+    estimateCost: async (data: {
+        image_base64?: string;
+        video_base64?: string;
+        video_url?: string;
+        copywriting?: string;
+        landing_page_url?: string;
+        language?: string;
+    }): Promise<CostEstimate> => {
+        const response = await api.post('/analyze/estimate', data);
+        if (response.data.code !== 0) throw new Error(response.data.message || 'Estimation failed');
+        return response.data.data;
+    },
+
+    /**
+     * Execute analysis with confirmed cost
+     */
     analyzeMaterial: async (data: {
         image_base64?: string;
         video_base64?: string;
@@ -59,9 +97,11 @@ export const analyzerService = {
         copywriting?: string;
         landing_page_url?: string;
         language?: string;
+        confirmed_cost?: number;  // User-confirmed cost from estimate
     }): Promise<any> => {
         const response = await api.post('/analyze/material', data);
         if (response.data.code !== 0) throw new Error(response.data.message || 'Analysis failed');
         return response.data.data;
     },
 };
+
