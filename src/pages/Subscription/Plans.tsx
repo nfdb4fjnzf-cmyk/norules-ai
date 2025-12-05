@@ -92,7 +92,9 @@ const Plans: React.FC = () => {
             const response = await api.get('/subscription/status');
             if (response.data.success) {
                 const sub = response.data.data.subscription;
-                if (sub && sub.status === 'active') {
+                // Consider 'canceled' subscriptions as active if they haven't expired yet
+                // Backend returns canceled subs that are still within their period
+                if (sub && (sub.status === 'active' || sub.status === 'canceled')) {
                     setCurrentPlanId(sub.planId);
                     setBillingCycle(sub.billingCycle as BillingCycle);
                 }

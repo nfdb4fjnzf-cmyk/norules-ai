@@ -30,7 +30,7 @@ export const paymentService = {
                 ipn_callback_url: `${BASE_URL}/api/payment/webhook`,
                 success_url: `${BASE_URL}/subscription/success`,
                 cancel_url: `${BASE_URL}/subscription/cancel`,
-                fixed_rate: true,
+                // Removed fixed_rate: true (requires NOWPayments paid plan)
                 is_fee_paid_by_user: false
             }, {
                 headers: {
