@@ -136,15 +136,15 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                                 Network Fee
                                 <span className="text-xs text-gray-500 bg-gray-800 px-1.5 py-0.5 rounded" title="Gas fee and processing">TRC20</span>
                             </span>
-                            <span className="text-white">$4.00</span>
+                            <span className="text-white">$1.00</span>
                         </div>
                         <div className="flex justify-between items-end pt-2">
                             <span className="text-gray-400">Total to Pay</span>
                             <div className="text-right">
                                 {discount && (
-                                    <span className="block text-sm text-gray-500 line-through mb-1">${(price + 4).toFixed(2)}</span>
+                                    <span className="block text-sm text-gray-500 line-through mb-1">${(price + 1).toFixed(2)}</span>
                                 )}
-                                <span className="text-3xl font-bold text-blue-400">${(finalPrice + 4).toFixed(2)}</span>
+                                <span className="text-3xl font-bold text-blue-400">${(finalPrice + 1).toFixed(2)}</span>
                                 <span className="block text-xs text-gray-500 mt-1">USDT (TRC20)</span>
                             </div>
                         </div>

@@ -19,7 +19,7 @@ const TopUpConfirmModal: React.FC<TopUpConfirmModalProps> = ({
     packageName
 }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const NETWORK_FEE = 4.00;
+    const NETWORK_FEE = 1.00;
     const finalPrice = price + NETWORK_FEE;
 
     if (!isOpen) return null;
