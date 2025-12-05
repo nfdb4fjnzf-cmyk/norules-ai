@@ -83,13 +83,11 @@ export const paymentService = {
             new Date(Date.now() + ORDER_EXPIRY_MINUTES * 60 * 1000)
         );
 
+        // Build order object, excluding undefined values (Firestore doesn't accept undefined)
         const order: PaymentOrder = {
             orderId,
             userId,
             type,
-            points: details.points,
-            planId: details.planId,
-            billingCycle: details.billingCycle,
             baseAmount,
             expectedAmount,
             walletAddress: WALLET_ADDRESS,
@@ -98,6 +96,11 @@ export const paymentService = {
             createdAt: now,
             expiresAt
         };
+
+        // Conditionally add optional fields (only if defined)
+        if (details.points !== undefined) order.points = details.points;
+        if (details.planId !== undefined) order.planId = details.planId;
+        if (details.billingCycle !== undefined) order.billingCycle = details.billingCycle;
 
         // Save to Firestore
         await db.collection('payment_orders').doc(orderId).set(order);
